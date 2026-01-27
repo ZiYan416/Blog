@@ -72,9 +72,9 @@ export default function NewPostPage() {
 
   return (
     <div className="min-h-screen bg-[#fafafa] dark:bg-[#050505] pb-20">
-      <div className="container max-w-5xl mx-auto px-6 pt-12">
+      <div className="container max-w-6xl mx-auto px-6">
         {/* Header Actions */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-12">
           <Button variant="ghost" asChild className="rounded-full hover:bg-black/5 dark:hover:bg-white/5">
             <Link href="/post">
               <ArrowLeft className="w-4 h-4 mr-2" />

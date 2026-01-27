@@ -9,9 +9,9 @@ import {
   ArrowRight,
   MessageSquare,
   Users,
-  LogOut,
   UserCircle
 } from 'lucide-react'
+import { SignOutButton } from '@/components/auth/sign-out-button'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 
@@ -37,13 +37,6 @@ export default async function DashboardPage() {
     { label: '新评论', value: '5', icon: MessageSquare, color: 'text-green-500' },
     { label: '活跃天数', value: '24', icon: Users, color: 'text-orange-500' },
   ]
-
-  const handleSignOut = async () => {
-    'use server'
-    const supabase = await createClient()
-    await supabase.auth.signOut()
-    redirect('/login')
-  }
 
   return (
     <div className="min-h-screen bg-[#fafafa] dark:bg-[#050505] pb-20">
@@ -144,12 +137,10 @@ export default async function DashboardPage() {
                     <p>{profile?.is_admin ? '超级管理员' : '普通用户'}</p>
                   </div>
                 </div>
-                <form action={handleSignOut}>
-                  <Button type="submit" variant="ghost" className="w-full rounded-full bg-white/20 dark:bg-black/20 hover:bg-white/30 dark:hover:bg-black/30 text-white dark:text-black border-none">
-                    <LogOut className="w-4 h-4 mr-2" />
-                    退出登录
-                  </Button>
-                </form>
+                <SignOutButton
+                  variant="ghost"
+                  className="w-full rounded-full bg-white/20 dark:bg-black/20 hover:bg-white/30 dark:hover:bg-black/30 text-white dark:text-black border-none"
+                />
               </CardContent>
             </Card>
 

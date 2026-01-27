@@ -2,13 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Plus, User, Search, Settings, LogOut, LayoutDashboard, FileText } from "lucide-react";
+import { Plus, User, Search, Settings, LayoutDashboard, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./theme-toggle";
 import { useUser } from "@/hooks/use-auth";
-import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { createClient } from "@/lib/supabase/client";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 
 const navItems = [
   { href: "/", label: "首页" },
@@ -29,31 +27,6 @@ const navItems = [
 export function Navbar() {
   const pathname = usePathname();
   const { user, isAdmin } = useUser();
-  const { toast } = useToast();
-  const router = useRouter();
-
-  const handleSignOut = async () => {
-    try {
-      const supabase = createClient();
-      const { error } = await supabase.auth.signOut();
-
-      if (error) throw error;
-
-      toast({
-        title: "已退出登录",
-        description: "期待您的再次回归。",
-      });
-
-      router.push("/");
-      router.refresh();
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "退出失败",
-        description: error.message || "请稍后再试",
-      });
-    }
-  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-black/5 dark:border-white/5 bg-white/70 dark:bg-black/70 backdrop-blur-xl">
@@ -138,12 +111,11 @@ export function Navbar() {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="text-red-500 focus:text-red-500 focus:bg-red-50 dark:focus:bg-red-950/20"
-                  onClick={handleSignOut}
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  退出登录
+                <DropdownMenuItem asChild>
+                  <SignOutButton
+                    variant="ghost"
+                    className="w-full justify-start h-9 px-2 py-1.5 text-red-500 focus:text-red-500 focus:bg-red-50 dark:focus:bg-red-950/20 border-none rounded-sm"
+                  />
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
