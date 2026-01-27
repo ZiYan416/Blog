@@ -23,7 +23,8 @@ export function SignOutButton({ className, variant = "ghost" }: SignOutButtonPro
       });
 
       // 1. 先在客户端注销，触发 onAuthStateChange 事件以同步更新 UI (如 Navbar)
-      await supabase.auth.signOut();
+      // 使用 Promise.allSettled 确保即使客户端注销失败（如网络问题），也继续执行服务端注销
+      await Promise.allSettled([supabase.auth.signOut()]);
 
       // 2. 调用 Server Action 彻底清除服务端 Cookies 并执行重定向
       await signOutAction();

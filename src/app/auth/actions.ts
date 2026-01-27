@@ -6,11 +6,8 @@ import { redirect } from "next/navigation";
 export async function signOutAction() {
   const supabase = await createClient();
 
-  // 检查当前是否有会话并注销
-  const { data: { user } } = await supabase.auth.getUser();
-  if (user) {
-    await supabase.auth.signOut();
-  }
+  // 无论是否获取到用户，都尝试执行注销操作以清除可能存在的会话
+  await supabase.auth.signOut();
 
   // 清除服务端 Cookies 后重定向
   redirect("/login");

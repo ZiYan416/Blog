@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -17,6 +17,23 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    const checkSession = async () => {
+      // 关键修改：使用 getUser() 替代 getSession()
+      // getSession() 只读本地缓存，getUser() 会向服务器验证 Token 有效性
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (user) {
+        // 只有服务器确认有效，才跳转
+        window.location.href = '/dashboard'
+      } else {
+        // 如果服务器说无效，但本地可能有残留，强制清理本地缓存
+        await supabase.auth.signOut()
+      }
+    }
+    checkSession()
+  }, [])
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,8 +53,8 @@ export default function LoginPage() {
           title: "登录成功",
           description: "正在为您跳转到个人中心...",
         })
-        router.push('/dashboard')
-        router.refresh()
+        // 使用强制刷新跳转，确保中间件和客户端状态完全同步
+        window.location.href = '/dashboard'
       }
     } catch (err: any) {
       setError("登录时发生意外错误")

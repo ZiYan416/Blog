@@ -1,10 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-/**
- * Next.js 16 Proxy (Middleware)
- * 处理全局会话同步与 Cookies 刷新
- */
 export default async function proxy(request: NextRequest) {
   let response = NextResponse.next({
     request: {
@@ -12,39 +8,55 @@ export default async function proxy(request: NextRequest) {
     },
   })
 
-  try {
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return request.cookies.getAll()
-          },
-          setAll(cookiesToSet) {
-            // 在请求中设置
-            cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-
-            // 在响应中同步设置
-            response = NextResponse.next({
-              request: {
-                headers: request.headers,
-              },
-            })
-            cookiesToSet.forEach(({ name, value, options }) =>
-              response.cookies.set(name, value, options)
-            )
-          },
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
         },
-      }
-    )
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          )
+        },
+      },
+    }
+  )
 
-    // 刷新会话，确保 Cookies 与 Supabase 同步
-    // 必须包裹在 try-catch 中，防止未登录状态下抛出错误导致 500
-    await supabase.auth.getUser()
-  } catch (e) {
-    // 捕获异常，确保请求继续流转（例如登录页请求）
-    console.error('Proxy auth sync error:', e)
+  const isApi = request.nextUrl.pathname.startsWith('/api')
+  const isAuth = request.nextUrl.pathname.startsWith('/auth')
+  const isDashboard = request.nextUrl.pathname.startsWith('/dashboard')
+  const isProfile = request.nextUrl.pathname.startsWith('/profile')
+  const isAdmin = request.nextUrl.pathname.startsWith('/admin')
+  const isLoginPage = request.nextUrl.pathname.startsWith('/login')
+  const isRegisterPage = request.nextUrl.pathname.startsWith('/register')
+
+  if (isApi || isAuth || isDashboard || isProfile || isAdmin || isLoginPage || isRegisterPage) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    // 1. 未登录用户访问受保护页面 -> 重定向到登录页
+    if (!user && (isDashboard || isProfile || isAdmin)) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      return NextResponse.redirect(url)
+    }
+
+    // 2. 已登录用户访问登录/注册页 -> 重定向到控制台
+    if (user && (isLoginPage || isRegisterPage)) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/dashboard'
+      return NextResponse.redirect(url)
+    }
   }
 
   return response
@@ -52,6 +64,13 @@ export default async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public (public folder)
+     */
+    '/((?!_next/static|_next/image|favicon.ico|public|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

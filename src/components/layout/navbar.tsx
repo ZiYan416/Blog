@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { User as SupabaseUser } from "@supabase/supabase-js";
 
 const navItems = [
   { href: "/", label: "首页" },
@@ -24,9 +25,12 @@ const navItems = [
   { href: "/about", label: "关于" },
 ];
 
-export function Navbar() {
+export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
   const pathname = usePathname();
-  const { user, isAdmin } = useUser();
+  const { user: clientUser, isAdmin } = useUser();
+
+  const user = clientUser || initialUser;
+
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-black/5 dark:border-white/5 bg-white/70 dark:bg-black/70 backdrop-blur-xl">

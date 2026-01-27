@@ -1,26 +1,68 @@
 "use client"
 
-import { useState } from 'react'
+import { useEffect, useState, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import Editor from '@/components/editor/editor'
-import { ArrowLeft, Save, Send, Image as ImageIcon, Type } from 'lucide-react'
+import { ArrowLeft, Save, Send, Image as ImageIcon, Type, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useToast } from '@/hooks/use-toast'
 
-export default function NewPostPage() {
+interface EditPostPageProps {
+  params: Promise<{ id: string }>
+}
+
+export default function EditPostPage({ params }: EditPostPageProps) {
+  const { id } = use(params)
   const router = useRouter()
   const { toast } = useToast()
-  const [loading, setLoading] = useState(false)
+
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [title, setTitle] = useState('')
   const [slug, setSlug] = useState('')
   const [coverImage, setCoverImage] = useState('')
   const [content, setContent] = useState('')
+  const [isPublished, setIsPublished] = useState(false)
 
-  const handleSave = async (published: boolean) => {
+  useEffect(() => {
+    const fetchPost = async () => {
+      const supabase = createClient()
+      try {
+        const { data, error } = await supabase
+          .from('posts')
+          .select('*')
+          .eq('id', id)
+          .single()
+
+        if (error) throw error
+
+        if (data) {
+          setTitle(data.title || '')
+          setSlug(data.slug || '')
+          setCoverImage(data.cover_image || '')
+          setContent(data.content || '')
+          setIsPublished(data.published || false)
+        }
+      } catch (error: any) {
+        toast({
+          title: "加载文章失败",
+          description: error.message,
+          variant: "destructive",
+        })
+        router.push('/post')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchPost()
+  }, [id, router, toast])
+
+  const handleUpdate = async (published: boolean) => {
     if (!title) {
       toast({
         title: "标题不能为空",
@@ -29,7 +71,7 @@ export default function NewPostPage() {
       return
     }
 
-    setLoading(true)
+    setSaving(true)
     const supabase = createClient()
 
     try {
@@ -42,62 +84,71 @@ export default function NewPostPage() {
         content,
         cover_image: coverImage || null,
         published,
-        author_id: user.id,
         excerpt: content.replace(/<[^>]*>/g, '').slice(0, 150) + '...',
+        updated_at: new Date().toISOString(),
       }
 
       const { error } = await supabase
         .from('posts')
-        .insert([postData])
+        .update(postData)
+        .eq('id', id)
 
       if (error) throw error
 
       toast({
-        title: published ? "文章已发布" : "草稿已保存",
-        description: "您的创作已同步到云端。",
+        title: "文章已更新",
+        description: "您的修改已实时同步到云端。",
       })
 
       router.push('/post')
       router.refresh()
     } catch (error: any) {
       toast({
-        title: "操作失败",
+        title: "更新失败",
         description: error.message,
         variant: "destructive",
       })
     } finally {
-      setLoading(false)
+      setSaving(false)
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#fafafa] dark:bg-[#050505]">
+        <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />
+      </div>
+    )
   }
 
   return (
     <div className="min-h-screen bg-[#fafafa] dark:bg-[#050505] pb-20">
-      <div className="container max-w-6xl mx-auto px-6 pt-6">
+      <div className="container max-w-6xl mx-auto px-6">
         {/* Header Actions */}
         <div className="flex items-center justify-between mb-12">
           <Button variant="ghost" asChild className="rounded-full hover:bg-black/5 dark:hover:bg-white/5">
             <Link href="/post">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              返回文章
+              返回列表
             </Link>
           </Button>
           <div className="flex items-center gap-3">
             <Button
               variant="outline"
               className="rounded-full border-black/10 dark:border-white/10"
-              onClick={() => handleSave(false)}
-              disabled={loading}
+              onClick={() => handleUpdate(false)}
+              disabled={saving}
             >
               <Save className="w-4 h-4 mr-2" />
               存为草稿
             </Button>
             <Button
               className="rounded-full bg-black dark:bg-white text-white dark:text-black hover:opacity-90 px-6"
-              onClick={() => handleSave(true)}
-              disabled={loading}
+              onClick={() => handleUpdate(true)}
+              disabled={saving}
             >
               <Send className="w-4 h-4 mr-2" />
-              立即发布
+              {isPublished ? '保存并更新' : '立即发布'}
             </Button>
           </div>
         </div>
@@ -131,7 +182,7 @@ export default function NewPostPage() {
             <Editor
               content={content}
               onChange={setContent}
-              placeholder="开始您的创作之旅..."
+              placeholder="继续您的创作之旅..."
             />
           </div>
 
@@ -171,11 +222,11 @@ export default function NewPostPage() {
             </Card>
 
             <div className="p-6 rounded-3xl bg-black dark:bg-white text-white dark:text-black">
-              <h3 className="font-bold mb-2 text-sm">写作提示</h3>
+              <h3 className="font-bold mb-2 text-sm">修改提示</h3>
               <ul className="text-xs space-y-2 opacity-70">
-                <li>• 使用一级标题作为主要章节</li>
-                <li>• 插入代码块以增加技术深度</li>
-                <li>• 为您的文章选择一个独特的 Slug</li>
+                <li>• 您正在编辑现有文章</li>
+                <li>• 修改 Slug 可能会导致旧链接失效</li>
+                <li>• 摘要将根据新内容自动生成</li>
               </ul>
             </div>
           </div>
