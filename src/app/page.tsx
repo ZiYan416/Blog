@@ -1,116 +1,114 @@
 import Link from "next/link";
-import { Plus, Menu, User } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen">
-      {/* Header */}
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 max-w-screen-2xl items-center">
-          <div className="mr-4 flex">
-            <Link href="/" className="mr-6 flex items-center space-x-2">
-              <span className="text-xl font-bold">My Blog</span>
+    <div className="flex flex-col items-center">
+      {/* Hero Section */}
+      <section className="w-full max-w-4xl mx-auto px-6 pt-24 pb-16 text-center">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.05] mb-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+          <Sparkles className="w-3.5 h-3.5 text-yellow-500" />
+          <span className="text-xs font-medium text-neutral-500">探索技术与创作的边界</span>
+        </div>
+
+        <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-8 animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-200">
+          记录思想，<br />
+          <span className="text-neutral-400 dark:text-neutral-600">分享技术的纯粹。</span>
+        </h1>
+
+        <p className="text-lg md:text-xl text-neutral-500 max-w-2xl mx-auto mb-12 leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
+          一个专注于内容与阅读体验的现代博客平台。支持 Markdown 写作，让您的每一篇文字都呈现出它应有的质感。
+        </p>
+
+        <div className="flex flex-wrap items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-500">
+          <Button asChild size="lg" className="rounded-full px-8 bg-black dark:bg-white text-white dark:text-black hover:opacity-90 transition-opacity">
+            <Link href="/post">
+              开始阅读
+              <ArrowRight className="w-4 h-4 ml-2" />
             </Link>
-          </div>
-          <nav className="flex items-center space-x-6 text-sm font-medium">
-            <Link href="/" className="transition-colors hover:text-foreground/80">
-              首页
+          </Button>
+          <Button asChild variant="outline" size="lg" className="rounded-full px-8 border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+            <Link href="/about">了解更多</Link>
+          </Button>
+        </div>
+      </section>
+
+      {/* Featured Posts Preview */}
+      <section className="w-full max-w-6xl mx-auto px-6 py-24">
+        <div className="flex items-center justify-between mb-12">
+          <h2 className="text-2xl font-semibold">精选文章</h2>
+          <Link href="/post" className="text-sm font-medium text-neutral-500 hover:text-black dark:hover:text-white transition-colors">
+            查看全部 →
+          </Link>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-8">
+          {[1, 2].map((i) => (
+            <Link
+              key={i}
+              href={`/post/sample-${i}`}
+              className="group relative block p-8 rounded-3xl bg-white dark:bg-neutral-900 border border-black/[0.03] dark:border-white/[0.03] hover:border-black/10 dark:hover:border-white/10 transition-all duration-500"
+            >
+              <div className="flex flex-col h-full">
+                <div className="flex items-center gap-3 mb-6">
+                  <span className="px-3 py-1 rounded-full bg-black/5 dark:bg-white/5 text-[10px] font-bold uppercase tracking-wider text-neutral-500">
+                    Technology
+                  </span>
+                  <span className="text-xs text-neutral-400">5 min read</span>
+                </div>
+                <h3 className="text-2xl font-bold mb-4 group-hover:translate-x-1 transition-transform duration-500">
+                  现代前端架构的演进与思考 ({i})
+                </h3>
+                <p className="text-neutral-500 text-sm leading-relaxed mb-8 line-clamp-2">
+                  深入探讨在 React 19 和 Next.js 15 时代，我们该如何构建可维护且高性能的 Web 应用...
+                </p>
+                <div className="mt-auto flex items-center justify-between pt-6 border-t border-black/[0.03] dark:border-white/[0.03]">
+                  <span className="text-xs font-medium text-neutral-400">2026.01.2{i}</span>
+                  <div className="w-8 h-8 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center group-hover:bg-black dark:group-hover:bg-white group-hover:text-white dark:group-hover:text-black transition-all duration-500">
+                    <ArrowRight className="w-4 h-4" />
+                  </div>
+                </div>
+              </div>
             </Link>
-            <Link href="/tag" className="transition-colors hover:text-foreground/80">
-              标签
-            </Link>
-            <Link href="/about" className="transition-colors hover:text-foreground/80">
-              关于
-            </Link>
-          </nav>
-          <div className="flex flex-1 items-center justify-end space-x-2">
-            <Button variant="ghost" size="icon" asChild>
-              <Link href="/login">
-                <User className="h-4 w-4" />
-              </Link>
-            </Button>
-            <Button asChild>
-              <Link href="/admin/post/new">
-                <Plus className="mr-2 h-4 w-4" />
-                撰写文章
-              </Link>
-            </Button>
+          ))}
+        </div>
+      </section>
+
+      {/* Modern Features Grid */}
+      <section className="w-full bg-black/[0.02] dark:bg-white/[0.02] py-24">
+        <div className="container max-w-6xl mx-auto px-6">
+          <div className="grid md:grid-cols-3 gap-12 text-center md:text-left">
+            <div>
+              <div className="w-10 h-10 bg-black dark:bg-white rounded-xl flex items-center justify-center mb-6 mx-auto md:mx-0">
+                <div className="w-2 h-2 bg-white dark:bg-black rounded-full" />
+              </div>
+              <h4 className="font-semibold mb-3">极致阅读</h4>
+              <p className="text-sm text-neutral-500 leading-relaxed">
+                精心调优的排版系统，让长篇阅读不再疲惫。
+              </p>
+            </div>
+            <div>
+              <div className="w-10 h-10 bg-neutral-200 dark:bg-neutral-800 rounded-xl flex items-center justify-center mb-6 mx-auto md:mx-0">
+                <div className="w-4 h-1 bg-black dark:bg-white rounded-full" />
+              </div>
+              <h4 className="font-semibold mb-3">Markdown 原生</h4>
+              <p className="text-sm text-neutral-500 leading-relaxed">
+                全功能的 Markdown 支持，让写作回归表达本身。
+              </p>
+            </div>
+            <div>
+              <div className="w-10 h-10 border border-black/10 dark:border-white/10 rounded-xl flex items-center justify-center mb-6 mx-auto md:mx-0">
+                <div className="w-3 h-3 border-2 border-black dark:border-white rounded-sm" />
+              </div>
+              <h4 className="font-semibold mb-3">暗黑模式</h4>
+              <p className="text-sm text-neutral-500 leading-relaxed">
+                完美适配系统的深浅色模式，保护您的视力。
+              </p>
+            </div>
           </div>
         </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="container py-12">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-4">欢迎来到我的博客</h1>
-            <p className="text-muted-foreground text-lg">
-              这里分享技术文章、学习心得和生活感悟
-            </p>
-          </div>
-
-          {/* Blog Posts Section */}
-          <section className="mb-12">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold">最新文章</h2>
-              <Link href="/admin/posts" className="text-sm text-muted-foreground hover:text-foreground">
-                查看全部 &rarr;
-              </Link>
-            </div>
-
-            <div className="grid gap-6">
-              {/* Placeholder for blog posts */}
-              <div className="rounded-lg border p-6 bg-card text-center">
-                <p className="text-muted-foreground">
-                  暂无文章，点击右侧按钮开始撰写
-                </p>
-              </div>
-            </div>
-          </section>
-
-          {/* Feature Section */}
-          <section className="rounded-lg border bg-card p-8">
-            <h2 className="text-2xl font-bold mb-4">功能特性</h2>
-            <div className="grid md:grid-cols-3 gap-6">
-              <div>
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                  <span className="text-2xl">✍️</span>
-                </div>
-                <h3 className="font-semibold mb-2">Markdown编辑</h3>
-                <p className="text-sm text-muted-foreground">
-                  支持Markdown语法，轻量级编辑器，实时预览
-                </p>
-              </div>
-              <div>
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                  <span className="text-2xl">🔒</span>
-                </div>
-                <h3 className="font-semibold mb-2">权限管理</h3>
-                <p className="text-sm text-muted-foreground">
-                  区分管理员和普通用户，内容安全可控
-                </p>
-              </div>
-              <div>
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                  <span className="text-2xl">🎨</span>
-                </div>
-                <h3 className="font-semibold mb-2">现代设计</h3>
-                <p className="text-sm text-muted-foreground">
-                  响应式布局，暗黑模式，流畅动画
-                </p>
-              </div>
-            </div>
-          </section>
-        </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t py-8">
-        <div className="container flex flex-col items-center justify-center text-center text-sm text-muted-foreground">
-          <p>© 2026 My Blog. Built with Next.js & Supabase</p>
-        </div>
-      </footer>
+      </section>
     </div>
   );
 }

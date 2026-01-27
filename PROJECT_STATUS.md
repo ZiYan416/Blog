@@ -42,38 +42,59 @@
   - [x] 服务端配置
   - [x] TypeScript 类型定义
 
-### 🔄 进行中
-- [ ] Supabase 数据库设置
-  - [ ] 创建 Supabase 项目
-  - [ ] 执行数据库 schema
-  - [ ] 配置 RLS 策略
-  - [ ] 插入初始数据
+### ✅ Supabase 数据库设置
+- [x] 创建项目方案
+- [x] 创建数据库迁移文件
+  - [x] posts 表
+  - [x] tags 表
+  - [x] featured_posts 表
+  - [x] comments 表
+  - [x] profiles 表
+- [x] 创建初始数据（seed_data.sql）
+- [x] 配置 RLS 策略
+- [x] 配置存储桶策略
+- [x] 创建 Supabase 设置指南（SUPABASE_SETUP.md）
+
+### ✅ 认证系统
+- [x] 创建 Auth Hooks
+  - [x] useUser hook
+  - [x] useSession hook
+- [x] 登录页面 ([login/page.tsx](src/app/login/page.tsx))
+- [x] 注册页面 ([register/page.tsx](src/app/register/page.tsx))
+- [x] 仪表盘页面 ([dashboard/page.tsx](src/app/dashboard/page.tsx))
+- [x] Auth 回调页面 ([auth/callback/page.tsx](src/app/auth/callback/page.tsx))
+- [x] Auth API
+  - [signin/route.ts](src/app/api/auth/signin/route.ts)
+  - [signup/route.ts](src/app/api/auth/signup/route.ts)
+  - [signout/route.ts](src/app/api/auth/signout/route.ts)
+  - [user/route.ts](src/app/api/auth/user/route.ts)
+
+### ✅ 文章组件
+- [x] PostCard 组件 ([post-card.tsx](src/components/post/post-card.tsx))
+- [x] PostList 组件 ([post-list.tsx](src/components/post/post-list.tsx))
+- [x] Markdown 工具函数 ([markdown.ts](src/lib/markdown.ts))
+- [x] 文章详情页 ([post/[slug]/page.tsx](src/app/post/[slug]/page.tsx))
+
+### ✅ 文章 API
+- [x] 获取文章列表 ([posts/route.ts](src/app/api/posts/route.ts))
+- [x] 获取文章详情 ([posts/[slug]/route.ts](src/app/api/posts/[slug]/route.ts))
+- [x] 创建文章 ([posts/create/route.ts](src/app/api/posts/create/route.ts))
+- [x] 更新文章 ([posts/[slug]/update/route.ts](src/app/api/posts/[slug]/update/route.ts))
+- [x] 删除文章 ([posts/[slug]/delete/route.ts](src/app/api/posts/[slug]/delete/route.ts))
+
+### ✅ 文章管理与交互优化
+- [x] 全局页面切换动画 ([template.tsx](src/app/template.tsx))
+- [x] 骨架屏基础组件 ([skeleton.tsx](src/components/ui/skeleton.tsx))
+- [x] 文章列表页骨架屏 ([post/loading.tsx](src/app/post/loading.tsx))
+- [x] 仪表盘页骨架屏 ([dashboard/loading.tsx](src/app/dashboard/loading.tsx))
+- [x] Tiptap 富文本编辑器集成 ([editor/](src/components/editor/))
+- [x] 新建文章页面 ([new/page.tsx](src/app/admin/posts/new/page.tsx))
 
 ### 📝 待开始
-- [ ] 认证系统
-  - [ ] 配置 Supabase Auth
-  - [ ] 创建登录/注册页面
-  - [ ] 实现 auth API
-
-- [ ] 编辑器集成
-  - [ ] 创建 Tiptap 编辑器组件
-  - [ ] 集成 Markdown 插件
-
-- [ ] 核心功能
-  - [ ] 文章 CRUD API
-  - [ ] 文章管理页面
-  - [ ] 文章列表页
-  - [ ] 文章详情页
-
-- [ ] 公开页面
-  - [ ] 登录/注册页
-  - [ ] 关于页
-  - [ ] 标签页
-  - [ ] SEO 优化
-
-- [ ] 部署
-  - [ ] 配置 Vercel
-  - [ ] 部署到生产环境
+- [ ] 文章编辑页面
+- [ ] 标签筛选功能
+- [ ] 搜索功能
+- [ ] 部署到生产环境
 
 ## 项目结构
 
@@ -83,23 +104,35 @@ blog/
 │   ├── layout.tsx         # 根布局
 │   ├── page.tsx           # 首页
 │   ├── globals.css        # 全局样式
+│   ├── login/             # 登录页
+│   ├── register/          # 注册页
+│   ├── dashboard/         # 仪表盘
+│   ├── auth/callback/     # Auth回调
+│   ├── post/[slug]/       # 文章详情
+│   ├── api/               # API 路由
+│   │   └── auth/
+│   │   └── posts/
 │   └── [待创建目录]
 ├── components/            # React 组件
 │   ├── ui/                # shadcn/ui 组件
-│   │   ├── button.tsx
-│   │   ├── card.tsx
-│   │   ├── input.tsx
-│   │   └── tabs.tsx
-│   ├── editor/            # 编辑器组件
-│   ├── post/              # 文章相关组件
-│   └── admin/             # 管理员组件
+│   ├── post/              # 文章组件
+│   │   ├── post-card.tsx
+│   │   └── post-list.tsx
+│   └── [待创建目录]
 ├── lib/
 │   ├── supabase/          # Supabase 配置
-│   │   ├── client.ts
-│   │   └── server.ts
 │   ├── types.ts           # TypeScript 类型
-│   └── utils.ts           # 工具函数
-├── .env.local.example      # 环境变量示例
+│   ├── utils.ts           # 工具函数
+│   └── markdown.ts        # Markdown 工具
+├── hooks/
+│   └── use-auth.ts        # Auth hooks
+├── supabase/
+│   └── migrations/        # 数据库迁移
+│       ├── 001_initial_schema.sql
+│       ├── 002_seed_data.sql
+│       └── 003_rls_policies.sql
+├── .env.local              # 环境变量
+├── SUPABASE_SETUP.md       # Supabase 设置指南
 └── PROJECT_STATUS.md      # 项目状态记录
 ```
 
@@ -109,12 +142,31 @@ blog/
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=xxx
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_SITE_NAME=My Blog
 ```
 
 ### Supabase 配置
-- RLS (Row Level Security) 待配置
-- 数据库 schema: `lib/db/schema.sql`
-- 初始数据: `lib/db/seed.sql`
+- RLS (Row Level Security) 已配置
+- 数据库 schema: `supabase/migrations/001_initial_schema.sql`
+- 初始数据: `supabase/migrations/002_seed_data.sql`
+- RLS 策略: `supabase/migrations/003_rls_policies.sql`
+- 设置指南: `SUPABASE_SETUP.md`
+
+### API 端点
+
+**认证 API**:
+- `POST /api/auth/signin` - 登录
+- `POST /api/auth/signup` - 注册
+- `POST /api/auth/signout` - 登出
+- `GET /api/auth/user` - 获取当前用户
+
+**文章 API**:
+- `GET /api/posts` - 获取文章列表
+- `GET /api/posts/[slug]` - 获取文章详情
+- `POST /api/posts/create` - 创建文章
+- `PUT /api/posts/[slug]/update` - 更新文章
+- `DELETE /api/posts/[slug]/delete` - 删除文章
 
 ## 待办事项
 
@@ -124,23 +176,34 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=xxx
 - [x] 配置 shadcn/ui
 - [x] 创建基础布局
 
-### 第二阶段：数据库与认证
-- [ ] 设置 Supabase 项目
-- [ ] 创建数据库表
-- [ ] 配置认证
-- [ ] 实现登录/注册
+### 第二阶段：Supabase 数据库设置 ✅
+- [x] 创建数据库迁移文件
+- [x] 配置 RLS 策略
+- [x] 创建设置指南
 
-### 第三阶段：编辑器与核心功能
+### 第三阶段：认证系统 ✅
+- [x] 创建 Auth Hooks
+- [x] 创建登录/注册页面
+- [x] 创建仪表盘
+- [x] 实现 auth API
+
+### 第四阶段：文章功能 ✅
+- [x] 创建文章组件
+- [x] 实现 Markdown 工具
+- [x] 创建文章详情页
+- [x] 实现文章 CRUD API
+
+### 第五阶段：文章管理界面
+- [ ] 创建文章列表管理页
+- [ ] 创建文章编辑器页面
 - [ ] 集成 Tiptap 编辑器
-- [ ] 实现文章 CRUD
-- [ ] 创建管理界面
 
-### 第四阶段：公开页面
-- [ ] 首页与文章列表
-- [ ] 文章详情页
-- [ ] 标签与搜索
+### 第六阶段：其他页面
+- [ ] 关于页
+- [ ] 标签页
+- [ ] 搜索功能
 
-### 第五阶段：部署
+### 第七阶段：部署
 - [ ] 配置 Vercel
 - [ ] 部署到生产
 - [ ] 绑定域名
@@ -158,3 +221,4 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=xxx
 - 所有路由按功能分组，使用 Next.js App Router 的路由组
 - 使用 RLS 确保数据安全
 - 使用 shadcn/ui 组件库保持设计一致性
+- 支持暗黑模式（使用 CSS 变量）
