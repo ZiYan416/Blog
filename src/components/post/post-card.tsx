@@ -7,6 +7,7 @@ import { formatDateString } from '@/lib/markdown'
 import { useUser } from '@/hooks/use-auth'
 import { DeletePostButton } from './delete-post-button'
 import { cn } from '@/lib/utils'
+import { getTagStyles } from '@/lib/tag-color'
 
 export interface Post {
   id: string
@@ -49,7 +50,7 @@ export default function PostCard({ post }: PostCardProps) {
       {/* Status Badge */}
       {!post.published && (
         <div className="absolute top-6 right-6 z-20">
-          <span className="px-3 py-1 text-[10px] font-bold bg-amber-100/80 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 backdrop-blur-md rounded-full uppercase tracking-widest border border-amber-200/50 dark:border-amber-800/50">
+          <span className="px-4 py-1.5 text-xs font-bold bg-amber-100/90 dark:bg-amber-900/60 text-amber-600 dark:text-amber-400 backdrop-blur-md rounded-full uppercase tracking-widest border border-amber-200/50 dark:border-amber-800/50 shadow-sm">
             草稿
           </span>
         </div>
@@ -102,14 +103,20 @@ export default function PostCard({ post }: PostCardProps) {
         <div className="mt-auto pt-6 border-t border-black/[0.03] dark:border-white/[0.03] flex items-center justify-between">
           <div className="flex flex-wrap gap-2">
             {tags.length > 0 ? (
-              tags.slice(0, 2).map((tag: string) => (
-                <span
-                  key={tag}
-                  className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-black/[0.03] dark:bg-white/[0.03] text-neutral-500"
-                >
-                  {tag}
-                </span>
-              ))
+              tags.slice(0, 2).map((tag: string) => {
+                const styles = getTagStyles(tag)
+                return (
+                  <span
+                    key={tag}
+                    className={cn(
+                      "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-colors",
+                    )}
+                    style={{ backgroundColor: styles.backgroundColor, color: '#333' }}
+                  >
+                    {tag}
+                  </span>
+                )
+              })
             ) : (
               <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-300 dark:text-neutral-700">
                 Uncategorized

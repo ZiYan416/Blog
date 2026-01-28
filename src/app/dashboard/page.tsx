@@ -30,12 +30,25 @@ export default async function DashboardPage() {
     .eq('id', user.id)
     .single()
 
-  // Placeholder stats - will be connected to real data in next phase
+  // 1. 获取文章统计信息
+  const { count: totalPosts } = await supabase
+    .from('posts')
+    .select('*', { count: 'exact', head: true })
+
+  // 2. 获取最近修改的文章（包括草稿）
+  // 使用 created_at 作为排序依据，确保新建的草稿（即使 updated_at 可能为空）也能显示
+  const { data: recentPosts } = await supabase
+    .from('posts')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(3)
+
+  // Placeholder stats - connected to real data where possible
   const stats = [
-    { label: '总文章', value: '12', icon: FileText, color: 'text-blue-500' },
-    { label: '总阅读', value: '1.2k', icon: BarChart3, color: 'text-purple-500' },
-    { label: '新评论', value: '5', icon: MessageSquare, color: 'text-green-500' },
-    { label: '活跃天数', value: '24', icon: Users, color: 'text-orange-500' },
+    { label: '总文章', value: totalPosts || 0, icon: FileText, color: 'text-blue-500' },
+    { label: '总阅读', value: '0', icon: BarChart3, color: 'text-purple-500' }, // 阅读量统计暂未实现
+    { label: '新评论', value: '0', icon: MessageSquare, color: 'text-green-500' },
+    { label: '活跃天数', value: '1', icon: Users, color: 'text-orange-500' },
   ]
 
   return (
@@ -110,13 +123,52 @@ export default async function DashboardPage() {
 
             <section>
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold">最近发布</h2>
+                <h2 className="text-xl font-semibold">最近动态</h2>
                 <Link href="/post" className="text-sm text-neutral-400 hover:text-black dark:hover:text-white transition-colors flex items-center gap-1">
                   查看全部 <ArrowRight className="w-3 h-3" />
                 </Link>
               </div>
-              <div className="p-12 text-center rounded-3xl border-2 border-dashed border-black/5 dark:border-white/5">
-                <p className="text-sm text-neutral-400">暂无最近发布的文章</p>
+
+              <div className="space-y-4">
+                {recentPosts && recentPosts.length > 0 ? (
+                  recentPosts.map((post) => (
+                    <div key={post.id} className="group flex items-center gap-4 p-4 rounded-3xl bg-white dark:bg-neutral-900 border border-black/[0.03] dark:border-white/[0.03] hover:border-black/10 dark:hover:border-white/10 transition-all">
+                      <div className="w-16 h-12 shrink-0 rounded-xl bg-neutral-100 dark:bg-neutral-800 overflow-hidden relative">
+                        {post.cover_image ? (
+                          <img src={post.cover_image} alt={post.title} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-neutral-300">
+                            <FileText className="w-6 h-6 opacity-50" />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-bold text-sm truncate pr-2">{post.title}</h3>
+                          {!post.published && (
+                            <span className="shrink-0 px-3 py-1 text-xs font-bold bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 rounded-full uppercase">
+                              草稿
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-neutral-500 truncate">
+                          {new Date(post.updated_at).toLocaleDateString('zh-CN')} · {post.excerpt || '暂无摘要'}
+                        </p>
+                      </div>
+
+                      <Button asChild variant="ghost" size="icon" className="rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Link href={`/admin/posts/${post.id}/edit`}>
+                          <ArrowRight className="w-4 h-4" />
+                        </Link>
+                      </Button>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-12 text-center rounded-3xl border-2 border-dashed border-black/5 dark:border-white/5">
+                    <p className="text-sm text-neutral-400">暂无最近发布的文章</p>
+                  </div>
+                )}
               </div>
             </section>
           </div>
@@ -146,18 +198,22 @@ export default async function DashboardPage() {
 
             <Card className="border-none bg-white dark:bg-neutral-900 rounded-3xl overflow-hidden shadow-sm">
               <CardHeader>
-                <CardTitle className="text-lg">系统通知</CardTitle>
-                <CardDescription>最近的项目更新与状态。</CardDescription>
+                <CardTitle className="text-lg">写作助手</CardTitle>
+                <CardDescription>提升写作质量的小贴士。</CardDescription>
               </CardHeader>
               <CardContent className="px-6 pb-6 text-sm text-neutral-500">
                 <ul className="space-y-4">
                   <li className="flex gap-3">
                     <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 shrink-0" />
-                    <p>现代简约风 UI 现已全局上线</p>
+                    <p>保持标题简洁有力，吸引读者点击。</p>
                   </li>
                   <li className="flex gap-3">
                     <div className="w-1.5 h-1.5 rounded-full bg-green-500 mt-1.5 shrink-0" />
-                    <p>Supabase 数据库同步已开启</p>
+                    <p>定期更新旧文章，保持内容时效性。</p>
+                  </li>
+                  <li className="flex gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-orange-500 mt-1.5 shrink-0" />
+                    <p>善用标签分类，方便内容检索。</p>
                   </li>
                 </ul>
               </CardContent>

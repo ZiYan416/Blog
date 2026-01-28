@@ -2,21 +2,26 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
 import Link from 'next/link'
-import { ArrowLeft, Calendar, Tag, Eye } from 'lucide-react'
-import { renderMarkdown, extractTags } from '@/lib/markdown'
+import { ArrowLeft, Calendar, Tag, Eye, Clock, User } from 'lucide-react'
+import { extractTags, calculateReadingTime, formatDateString, generatePostSlug } from '@/lib/markdown'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { ViewCounter } from '@/components/post/view-counter'
+import { CommentSection } from '@/components/post/comment-section'
+import { getComments } from '@/app/actions/comment'
+import { MarkdownRenderer } from '@/components/post/markdown-renderer'
+import { getTagStyles } from '@/lib/tag-color'
 
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }): Promise<Metadata> {
+  const { slug } = await params
   const supabase = await createClient()
   const { data: post } = await supabase
     .from('posts')
-    .select('title, slug')
-    .eq('slug', params.slug)
+    .select('title, slug, excerpt')
+    .eq('slug', slug)
     .single()
 
   if (!post) {
@@ -27,95 +32,147 @@ export async function generateMetadata({
 
   return {
     title: `${post.title} | My Blog`,
-    description: post.title,
+    description: post.excerpt || post.title,
   }
 }
 
 export default async function PostPage({
   params,
 }: {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }) {
+  const { slug } = await params
   const supabase = await createClient()
+
   const { data: post, error } = await supabase
     .from('posts')
     .select('*')
-    .eq('slug', params.slug)
-    .eq('published', true)
+    .eq('slug', slug)
     .single()
 
   if (error || !post) {
     notFound()
   }
 
-  const content = await renderMarkdown(post.content)
-  const tags = extractTags(post.content)
-  const formattedDate = new Date(post.created_at).toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
+  // Fetch author profile
+  const { data: author } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', post.author_id)
+    .single()
+
+  const comments = await getComments(post.id)
+
+  const tags = post.tags || extractTags(post.content)
+
+  const readingTime = calculateReadingTime(post.content)
+  const formattedDate = formatDateString(post.created_at)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Back button */}
-        <Link href="/">
-          <Button variant="ghost" className="mb-6">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            返回首页
+    <div className="min-h-screen bg-[#fafafa] dark:bg-[#050505] pb-20">
+      <ViewCounter slug={post.slug} />
+
+      {/* Hero Header */}
+      <div className="relative w-full h-[35vh] min-h-[300px] bg-neutral-900 dark:bg-black overflow-hidden">
+        {post.cover_image && (
+          <div className="absolute inset-0 opacity-60">
+            <img src={post.cover_image} alt={post.title} className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#fafafa] dark:from-[#050505] via-transparent to-transparent" />
+          </div>
+        )}
+
+        <div className="container max-w-6xl mx-auto px-6 h-full flex flex-col justify-end pb-24 relative z-10">
+          <Button variant="ghost" asChild className="absolute top-8 left-6 text-white/80 hover:text-white hover:bg-white/10 rounded-full">
+            <Link href="/post">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              返回列表
+            </Link>
           </Button>
-        </Link>
 
-        {/* Article content */}
-        <Card>
-          <CardContent className="pt-6">
-            <h1 className="text-4xl font-bold mb-4">{post.title}</h1>
+          <div className="space-y-6">
+            <h1 className="text-4xl md:text-5xl font-bold text-white leading-tight tracking-tight drop-shadow-sm">
+              {post.title}
+            </h1>
 
-            <div className="flex items-center gap-4 text-sm text-muted-foreground mb-6 pb-6 border-b">
-              <span className="flex items-center gap-1">
-                <Calendar className="w-4 h-4" />
+            <div className="flex flex-wrap items-center gap-4 text-sm font-medium text-neutral-400">
+              <span className="bg-black/20 dark:bg-white/10 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 flex items-center gap-2 text-white/90">
+                <Calendar className="w-3.5 h-3.5" />
                 {formattedDate}
               </span>
-              <span className="flex items-center gap-1">
-                <Eye className="w-4 h-4" />
-                {post.view_count || 0} 次浏览
+              <span className="bg-black/20 dark:bg-white/10 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 flex items-center gap-2 text-white/90">
+                <Clock className="w-3.5 h-3.5" />
+                {readingTime}
               </span>
-            </div>
-
-            <div className="prose dark:prose-invert max-w-none">
-              <div className="markdown-content" dangerouslySetInnerHTML={{ __html: content }} />
+              <span className="bg-black/20 dark:bg-white/10 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 flex items-center gap-2 text-white/90">
+                <Eye className="w-3.5 h-3.5" />
+                {post.view_count || 0} 阅读
+              </span>
+              {!post.published && (
+                <span className="bg-amber-500/80 backdrop-blur-md px-3 py-1 rounded-full border border-amber-400/50 text-white font-bold uppercase tracking-wider">
+                  草稿预览
+                </span>
+              )}
             </div>
 
             {tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-8 pt-6 border-t">
-                <Tag className="w-4 h-4 mt-0.5" />
-                {tags.map((tag) => (
-                  <Link key={tag} href={`/tag/${tag}`}>
-                    <Button variant="outline" size="sm">
-                      {tag}
-                    </Button>
-                  </Link>
-                ))}
+              <div className="flex flex-wrap gap-2">
+                {tags.map((tag: string) => {
+                  const styles = getTagStyles(tag)
+                  return (
+                    <Link key={tag} href={'/tag/' + generatePostSlug(tag)}>
+                      <span
+                        className="group relative overflow-hidden backdrop-blur-md px-3 py-1 rounded-full transition-all flex items-center gap-1.5 hover:scale-105 duration-300"
+                        style={{
+                          backgroundColor: styles.backgroundColor,
+                          color: '#333',
+                          border: `1px solid ${styles.borderColor}`,
+                        }}
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent opacity-50 group-hover:opacity-70 transition-opacity" />
+                        <Tag className="w-3 h-3 relative z-10 opacity-70" />
+                        <span className="text-xs font-bold uppercase tracking-wider relative z-10 shadow-sm">{tag}</span>
+                      </span>
+                    </Link>
+                  )
+                })}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
+      </div>
 
-        {/* Author info (placeholder) */}
-        <Card className="mt-6">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <span className="text-xl">👤</span>
-              </div>
-              <div>
-                <h4 className="font-semibold">作者</h4>
-                <p className="text-sm text-muted-foreground">{post.author_id}</p>
+      <div className="container max-w-6xl mx-auto px-6 -mt-12 relative z-20">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8">
+          {/* Main Content */}
+          <div className="bg-white dark:bg-neutral-900 rounded-3xl p-8 md:p-10 shadow-xl border border-black/5 dark:border-white/5">
+            <MarkdownRenderer content={post.content} />
+
+            <CommentSection postId={post.id} initialComments={comments} />
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-8">
+            <div className="bg-white dark:bg-neutral-900 rounded-3xl p-6 shadow-sm border border-black/5 dark:border-white/5 sticky top-24">
+              <h3 className="font-bold mb-6 text-sm uppercase tracking-widest text-neutral-400">About Author</h3>
+              <div className="flex flex-col items-center text-center">
+                <div className="w-20 h-20 rounded-full bg-neutral-100 dark:bg-neutral-800 mb-4 overflow-hidden">
+                  {author?.avatar_url ? (
+                    <img src={author.avatar_url} alt={author.display_name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-neutral-300">
+                      <User className="w-8 h-8" />
+                    </div>
+                  )}
+                </div>
+                <h4 className="font-bold text-lg mb-1">{author?.display_name || 'Anonymous'}</h4>
+                <p className="text-xs text-neutral-500 mb-4">{author?.email}</p>
+                <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">
+                  {author?.bio || '热爱技术，热爱分享。'}
+                </p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   )

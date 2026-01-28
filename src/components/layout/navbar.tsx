@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Plus, User, Search, Settings, LayoutDashboard, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,8 @@ const navItems = [
 
 export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState("");
   const { user: clientUser, isAdmin } = useUser();
 
   const user = clientUser || initialUser;
@@ -67,6 +70,13 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
             <input
               type="text"
               placeholder="搜索..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && searchQuery.trim()) {
+                  router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+                }
+              }}
               className="pl-9 pr-4 py-1.5 text-sm bg-neutral-100 dark:bg-neutral-900 border-none rounded-full w-32 focus:w-48 transition-all outline-none focus:ring-1 ring-black/10 dark:ring-white/10"
             />
           </div>

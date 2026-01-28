@@ -23,9 +23,16 @@ export default async function PostsPage() {
   // 构建查询
   let query = supabase.from('posts').select('*');
 
-  // 如果不是管理员，只看已发布的
+  // 权限控制：
+  // 1. 管理员：可以看到所有文章
+  // 2. 登录用户：可以看到已发布文章 + 自己写的草稿
+  // 3. 游客：只能看到已发布文章
   if (!isAdmin) {
-    query = query.eq('published', true);
+    if (user) {
+      query = query.or(`published.eq.true,author_id.eq.${user.id}`);
+    } else {
+      query = query.eq('published', true);
+    }
   }
 
   const { data: posts, error } = await query.order('created_at', { ascending: false });

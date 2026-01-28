@@ -1,24 +1,99 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import Editor from '@/components/editor/editor'
-import { ArrowLeft, Save, Send, Image as ImageIcon, Type } from 'lucide-react'
+import { TagSelector } from '@/components/post/tag-selector'
+import { PostPreviewModal } from '@/components/post/post-preview-modal'
+import { ArrowLeft, Save, Send, Image as ImageIcon, Type, Upload, Eye } from 'lucide-react'
 import Link from 'next/link'
 import { useToast } from '@/hooks/use-toast'
+import { extractTags, autoClassifyTags, generatePostSlug } from '@/lib/markdown'
+import { getTagNames, ensureTagsExist } from '@/app/actions/tags'
 
 export default function NewPostPage() {
   const router = useRouter()
   const { toast } = useToast()
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
   const [title, setTitle] = useState('')
   const [slug, setSlug] = useState('')
   const [coverImage, setCoverImage] = useState('')
   const [content, setContent] = useState('')
+  const [tags, setTags] = useState<string[]>([])
+  const [availableTags, setAvailableTags] = useState<string[]>([])
+  const [loadingTags, setLoadingTags] = useState(false)
+  const [previewOpen, setPreviewOpen] = useState(false)
+
+  const fetchAvailableTags = async () => {
+    setLoadingTags(true)
+    try {
+      const tags = await getTagNames()
+      setAvailableTags(tags)
+    } catch (error) {
+      console.error('Error fetching tags:', error)
+    } finally {
+      setLoadingTags(false)
+    }
+  }
+
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const text = event.target?.result as string
+      if (!text) return
+
+      // Simple frontmatter parsing
+      const frontmatterRegex = /^---\s*[\r\n]+([\s\S]*?)[\r\n]+---\s*/
+      const match = text.match(frontmatterRegex)
+
+      if (match) {
+        const frontmatter = match[1]
+        const contentBody = text.replace(frontmatterRegex, '')
+        setContent(contentBody.trim())
+
+        // Parse frontmatter lines
+        const lines = frontmatter.split('\n')
+        lines.forEach(line => {
+          const [key, ...valueParts] = line.split(':')
+          if (key && valueParts.length) {
+            const value = valueParts.join(':').trim().replace(/^['"](.*)['"]$/, '$1')
+            if (key.trim() === 'title') setTitle(value)
+            if (key.trim() === 'slug') setSlug(value)
+          }
+        })
+
+        toast({
+            title: "导入成功",
+            description: "已解析 Markdown 内容及元数据",
+        })
+      } else {
+        setContent(text)
+        toast({
+            title: "导入成功",
+            description: "已加载文件内容",
+        })
+      }
+
+      // Reset input value to allow uploading the same file again if needed
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+    reader.readAsText(file)
+  }
+
+  useEffect(() => {
+    fetchAvailableTags()
+  }, [])
 
   const handleSave = async (published: boolean) => {
     if (!title) {
@@ -36,14 +111,33 @@ export default function NewPostPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('未登录')
 
+      // 智能标签处理：如果未手动选择，则自动归类
+      let finalTags = tags
+      if (finalTags.length === 0) {
+        finalTags = autoClassifyTags(content, availableTags)
+        if (finalTags.length > 0) {
+          toast({
+            title: "已自动归类文章",
+            description: `根据内容自动添加了标签: ${finalTags.join(', ')}`,
+          })
+        }
+      }
+
+      // 确保所有新标签都已存在于 tags 表中
+      const tagsSynced = await ensureTagsExist(finalTags)
+      if (!tagsSynced) {
+        console.warn('部分标签同步失败，但将继续保存文章')
+      }
+
       const postData = {
         title,
-        slug: slug || title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''),
+        slug: slug || generatePostSlug(title),
         content,
         cover_image: coverImage || null,
         published,
         author_id: user.id,
         excerpt: content.replace(/<[^>]*>/g, '').slice(0, 150) + '...',
+        tags: finalTags
       }
 
       const { error } = await supabase
@@ -72,15 +166,40 @@ export default function NewPostPage() {
 
   return (
     <div className="min-h-screen bg-[#fafafa] dark:bg-[#050505] pb-20">
-      <div className="container max-w-6xl mx-auto px-6 pt-6">
+      <div className="container max-w-6xl mx-auto px-6">
         {/* Header Actions */}
         <div className="flex items-center justify-between mb-12">
-          <Button variant="ghost" asChild className="rounded-full hover:bg-black/5 dark:hover:bg-white/5">
-            <Link href="/post">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              返回文章
-            </Link>
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" asChild className="rounded-full hover:bg-black/5 dark:hover:bg-white/5">
+              <Link href="/post">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                返回文章
+              </Link>
+            </Button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept=".md,.markdown"
+              onChange={handleFileUpload}
+            />
+            <Button
+              variant="outline"
+              className="rounded-full border-dashed border-black/20 dark:border-white/20"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              导入 MD
+            </Button>
+            <Button
+              variant="outline"
+              className="rounded-full border-black/10 dark:border-white/10"
+              onClick={() => setPreviewOpen(true)}
+            >
+              <Eye className="w-4 h-4 mr-2" />
+              全屏预览
+            </Button>
+          </div>
           <div className="flex items-center gap-3">
             <Button
               variant="outline"
@@ -116,10 +235,10 @@ export default function NewPostPage() {
               <div className="flex items-center gap-4 text-sm text-neutral-500">
                 <div className="flex items-center gap-1.5">
                   <Type className="w-4 h-4" />
-                  <span>Slug:</span>
+                  <span>链接别名:</span>
                   <input
                     type="text"
-                    placeholder="post-url-slug"
+                    placeholder="文章链接别名 (如: my-first-post)"
                     className="bg-transparent border-none outline-none focus:text-black dark:focus:text-white transition-colors"
                     value={slug}
                     onChange={(e) => setSlug(e.target.value)}
@@ -137,6 +256,18 @@ export default function NewPostPage() {
 
           {/* Sidebar Settings */}
           <div className="space-y-6">
+            <Card className="border-none shadow-sm bg-white dark:bg-neutral-900 rounded-3xl overflow-hidden">
+              <CardContent className="p-6">
+                <TagSelector
+                  value={tags}
+                  onChange={setTags}
+                  availableTags={availableTags}
+                  loading={loadingTags}
+                  onRefresh={fetchAvailableTags}
+                />
+              </CardContent>
+            </Card>
+
             <Card className="border-none shadow-sm bg-white dark:bg-neutral-900 rounded-3xl overflow-hidden">
               <CardContent className="p-6">
                 <h3 className="font-bold mb-4 flex items-center gap-2">
@@ -157,7 +288,7 @@ export default function NewPostPage() {
                   ) : (
                     <div className="aspect-video rounded-2xl border-2 border-dashed border-black/5 dark:border-white/5 flex flex-col items-center justify-center text-neutral-400 bg-neutral-50 dark:bg-neutral-950">
                       <ImageIcon className="w-8 h-8 mb-2 opacity-20" />
-                      <p className="text-[10px] uppercase tracking-widest font-bold">No Image</p>
+                      <p className="text-[10px] uppercase tracking-widest font-bold">暂无图片</p>
                     </div>
                   )}
                   <Input
@@ -181,6 +312,20 @@ export default function NewPostPage() {
           </div>
         </div>
       </div>
+
+      <PostPreviewModal
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        post={{
+          title,
+          content,
+          coverImage,
+          tags: tags.length > 0 ? tags : (autoClassifyTags(content, availableTags) || []),
+          slug,
+          published: false,
+          created_at: new Date().toISOString()
+        }}
+      />
     </div>
   )
 }

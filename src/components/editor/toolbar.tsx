@@ -1,6 +1,5 @@
 "use client"
 
-import { type Editor } from '@tiptap/react'
 import {
   Bold,
   Italic,
@@ -11,126 +10,139 @@ import {
   Heading2,
   Code,
   Image as ImageIcon,
-  Undo,
-  Redo,
-  Terminal
+  Terminal,
+  Eye,
+  Pencil,
+  Columns,
+  Link as LinkIcon
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
+export type ViewMode = 'edit' | 'preview' | 'split'
+export type MarkdownAction = 'bold' | 'italic' | 'h1' | 'h2' | 'list' | 'ordered-list' | 'quote' | 'code' | 'code-block' | 'image' | 'link'
+
 interface ToolbarProps {
-  editor: Editor | null
+  viewMode: ViewMode
+  onViewModeChange: (mode: ViewMode) => void
+  onAction: (action: MarkdownAction) => void
 }
 
-export function Toolbar({ editor }: ToolbarProps) {
-  if (!editor) return null
-
-  const addImage = () => {
-    const url = window.prompt('请输入图片 URL')
-    if (url) {
-      editor.chain().focus().setImage({ src: url }).run()
-    }
-  }
-
+export function Toolbar({ viewMode, onViewModeChange, onAction }: ToolbarProps) {
   const items = [
     {
       icon: Bold,
       title: '加粗',
-      action: () => editor.chain().focus().toggleBold().run(),
-      isActive: () => editor.isActive('bold'),
+      action: () => onAction('bold'),
     },
     {
       icon: Italic,
       title: '斜体',
-      action: () => editor.chain().focus().toggleItalic().run(),
-      isActive: () => editor.isActive('italic'),
+      action: () => onAction('italic'),
     },
     {
       icon: Heading1,
       title: '一级标题',
-      action: () => editor.chain().focus().toggleHeading({ level: 1 }).run(),
-      isActive: () => editor.isActive('heading', { level: 1 }),
+      action: () => onAction('h1'),
     },
     {
       icon: Heading2,
       title: '二级标题',
-      action: () => editor.chain().focus().toggleHeading({ level: 2 }).run(),
-      isActive: () => editor.isActive('heading', { level: 2 }),
+      action: () => onAction('h2'),
     },
     {
       icon: List,
       title: '无序列表',
-      action: () => editor.chain().focus().toggleBulletList().run(),
-      isActive: () => editor.isActive('bulletList'),
+      action: () => onAction('list'),
     },
     {
       icon: ListOrdered,
       title: '有序列表',
-      action: () => editor.chain().focus().toggleOrderedList().run(),
-      isActive: () => editor.isActive('orderedList'),
+      action: () => onAction('ordered-list'),
     },
     {
       icon: Quote,
       title: '引用',
-      action: () => editor.chain().focus().toggleBlockquote().run(),
-      isActive: () => editor.isActive('blockquote'),
+      action: () => onAction('quote'),
     },
     {
       icon: Code,
       title: '行内代码',
-      action: () => editor.chain().focus().toggleCode().run(),
-      isActive: () => editor.isActive('code'),
+      action: () => onAction('code'),
     },
     {
       icon: Terminal,
       title: '代码块',
-      action: () => editor.chain().focus().toggleCodeBlock().run(),
-      isActive: () => editor.isActive('codeBlock'),
+      action: () => onAction('code-block'),
+    },
+    {
+      icon: LinkIcon,
+      title: '插入链接',
+      action: () => onAction('link'),
     },
     {
       icon: ImageIcon,
       title: '插入图片',
-      action: addImage,
-      isActive: () => false,
+      action: () => onAction('image'),
+    },
+  ]
+
+  const modes = [
+    {
+      icon: Pencil,
+      title: '编辑模式',
+      value: 'edit' as const,
+    },
+    {
+      icon: Columns,
+      title: '分栏预览',
+      value: 'split' as const,
+    },
+    {
+      icon: Eye,
+      title: '预览模式',
+      value: 'preview' as const,
     },
   ]
 
   return (
     <div className="flex flex-wrap items-center gap-1 p-2 border-b border-black/5 dark:border-white/5 bg-neutral-50/50 dark:bg-neutral-800/50 sticky top-0 z-10 backdrop-blur-md">
-      {items.map((item, index) => (
-        <Button
-          key={index}
-          variant="ghost"
-          size="icon"
-          className={cn(
-            "h-8 w-8 rounded-lg transition-colors",
-            item.isActive()
-              ? "bg-black text-white dark:bg-white dark:text-black"
-              : "text-neutral-500 hover:bg-black/5 dark:hover:bg-white/5"
-          )}
-          onClick={item.action}
-          title={item.title}
-        >
-          <item.icon className="h-4 w-4" />
-        </Button>
-      ))}
-      <div className="w-[1px] h-4 bg-black/10 dark:bg-white/10 mx-1" />
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8 rounded-lg text-neutral-500"
-        onClick={() => editor.chain().focus().undo().run()}
-      >
-        <Undo className="h-4 w-4" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8 rounded-lg text-neutral-500"
-        onClick={() => editor.chain().focus().redo().run()}
-      >
-        <Redo className="h-4 w-4" />
-      </Button>
+      <div className="flex items-center gap-1 border-r border-black/10 dark:border-white/10 pr-2 mr-2">
+        {modes.map((m) => (
+          <Button
+            key={m.value}
+            variant="ghost"
+            size="icon"
+            className={cn(
+              "h-8 w-8 rounded-lg transition-colors",
+              viewMode === m.value
+                ? "bg-black text-white dark:bg-white dark:text-black"
+                : "text-neutral-500 hover:bg-black/5 dark:hover:bg-white/5"
+            )}
+            onClick={() => onViewModeChange(m.value)}
+            title={m.title}
+          >
+            <m.icon className="h-4 w-4" />
+          </Button>
+        ))}
+      </div>
+
+      {(viewMode === 'edit' || viewMode === 'split') && (
+        <div className="flex items-center gap-1">
+          {items.map((item, index) => (
+            <Button
+              key={index}
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-lg text-neutral-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+              onClick={item.action}
+              title={item.title}
+            >
+              <item.icon className="h-4 w-4" />
+            </Button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

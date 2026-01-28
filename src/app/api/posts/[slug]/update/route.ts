@@ -76,5 +76,50 @@ export async function PUT(
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
+  // Update tags relationship
+  if (tags && Array.isArray(tags)) {
+    // 1. Delete existing relationships
+    await supabase
+      .from('post_tags')
+      .delete()
+      .eq('post_id', post.id)
+
+    // 2. Re-insert tags
+    for (const tagName of tags) {
+      // Check if tag exists
+      const { data: existingTag } = await supabase
+        .from('tags')
+        .select('id')
+        .eq('name', tagName)
+        .single()
+
+      let tagId = existingTag?.id
+
+      if (!tagId) {
+        // Create new tag
+        const tagSlug = generatePostSlug(tagName)
+
+        const { data: newTag } = await supabase
+          .from('tags')
+          .insert({
+            name: tagName,
+            slug: tagSlug
+          })
+          .select('id')
+          .single()
+        tagId = newTag?.id
+      }
+
+      if (tagId) {
+        await supabase
+          .from('post_tags')
+          .insert({
+            post_id: post.id,
+            tag_id: tagId
+          })
+      }
+    }
+  }
+
   return NextResponse.json({ post })
 }
