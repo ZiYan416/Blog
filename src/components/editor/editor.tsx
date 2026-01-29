@@ -9,6 +9,9 @@ import { Toolbar, ViewMode, MarkdownAction } from './toolbar'
 import { cn } from '@/lib/utils'
 import { RichEditor } from './rich-editor'
 import { Editor as TiptapEditor } from '@tiptap/react'
+import { createClient } from '@/lib/supabase/client'
+import { v4 as uuidv4 } from 'uuid'
+import { useToast } from '@/hooks/use-toast'
 
 interface EditorProps {
   content: string
@@ -19,6 +22,8 @@ interface EditorProps {
 export default function Editor({ content, onChange, placeholder = '开始创作吧...' }: EditorProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('rich')
   const [tiptapEditor, setTiptapEditor] = useState<TiptapEditor | null>(null)
+  const { toast } = useToast()
+  const [isUploading, setIsUploading] = useState(false)
 
   // Refs for scrolling synchronization
   const sourceScrollRef = useRef<HTMLDivElement>(null)
@@ -38,6 +43,72 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
     import('prismjs/components/prism-json')
     import('prismjs/components/prism-bash')
   }, [])
+
+  const handleImageUpload = async (file: File): Promise<string | null> => {
+    try {
+      setIsUploading(true)
+      const supabase = createClient()
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${uuidv4()}.${fileExt}`
+      const filePath = `${fileName}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('blog-images')
+        .upload(filePath, file)
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('blog-images')
+        .getPublicUrl(filePath)
+
+      return publicUrl
+    } catch (error: any) {
+      console.error('Image upload failed:', error)
+      toast({
+        title: "图片上传失败",
+        description: error.message,
+        variant: "destructive"
+      })
+      return null
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const handleSourcePaste = async (e: React.ClipboardEvent) => {
+    const items = Array.from(e.clipboardData.items)
+    const imageItem = items.find(item => item.type.startsWith('image'))
+
+    if (imageItem) {
+      e.preventDefault()
+      const file = imageItem.getAsFile()
+      if (file) {
+        const textarea = e.currentTarget as HTMLTextAreaElement
+        const start = textarea.selectionStart
+        const end = textarea.selectionEnd
+
+        // Insert placeholder
+        const placeholder = `![Uploading ${file.name}...]()`
+        const newText = content.substring(0, start) + placeholder + content.substring(end)
+        onChange(newText)
+
+        // Upload
+        const url = await handleImageUpload(file)
+
+        if (url) {
+          // Replace placeholder with actual markdown
+          const imageMarkdown = `![image](${url})`
+          const finalText = newText.replace(placeholder, imageMarkdown)
+          onChange(finalText)
+        } else {
+            // Restore original text on failure (or keep placeholder? better to revert)
+           const revertText = content // simplified revert
+           onChange(revertText)
+        }
+      }
+    }
+  }
 
   // Scroll Synchronization
   const handleScroll = (source: 'source' | 'rich', e: React.UIEvent<HTMLDivElement>) => {
@@ -190,21 +261,21 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
   }
 
   return (
-    <div className="w-full h-full border border-black/5 dark:border-white/5 bg-white dark:bg-neutral-900 rounded-[2rem] overflow-hidden transition-all focus-within:ring-1 ring-black/10 dark:ring-white/10 shadow-sm flex flex-col">
-      <Toolbar viewMode={viewMode} onViewModeChange={setViewMode} onAction={handleAction} />
+    <div className="w-full border border-black/5 dark:border-white/5 bg-white dark:bg-neutral-900 rounded-[2rem] transition-all focus-within:ring-1 ring-black/10 dark:ring-white/10 shadow-sm flex flex-col min-h-[calc(100vh-12rem)] relative">
+      <div className="sticky top-0 z-40 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm border-b border-black/5 dark:border-white/5 rounded-t-[2rem]">
+         <Toolbar viewMode={viewMode} onViewModeChange={setViewMode} onAction={handleAction} />
+      </div>
 
-      <div className="flex-1 relative flex overflow-hidden">
+      <div className="flex-1 relative flex">
 
         {/* Source Mode Editor (Left in Split, or Visible in Source Mode) */}
         <div className={cn(
-          "h-full transition-all duration-300 flex flex-col bg-neutral-50/50 dark:bg-neutral-950/50",
+          "transition-all duration-300 flex flex-col bg-neutral-50/50 dark:bg-neutral-950/50",
           viewMode === 'source' ? "w-full" :
           viewMode === 'split' ? "w-1/2 border-r border-black/5 dark:border-white/5" : "hidden"
         )}>
           <div
-            className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6 font-mono text-sm"
-            ref={sourceScrollRef}
-            onScroll={(e) => handleScroll('source', e)}
+            className="flex-1 min-h-0 p-4 sm:p-6 font-mono text-sm"
           >
             <div ref={containerRef} className="min-h-full">
               <CodeEditor
@@ -221,6 +292,8 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
                   backgroundColor: 'transparent',
                 }}
                 textareaClassName="focus:outline-none"
+                // @ts-ignore
+                onPaste={handleSourcePaste}
               />
             </div>
           </div>
@@ -228,14 +301,12 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
 
         {/* Rich/Normal Mode Editor (Right in Split, or Visible in Rich Mode) */}
         <div className={cn(
-          "h-full transition-all duration-300 flex flex-col bg-white dark:bg-neutral-900",
+          "transition-all duration-300 flex flex-col bg-white dark:bg-neutral-900",
           viewMode === 'rich' ? "w-full" :
           viewMode === 'split' ? "w-1/2" : "hidden"
         )}>
            <div
-            className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-8"
-            ref={richScrollRef}
-            onScroll={(e) => handleScroll('rich', e)}
+            className="flex-1 min-h-0 p-4 sm:p-8"
            >
              <RichEditor
                 content={content}

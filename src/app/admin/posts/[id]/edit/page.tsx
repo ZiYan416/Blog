@@ -12,7 +12,7 @@ import { PostPreviewModal } from '@/components/post/post-preview-modal'
 import { ArrowLeft, Save, Send, Image as ImageIcon, Type, Loader2, Eye, X } from 'lucide-react'
 import Link from 'next/link'
 import { useToast } from '@/hooks/use-toast'
-import { extractTags, autoClassifyTags, generatePostSlug } from '@/lib/markdown'
+import { extractTags, autoClassifyTags, generatePostSlug, getPostExcerpt } from '@/lib/markdown'
 import { getTagNames, ensureTagsExist } from '@/app/actions/tags'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -173,7 +173,7 @@ export default function EditPostPage({ params }: EditPostPageProps) {
         content,
         cover_image: coverImage || null,
         published,
-        excerpt: content.replace(/<[^>]*>/g, '').slice(0, 150) + '...',
+        excerpt: getPostExcerpt(content),
         updated_at: new Date().toISOString(),
         tags: finalTags
       }
@@ -212,10 +212,10 @@ export default function EditPostPage({ params }: EditPostPageProps) {
   }
 
   return (
-    <div className="h-screen w-full bg-[#fafafa] dark:bg-[#050505] flex flex-col overflow-hidden">
-      <div className="flex-1 flex flex-col min-h-0 p-4 md:p-6 max-w-[1800px] mx-auto w-full">
+    <div className="min-h-screen bg-[#fafafa] dark:bg-[#050505] pb-20">
+      <div className="container max-w-6xl mx-auto px-6 py-12">
         {/* Header Actions */}
-        <div className="flex-none mb-4">
+        <div className="mb-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Button variant="ghost" asChild className="rounded-full hover:bg-black/5 dark:hover:bg-white/5">
@@ -256,10 +256,10 @@ export default function EditPostPage({ params }: EditPostPageProps) {
           </div>
         </div>
 
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 min-h-0">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 items-start">
           {/* Main Editor Area */}
-          <div className="flex flex-col h-full overflow-hidden gap-4">
-            <div className="flex-none space-y-4">
+          <div className="flex flex-col gap-6">
+            <div className="space-y-4">
               <input
                 type="text"
                 placeholder="在此输入引人入胜的标题..."
@@ -282,17 +282,15 @@ export default function EditPostPage({ params }: EditPostPageProps) {
               </div>
             </div>
 
-            <div className="flex-1 min-h-0">
-              <Editor
-                content={content}
-                onChange={setContent}
-                placeholder="继续您的创作之旅..."
-              />
-            </div>
+            <Editor
+              content={content}
+              onChange={setContent}
+              placeholder="继续您的创作之旅..."
+            />
           </div>
 
           {/* Sidebar Settings */}
-          <div className="h-full overflow-y-auto pr-2 pb-20 space-y-6 scrollbar-hide">
+          <div className="sticky top-8 space-y-6">
             <Card className="border-none shadow-sm bg-white dark:bg-neutral-900 rounded-3xl overflow-hidden">
               <CardContent className="p-6">
                 <TagSelector
