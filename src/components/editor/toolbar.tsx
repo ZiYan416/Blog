@@ -19,7 +19,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
-export type ViewMode = 'edit' | 'preview' | 'split'
+export type ViewMode = 'source' | 'rich' | 'split'
 export type MarkdownAction = 'bold' | 'italic' | 'h1' | 'h2' | 'list' | 'ordered-list' | 'quote' | 'code' | 'code-block' | 'image' | 'link'
 
 interface ToolbarProps {
@@ -87,62 +87,61 @@ export function Toolbar({ viewMode, onViewModeChange, onAction }: ToolbarProps) 
     },
   ]
 
-  const modes = [
-    {
-      icon: Pencil,
-      title: '编辑模式',
-      value: 'edit' as const,
-    },
-    {
-      icon: Columns,
-      title: '分栏预览',
-      value: 'split' as const,
-    },
-    {
-      icon: Eye,
-      title: '预览模式',
-      value: 'preview' as const,
-    },
-  ]
-
   return (
     <div className="flex flex-wrap items-center gap-1 p-2 border-b border-black/5 dark:border-white/5 bg-neutral-50/50 dark:bg-neutral-800/50 sticky top-0 z-10 backdrop-blur-md">
       <div className="flex items-center gap-1 border-r border-black/10 dark:border-white/10 pr-2 mr-2">
-        {modes.map((m) => (
+        {/* Mode Switcher Logic:
+            If in Split mode, button can switch back to Source or Rich (Single).
+            If in Single mode, button toggles between Source/Rich or switches to Split.
+        */}
+
+        {/* Toggle Single Mode Type (Source <-> Rich) */}
+        {viewMode !== 'split' && (
           <Button
-            key={m.value}
             variant="ghost"
             size="icon"
             className={cn(
               "h-8 w-8 rounded-lg transition-colors",
-              viewMode === m.value
-                ? "bg-black text-white dark:bg-white dark:text-black"
-                : "text-neutral-500 hover:bg-black/5 dark:hover:bg-white/5"
+              "text-neutral-500 hover:bg-black/5 dark:hover:bg-white/5"
             )}
-            onClick={() => onViewModeChange(m.value)}
-            title={m.title}
+            onClick={() => onViewModeChange(viewMode === 'source' ? 'rich' : 'source')}
+            title={viewMode === 'source' ? "切换到所见即所得" : "切换到源码模式"}
           >
-            <m.icon className="h-4 w-4" />
+            {viewMode === 'source' ? <Eye className="h-4 w-4" /> : <Code className="h-4 w-4" />}
+          </Button>
+        )}
+
+        {/* Split Mode Toggle */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className={cn(
+            "h-8 w-8 rounded-lg transition-colors",
+            viewMode === 'split'
+              ? "bg-black text-white dark:bg-white dark:text-black"
+              : "text-neutral-500 hover:bg-black/5 dark:hover:bg-white/5"
+          )}
+          onClick={() => onViewModeChange(viewMode === 'split' ? 'source' : 'split')}
+          title={viewMode === 'split' ? "退出分栏" : "分栏编辑"}
+        >
+          <Columns className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <div className="flex items-center gap-1">
+        {items.map((item, index) => (
+          <Button
+            key={index}
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-lg text-neutral-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+            onClick={item.action}
+            title={item.title}
+          >
+            <item.icon className="h-4 w-4" />
           </Button>
         ))}
       </div>
-
-      {(viewMode === 'edit' || viewMode === 'split') && (
-        <div className="flex items-center gap-1">
-          {items.map((item, index) => (
-            <Button
-              key={index}
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 rounded-lg text-neutral-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-              onClick={item.action}
-              title={item.title}
-            >
-              <item.icon className="h-4 w-4" />
-            </Button>
-          ))}
-        </div>
-      )}
     </div>
   )
 }

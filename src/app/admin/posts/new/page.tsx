@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -12,15 +12,16 @@ import { PostPreviewModal } from '@/components/post/post-preview-modal'
 import { ArrowLeft, Save, Send, Image as ImageIcon, Type, Upload, Eye, Loader2, X } from 'lucide-react'
 import Link from 'next/link'
 import { useToast } from '@/hooks/use-toast'
-import { extractTags, autoClassifyTags, generatePostSlug } from '@/lib/markdown'
+import { autoClassifyTags, generatePostSlug } from '@/lib/markdown'
+import { ensureTagsExist, getTagNames } from '@/app/actions/tags'
 import { v4 as uuidv4 } from 'uuid'
+import { useEffect } from 'react'
 
 export default function NewPostPage() {
   const router = useRouter()
   const { toast } = useToast()
 
   const [loading, setLoading] = useState(false)
-  const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
 
   const [title, setTitle] = useState('')
@@ -35,9 +36,141 @@ export default function NewPostPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const coverInputRef = useRef<HTMLInputElement>(null)
 
+  const fetchAvailableTags = async () => {
+    setLoadingTags(true)
+    try {
+      const tags = await getTagNames()
+      setAvailableTags(tags)
+    } catch (error) {
+      console.error('Error fetching tags:', error)
+    } finally {
+      setLoadingTags(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchAvailableTags()
+  }, [])
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const text = e.target?.result
+      if (typeof text === 'string') {
+        setContent(text)
+        if (!title) {
+           const match = text.match(/^#\s+(.+)$/m)
+           if (match) setTitle(match[1].trim())
+        }
+      }
+    }
+    reader.readAsText(file)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    const supabase = createClient()
+
+    try {
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${uuidv4()}.${fileExt}`
+      const filePath = `${fileName}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('blog-images')
+        .upload(filePath, file)
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('blog-images')
+        .getPublicUrl(filePath)
+
+      setCoverImage(publicUrl)
+      toast({
+        title: "封面上传成功",
+        description: "图片已保存到云端",
+      })
+    } catch (error: any) {
+      toast({
+        title: "上传失败",
+        description: error.message,
+        variant: "destructive",
+      })
+    } finally {
+      setUploading(false)
+      if (coverInputRef.current) coverInputRef.current.value = ''
+    }
+  }
+
+  const handleSave = async (published: boolean) => {
+    if (!title) {
+      toast({
+        title: "标题不能为空",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setLoading(true)
+    const supabase = createClient()
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('未登录')
+
+      let finalTags = tags
+      if (finalTags.length === 0) {
+        finalTags = autoClassifyTags(content, availableTags)
+      }
+
+      await ensureTagsExist(finalTags)
+
+      const postData = {
+        title,
+        slug: slug || generatePostSlug(title),
+        content,
+        cover_image: coverImage || null,
+        published,
+        author_id: user.id,
+        excerpt: content.replace(/<[^>]*>/g, '').slice(0, 150) + '...',
+        tags: finalTags
+      }
+
+      const { error } = await supabase
+        .from('posts')
+        .insert(postData)
+
+      if (error) throw error
+
+      toast({
+        title: published ? "发布成功" : "草稿已保存",
+        description: "文章已成功保存到云端。",
+      })
+
+      router.push('/post')
+      router.refresh()
+    } catch (error: any) {
+      toast({
+        title: "保存失败",
+        description: error.message,
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-[#fafafa] dark:bg-[#050505] flex flex-col h-screen overflow-hidden">
-      <div className="container max-w-[95%] mx-auto px-6 py-4 flex-1 flex flex-col min-h-0">
+    <div className="h-screen w-full bg-[#fafafa] dark:bg-[#050505] flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col min-h-0 p-4 pt-1 max-w-[1800px] mx-auto w-full">
         {/* Header Actions */}
         <div className="flex-none mb-4">
           <div className="flex items-center justify-between">
@@ -48,7 +181,6 @@ export default function NewPostPage() {
                   返回
                 </Link>
               </Button>
-              {/* ... upload buttons ... */}
               <input
                 type="file"
                 ref={fileInputRef}
@@ -75,7 +207,6 @@ export default function NewPostPage() {
             </div>
 
             <div className="flex items-center gap-3">
-               {/* ... save buttons ... */}
                <Button
                 variant="outline"
                 className="rounded-full border-black/10 dark:border-white/10"
@@ -97,9 +228,9 @@ export default function NewPostPage() {
           </div>
         </div>
 
-        <div className="flex-1 grid lg:grid-cols-4 gap-6 min-h-0">
-          {/* Main Editor Area - Scrollable Column */}
-          <div className="lg:col-span-3 flex flex-col h-full overflow-hidden gap-4">
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 min-h-0">
+          {/* Main Editor Area */}
+          <div className="flex flex-col h-full overflow-hidden gap-4">
             <div className="flex-none space-y-4">
               <input
                 type="text"
@@ -132,7 +263,7 @@ export default function NewPostPage() {
             </div>
           </div>
 
-          {/* Sidebar Settings - Scrollable Column */}
+          {/* Sidebar Settings */}
           <div className="h-full overflow-y-auto pr-2 pb-20 space-y-6 scrollbar-hide">
             <Card className="border-none shadow-sm bg-white dark:bg-neutral-900 rounded-3xl overflow-hidden">
               <CardContent className="p-6">
@@ -214,8 +345,6 @@ export default function NewPostPage() {
       </div>
 
       <PostPreviewModal
-        // ... existing props
-
         open={previewOpen}
         onOpenChange={setPreviewOpen}
         post={{

@@ -212,8 +212,8 @@ export default function EditPostPage({ params }: EditPostPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[#fafafa] dark:bg-[#050505] flex flex-col h-screen overflow-hidden">
-      <div className="container max-w-[95%] mx-auto px-6 py-4 flex-1 flex flex-col min-h-0">
+    <div className="h-screen w-full bg-[#fafafa] dark:bg-[#050505] flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col min-h-0 p-4 md:p-6 max-w-[1800px] mx-auto w-full">
         {/* Header Actions */}
         <div className="flex-none mb-4">
           <div className="flex items-center justify-between">
@@ -256,9 +256,9 @@ export default function EditPostPage({ params }: EditPostPageProps) {
           </div>
         </div>
 
-        <div className="flex-1 grid lg:grid-cols-4 gap-6 min-h-0">
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 min-h-0">
           {/* Main Editor Area */}
-          <div className="lg:col-span-3 flex flex-col h-full overflow-hidden gap-4">
+          <div className="flex flex-col h-full overflow-hidden gap-4">
             <div className="flex-none space-y-4">
               <input
                 type="text"

@@ -4,15 +4,11 @@ import { useState, useRef, useEffect } from 'react'
 import CodeEditor from 'react-simple-code-editor'
 import { highlight, languages } from 'prismjs'
 import 'prismjs/components/prism-markdown'
-import 'prismjs/themes/prism.css' // We'll override this with our own minimal styles if needed
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
-import rehypeHighlight from 'rehype-highlight'
-import rehypeRaw from 'rehype-raw'
-import rehypeSlug from 'rehype-slug'
-import 'highlight.js/styles/github-dark.css'
+import 'prismjs/themes/prism.css'
 import { Toolbar, ViewMode, MarkdownAction } from './toolbar'
 import { cn } from '@/lib/utils'
+import { RichEditor } from './rich-editor'
+import { Editor as TiptapEditor } from '@tiptap/react'
 
 interface EditorProps {
   content: string
@@ -21,11 +17,16 @@ interface EditorProps {
 }
 
 export default function Editor({ content, onChange, placeholder = '开始创作吧...' }: EditorProps) {
-  const [viewMode, setViewMode] = useState<ViewMode>('edit')
-  // Ref to access the underlying textarea for cursor manipulation
-  // react-simple-code-editor exposes the textarea via a ref prop but it might be nested
-  // Actually, looking at the type definition or source, we can try to get the textarea element
-  const editorRef = useRef<any>(null)
+  const [viewMode, setViewMode] = useState<ViewMode>('rich')
+  const [tiptapEditor, setTiptapEditor] = useState<TiptapEditor | null>(null)
+
+  // Refs for scrolling synchronization
+  const sourceScrollRef = useRef<HTMLDivElement>(null)
+  const richScrollRef = useRef<HTMLDivElement>(null)
+  const isScrollingRef = useRef(false)
+
+  // Refs for editor instances (to restore focus/selection)
+  const sourceEditorRef = useRef<any>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
   // Ensure Prism languages are loaded
@@ -38,16 +39,64 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
     import('prismjs/components/prism-bash')
   }, [])
 
-  const handleAction = (action: MarkdownAction) => {
-    // Access the internal textarea element from the editor ref
-    // We search within our container div to find the textarea
-    const textarea = containerRef.current?.querySelector('textarea')
+  // Scroll Synchronization
+  const handleScroll = (source: 'source' | 'rich', e: React.UIEvent<HTMLDivElement>) => {
+    if (isScrollingRef.current) return
 
+    const target = e.currentTarget
+    const other = source === 'source' ? richScrollRef.current : sourceScrollRef.current
+
+    if (!other) return
+
+    isScrollingRef.current = true
+
+    // Calculate percentage
+    const percentage = target.scrollTop / (target.scrollHeight - target.clientHeight)
+
+    // Apply to other
+    if (!isNaN(percentage)) {
+      other.scrollTop = percentage * (other.scrollHeight - other.clientHeight)
+    }
+
+    // Debounce unlock
+    setTimeout(() => {
+      isScrollingRef.current = false
+    }, 50)
+  }
+
+  const handleAction = (action: MarkdownAction) => {
+    // If in Rich mode (or Split mode with focus preference), try Tiptap
+    // We'll prioritize Tiptap in Rich/Split mode unless explicitly interacting with Source
+    if ((viewMode === 'rich' || viewMode === 'split') && tiptapEditor && !tiptapEditor.isDestroyed) {
+        switch (action) {
+            case 'bold': tiptapEditor.chain().focus().toggleBold().run(); break;
+            case 'italic': tiptapEditor.chain().focus().toggleItalic().run(); break;
+            case 'h1': tiptapEditor.chain().focus().toggleHeading({ level: 1 }).run(); break;
+            case 'h2': tiptapEditor.chain().focus().toggleHeading({ level: 2 }).run(); break;
+            case 'list': tiptapEditor.chain().focus().toggleBulletList().run(); break;
+            case 'ordered-list': tiptapEditor.chain().focus().toggleOrderedList().run(); break;
+            case 'quote': tiptapEditor.chain().focus().toggleBlockquote().run(); break;
+            case 'code': tiptapEditor.chain().focus().toggleCode().run(); break;
+            case 'code-block': tiptapEditor.chain().focus().toggleCodeBlock().run(); break;
+            case 'link':
+                const url = window.prompt('URL')
+                if (url) tiptapEditor.chain().focus().setLink({ href: url }).run();
+                break;
+            case 'image':
+                const imgUrl = window.prompt('Image URL')
+                if (imgUrl) tiptapEditor.chain().focus().setImage({ src: imgUrl }).run();
+                break;
+        }
+        return
+    }
+
+    // Fallback to Source Editor manipulation
+    const textarea = containerRef.current?.querySelector('textarea')
     if (!textarea) return
 
     const start = textarea.selectionStart
     const end = textarea.selectionEnd
-    const text = content // Use props content as source of truth
+    const text = content
     const selectedText = text.substring(start, end)
 
     let insertStart = ''
@@ -55,7 +104,6 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
     let newCursorPos = start
     let newSelectionEnd = end
 
-    // Helper to ensure we are at the start of a line or add a newline
     const ensureStartOfLine = () => {
        const beforeCursor = text.substring(0, start)
        if (beforeCursor && beforeCursor.slice(-1) !== '\n' && start !== 0) {
@@ -131,7 +179,6 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
     const newText = text.substring(0, start) + insertStart + selectedText + insertEnd + text.substring(end)
     onChange(newText)
 
-    // Restore focus and update cursor position
     setTimeout(() => {
       textarea.focus()
       if (selectedText) {
@@ -142,73 +189,85 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
     }, 0)
   }
 
-  const Preview = () => (
-    <article className="prose prose-neutral dark:prose-invert max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-img:rounded-2xl prose-pre:bg-neutral-100 dark:prose-pre:bg-neutral-800 prose-pre:border prose-pre:border-black/5 dark:prose-pre:border-white/5 py-8 px-4 sm:px-8">
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeSlug, rehypeHighlight, rehypeRaw]}
-      >
-        {content || '*暂无内容*'}
-      </ReactMarkdown>
-    </article>
-  )
-
   return (
     <div className="w-full h-full border border-black/5 dark:border-white/5 bg-white dark:bg-neutral-900 rounded-[2rem] overflow-hidden transition-all focus-within:ring-1 ring-black/10 dark:ring-white/10 shadow-sm flex flex-col">
       <Toolbar viewMode={viewMode} onViewModeChange={setViewMode} onAction={handleAction} />
 
       <div className="flex-1 relative flex overflow-hidden">
-        {/* Write Mode */}
+
+        {/* Source Mode Editor (Left in Split, or Visible in Source Mode) */}
         <div className={cn(
-          "h-full transition-all duration-300 flex flex-col",
-          viewMode === 'edit' ? "w-full" :
+          "h-full transition-all duration-300 flex flex-col bg-neutral-50/50 dark:bg-neutral-950/50",
+          viewMode === 'source' ? "w-full" :
           viewMode === 'split' ? "w-1/2 border-r border-black/5 dark:border-white/5" : "hidden"
         )}>
-          <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6 font-mono text-sm" ref={containerRef}>
-            <CodeEditor
-              ref={editorRef}
-              value={content}
-              onValueChange={onChange}
-              highlight={code => highlight(code, languages.markdown, 'markdown')}
-              padding={10}
-              placeholder={placeholder}
-              className="font-mono text-base leading-relaxed bg-transparent min-h-full focus:outline-none"
-              style={{
-                fontFamily: '"Fira Code", "JetBrains Mono", Menlo, Monaco, Consolas, "Courier New", monospace',
-                fontSize: 16,
-                backgroundColor: 'transparent',
-              }}
-              textareaClassName="focus:outline-none"
-            />
+          <div
+            className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6 font-mono text-sm"
+            ref={sourceScrollRef}
+            onScroll={(e) => handleScroll('source', e)}
+          >
+            <div ref={containerRef} className="min-h-full">
+              <CodeEditor
+                ref={sourceEditorRef}
+                value={content}
+                onValueChange={onChange}
+                highlight={code => highlight(code, languages.markdown, 'markdown')}
+                padding={10}
+                placeholder="Source Mode..."
+                className="font-mono text-base leading-relaxed bg-transparent min-h-full focus:outline-none text-neutral-600 dark:text-neutral-400"
+                style={{
+                  fontFamily: '"Fira Code", "JetBrains Mono", Menlo, Monaco, Consolas, "Courier New", monospace',
+                  fontSize: 14,
+                  backgroundColor: 'transparent',
+                }}
+                textareaClassName="focus:outline-none"
+              />
+            </div>
           </div>
         </div>
 
-        {/* Preview Mode */}
+        {/* Rich/Normal Mode Editor (Right in Split, or Visible in Rich Mode) */}
         <div className={cn(
-          "h-full overflow-y-auto bg-neutral-50/30 dark:bg-neutral-950/30 transition-all duration-300",
-          viewMode === 'preview' ? "w-full" :
-          viewMode === 'split' ? "w-1/2 block" : "hidden"
+          "h-full transition-all duration-300 flex flex-col bg-white dark:bg-neutral-900",
+          viewMode === 'rich' ? "w-full" :
+          viewMode === 'split' ? "w-1/2" : "hidden"
         )}>
-          <Preview />
+           <div
+            className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-8"
+            ref={richScrollRef}
+            onScroll={(e) => handleScroll('rich', e)}
+           >
+             <RichEditor
+                content={content}
+                onChange={onChange}
+                onEditorReady={setTiptapEditor}
+                placeholder={placeholder}
+             />
+          </div>
         </div>
       </div>
 
-      {/* Global styles for custom prism theme overrides if necessary */}
       <style jsx global>{`
-        /* Custom Prism overrides to match Typora/clean look */
-        code[class*="language-"],
-        pre[class*="language-"] {
-          text-shadow: none !important;
-          background: transparent !important;
-        }
-
-        /* Make sure the editor text color matches the theme */
+        /* Reset CodeEditor Defaults */
         .npm__react-simple-code-editor__textarea {
           outline: none !important;
         }
-
         textarea {
-            outline: none !important;
+          outline: none !important;
+        }
+
+        /* Tiptap Styles */
+        .ProseMirror {
+            outline: none;
+            min-height: 100px;
+        }
+
+        .ProseMirror p.is-editor-empty:first-child::before {
+            color: #adb5bd;
+            content: attr(data-placeholder);
+            float: left;
+            height: 0;
+            pointer-events: none;
         }
       `}</style>
     </div>
