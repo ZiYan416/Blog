@@ -51,15 +51,18 @@ export default async function PostPage({
     .single()
 
   if (error || !post) {
+    if (error) console.error('Supabase Error:', error)
     notFound()
   }
 
-  // Fetch author profile
+  // Fetch author profile - Step 2 (Separate query to avoid join errors)
   const { data: author } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', post.author_id)
     .single()
+
+  // No longer blocking the whole page if author fetch fails (it just remains null)
 
   const comments = await getComments(post.id)
 

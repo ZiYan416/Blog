@@ -48,8 +48,8 @@ export default async function HomePage() {
       </section>
 
       {/* Featured Posts Preview */}
-      <section className="w-full max-w-6xl mx-auto px-6 py-24">
-        <div className="flex items-center justify-between mb-12">
+      <section className="w-full max-w-6xl mx-auto px-6 pt-12 pb-24">
+        <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-semibold">精选文章</h2>
           <Link href="/post" className="text-sm font-medium text-neutral-500 hover:text-black dark:hover:text-white transition-colors">
             查看全部 →
