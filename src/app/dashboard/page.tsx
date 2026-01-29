@@ -36,19 +36,49 @@ export default async function DashboardPage() {
     .select('*', { count: 'exact', head: true })
 
   // 2. 获取最近修改的文章（包括草稿）
-  // 使用 created_at 作为排序依据，确保新建的草稿（即使 updated_at 可能为空）也能显示
   const { data: recentPosts } = await supabase
     .from('posts')
     .select('*')
     .order('created_at', { ascending: false })
     .limit(3)
 
-  // Placeholder stats - connected to real data where possible
+  // 3. 计算总阅读量 (从所有文章的 view_count 求和)
+  const { data: allPosts } = await supabase
+    .from('posts')
+    .select('view_count')
+
+  const totalViews = allPosts?.reduce((sum, post) => sum + (post.view_count || 0), 0) || 0
+
+  // 4. 计算活跃天数 (从用户注册时间到现在)
+  const createdAt = new Date(user.created_at)
+  const now = new Date()
+  const diffTime = Math.abs(now.getTime() - createdAt.getTime())
+  const activeDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+  // 5. 计算评论总数 (假设我们想显示用户文章收到的评论数，或者用户发出的评论数)
+  // 这里我们计算"收到的评论"
+  // 先获取用户所有文章ID
+  const { data: userPosts } = await supabase
+    .from('posts')
+    .select('id')
+    .eq('author_id', user.id)
+
+  let totalComments = 0
+  if (userPosts && userPosts.length > 0) {
+    const postIds = userPosts.map(p => p.id)
+    const { count } = await supabase
+      .from('comments')
+      .select('*', { count: 'exact', head: true })
+      .in('post_id', postIds)
+    totalComments = count || 0
+  }
+
+  // Real stats
   const stats = [
     { label: '总文章', value: totalPosts || 0, icon: FileText, color: 'text-blue-500' },
-    { label: '总阅读', value: '0', icon: BarChart3, color: 'text-purple-500' }, // 阅读量统计暂未实现
-    { label: '新评论', value: '0', icon: MessageSquare, color: 'text-green-500' },
-    { label: '活跃天数', value: '1', icon: Users, color: 'text-orange-500' },
+    { label: '总阅读', value: totalViews, icon: BarChart3, color: 'text-purple-500' },
+    { label: '总评论', value: totalComments, icon: MessageSquare, color: 'text-green-500' },
+    { label: '活跃天数', value: activeDays, icon: Users, color: 'text-orange-500' },
   ]
 
   return (

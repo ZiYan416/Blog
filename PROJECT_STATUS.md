@@ -89,11 +89,19 @@
 - [x] 仪表盘页骨架屏 ([dashboard/loading.tsx](src/app/dashboard/loading.tsx))
 - [x] Tiptap 富文本编辑器集成 ([editor/](src/components/editor/))
 - [x] 新建文章页面 ([new/page.tsx](src/app/admin/posts/new/page.tsx))
+- [x] 编辑文章页面 ([edit/page.tsx](src/app/admin/posts/[id]/edit/page.tsx))
+
+### ✅ 标签系统重构
+- [x] 数据库架构升级 (Many-to-Many: `post_tags` 表)
+- [x] 确定性颜色生成算法 (`tag-color.ts` - Sunny Palette)
+- [x] 标签详情页 UI 优化 (Glassmorphism + Dynamic Header)
+- [x] 标签管理后台
+- [x] 自动标签提取与分类
 
 ### 📝 待开始
-- [ ] 文章编辑页面
-- [ ] 标签筛选功能
-- [ ] 搜索功能
+- [ ] 首页精选文章对接真实数据
+- [ ] 仪表盘用户数据对接真实数据
+- [ ] 搜索功能完善
 - [ ] 部署到生产环境
 
 ## 项目结构

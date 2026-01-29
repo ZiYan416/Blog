@@ -1,13 +1,16 @@
 "use client"
 
 import Link from 'next/link'
-import { Calendar, Tag, Eye, Edit2, ArrowUpRight, Clock } from 'lucide-react'
+import { Calendar, Tag, Eye, Edit2, ArrowUpRight, Clock, Star, Loader2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { formatDateString } from '@/lib/markdown'
 import { useUser } from '@/hooks/use-auth'
 import { DeletePostButton } from './delete-post-button'
 import { cn } from '@/lib/utils'
 import { getTagStyles } from '@/lib/tag-color'
+import { toggleFeaturedStatus } from '@/app/actions/post'
+import { useState } from 'react'
+import { useToast } from '@/hooks/use-toast'
 
 export interface Post {
   id: string
@@ -16,6 +19,7 @@ export interface Post {
   excerpt: string
   cover_image: string | null
   published: boolean
+  featured: boolean
   created_at: string
   updated_at: string
   tags: any[]
@@ -27,22 +31,85 @@ interface PostCardProps {
   post: Post
 }
 
+function FeaturedToggle({ id, isFeatured }: { id: string, isFeatured: boolean }) {
+  const [loading, setLoading] = useState(false)
+  const [featured, setFeatured] = useState(isFeatured)
+  const { toast } = useToast()
+
+  const handleToggle = async (e: React.MouseEvent) => {
+    e.preventDefault() // Prevent navigation
+    e.stopPropagation()
+
+    setLoading(true)
+    try {
+      const result = await toggleFeaturedStatus(id, featured)
+      if (result.error) throw new Error(result.error)
+
+      setFeatured(!featured)
+      toast({
+        title: !featured ? "已设为精选" : "已取消精选",
+        description: !featured ? "该文章将在首页精选栏目展示" : "该文章已从首页移除",
+      })
+    } catch (error: any) {
+      toast({
+        title: "操作失败",
+        description: error.message,
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <button
+      onClick={handleToggle}
+      disabled={loading}
+      className={cn(
+        "w-10 h-10 rounded-full bg-white/90 dark:bg-black/90 backdrop-blur-md flex items-center justify-center shadow-sm hover:scale-110 transition-transform",
+        featured ? "text-amber-500" : "text-neutral-400 hover:text-amber-500"
+      )}
+      title={featured ? "取消精选" : "设为精选"}
+    >
+      {loading ? (
+        <Loader2 className="w-4 h-4 animate-spin" />
+      ) : (
+        <Star className={cn("w-4 h-4", featured && "fill-current")} />
+      )}
+    </button>
+  )
+}
+
 export default function PostCard({ post }: PostCardProps) {
   const { isAdmin } = useUser()
   const formattedDate = formatDateString(post.created_at)
   const tags = post.tags || []
 
   return (
-    <div className="group relative bg-white dark:bg-neutral-900 rounded-[2.5rem] border border-black/[0.03] dark:border-white/[0.03] hover:border-black/10 dark:hover:border-white/10 transition-all duration-500 hover:shadow-2xl hover:shadow-black/[0.02] dark:hover:shadow-white/[0.01] flex flex-col h-full overflow-hidden">
+    <div className={cn(
+      "group relative bg-white dark:bg-neutral-900 rounded-[2.5rem] border transition-all duration-500 hover:shadow-2xl hover:shadow-black/[0.02] dark:hover:shadow-white/[0.01] flex flex-col h-full overflow-hidden",
+      post.featured ? "border-amber-500/30 dark:border-amber-500/20" : "border-black/[0.03] dark:border-white/[0.03] hover:border-black/10 dark:hover:border-white/10"
+    )}>
+      {/* Featured Ribbon for everyone */}
+      {post.featured && (
+        <div className="absolute top-0 right-0 z-30">
+          <div className="bg-amber-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl shadow-sm">
+            FEATURED
+          </div>
+        </div>
+      )}
+
       {/* Admin Actions Overlay */}
       {isAdmin && (
         <div className="absolute top-6 left-6 z-20 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
           <Link
             href={`/admin/posts/${post.id}/edit`}
             className="w-10 h-10 rounded-full bg-white/90 dark:bg-black/90 backdrop-blur-md flex items-center justify-center shadow-sm hover:scale-110 transition-transform text-black dark:text-white"
+            title="编辑文章"
           >
             <Edit2 className="w-4 h-4" />
           </Link>
+          <FeaturedToggle id={post.id} isFeatured={post.featured} />
           <DeletePostButton slug={post.slug || post.id} title={post.title} />
         </div>
       )}

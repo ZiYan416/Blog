@@ -124,7 +124,7 @@ export default async function PostPage({
                         className="group relative overflow-hidden backdrop-blur-md px-3 py-1 rounded-full transition-all flex items-center gap-1.5 hover:scale-105 duration-300"
                         style={{
                           backgroundColor: styles.backgroundColor,
-                          color: '#333',
+                          color: '#ffffff',
                           border: `1px solid ${styles.borderColor}`,
                         }}
                       >

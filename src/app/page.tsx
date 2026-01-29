@@ -1,8 +1,21 @@
 import Link from "next/link";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, FileText, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { createClient } from "@/lib/supabase/server";
+import { getTagStyles } from "@/lib/tag-color";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const supabase = await createClient();
+
+  // Fetch featured posts (published = true AND featured = true)
+  const { data: featuredPosts } = await supabase
+    .from("posts")
+    .select("*")
+    .eq("published", true)
+    .eq("featured", true)
+    .order("created_at", { ascending: false })
+    .limit(4);
+
   return (
     <div className="flex flex-col items-center">
       {/* Hero Section */}
@@ -44,34 +57,67 @@ export default function HomePage() {
         </div>
 
         <div className="grid md:grid-cols-2 gap-8">
-          {[1, 2].map((i) => (
-            <Link
-              key={i}
-              href={`/post/sample-${i}`}
-              className="group relative block p-8 rounded-3xl bg-white dark:bg-neutral-900 border border-black/[0.03] dark:border-white/[0.03] hover:border-black/10 dark:hover:border-white/10 transition-all duration-500"
-            >
-              <div className="flex flex-col h-full">
-                <div className="flex items-center gap-3 mb-6">
-                  <span className="px-3 py-1 rounded-full bg-black/5 dark:bg-white/5 text-[10px] font-bold uppercase tracking-wider text-neutral-500">
-                    Technology
-                  </span>
-                  <span className="text-xs text-neutral-400">5 min read</span>
-                </div>
-                <h3 className="text-2xl font-bold mb-4 group-hover:translate-x-1 transition-transform duration-500">
-                  现代前端架构的演进与思考 ({i})
-                </h3>
-                <p className="text-neutral-500 text-sm leading-relaxed mb-8 line-clamp-2">
-                  深入探讨在 React 19 和 Next.js 15 时代，我们该如何构建可维护且高性能的 Web 应用...
-                </p>
-                <div className="mt-auto flex items-center justify-between pt-6 border-t border-black/[0.03] dark:border-white/[0.03]">
-                  <span className="text-xs font-medium text-neutral-400">2026.01.2{i}</span>
-                  <div className="w-8 h-8 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center group-hover:bg-black dark:group-hover:bg-white group-hover:text-white dark:group-hover:text-black transition-all duration-500">
-                    <ArrowRight className="w-4 h-4" />
+          {featuredPosts && featuredPosts.length > 0 ? (
+            featuredPosts.map((post) => {
+              // Try to find a primary tag to display
+              let primaryTag = "Featured";
+              if (post.tags && Array.isArray(post.tags) && post.tags.length > 0) {
+                 primaryTag = post.tags[0];
+              }
+
+              const styles = getTagStyles(primaryTag);
+
+              return (
+              <Link
+                key={post.id}
+                href={`/post/${post.slug}`}
+                className="group relative block p-8 rounded-3xl bg-white dark:bg-neutral-900 border border-black/[0.03] dark:border-white/[0.03] hover:border-black/10 dark:hover:border-white/10 transition-all duration-500"
+              >
+                <div className="flex flex-col h-full">
+                  <div className="flex items-center gap-3 mb-6">
+                    <span
+                      className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5"
+                      style={{
+                        backgroundColor: styles.backgroundColor,
+                        color: '#333',
+                        border: `1px solid ${styles.borderColor}`
+                      }}
+                    >
+                      <Tag className="w-3 h-3 opacity-60" />
+                      {primaryTag}
+                    </span>
+                    <span className="text-xs text-neutral-400">
+                      {new Date(post.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <h3 className="text-2xl font-bold mb-4 group-hover:translate-x-1 transition-transform duration-500 line-clamp-2">
+                    {post.title}
+                  </h3>
+                  <p className="text-neutral-500 text-sm leading-relaxed mb-8 line-clamp-2">
+                    {post.excerpt || "暂无摘要..."}
+                  </p>
+                  <div className="mt-auto flex items-center justify-between pt-6 border-t border-black/[0.03] dark:border-white/[0.03]">
+                    <span className="text-xs font-medium text-neutral-400">
+                      {post.view_count || 0} views
+                    </span>
+                    <div className="w-8 h-8 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center group-hover:bg-black dark:group-hover:bg-white group-hover:text-white dark:group-hover:text-black transition-all duration-500">
+                      <ArrowRight className="w-4 h-4" />
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            )})
+          ) : (
+            <div className="col-span-2 p-12 text-center rounded-3xl border-2 border-dashed border-black/5 dark:border-white/5 bg-neutral-50/50 dark:bg-neutral-900/50">
+               <div className="flex flex-col items-center gap-4 text-neutral-400">
+                 <FileText className="w-10 h-10 opacity-20" />
+                 <p>暂无精选文章</p>
+                 <Button asChild variant="outline" className="rounded-full mt-2">
+                   <Link href="/admin/posts/new">发布第一篇文章</Link>
+                 </Button>
+               </div>
+            </div>
+          )}
         </div>
       </section>
 

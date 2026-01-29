@@ -6,19 +6,6 @@ import { revalidatePath } from 'next/cache'
 export async function incrementViewCount(slug: string) {
   const supabase = await createClient()
 
-  // Call the RPC function to increment view count safely
-  // If you don't have an RPC function, we can use a direct update
-  // using rpc is better for concurrency: create function increment_view_count(post_slug text) ...
-
-  // For now, let's try direct update which is simpler but less concurrency-safe
-  // or checks if we can use a raw query.
-  // Actually, Supabase typically needs an RPC for atomic increments,
-  // but let's try a simple fetch-update loop for now or see if we can do rpc later.
-
-  // Let's implement a simple RPC call assuming we will create it,
-  // OR just do a quick read-update (optimistic) since high concurrency isn't expected yet.
-
-  // Better approach for now without migration:
   const { data } = await supabase
     .from('posts')
     .select('view_count')
@@ -34,4 +21,72 @@ export async function incrementViewCount(slug: string) {
 
     revalidatePath(`/post/${slug}`)
   }
+}
+
+export async function toggleFeaturedStatus(id: string, currentStatus: boolean) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'Unauthorized' }
+  }
+
+  // Check if admin
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('is_admin')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile?.is_admin) {
+    return { error: 'Forbidden' }
+  }
+
+  const { error } = await supabase
+    .from('posts')
+    .update({ featured: !currentStatus })
+    .eq('id', id)
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  revalidatePath('/')
+  revalidatePath('/post')
+
+  return { success: true }
+}
+
+export async function deletePost(id: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'Unauthorized' }
+  }
+
+  // Check if admin
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('is_admin')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile?.is_admin) {
+    return { error: 'Forbidden' }
+  }
+
+  const { error } = await supabase
+    .from('posts')
+    .delete()
+    .eq('id', id)
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  revalidatePath('/')
+  revalidatePath('/post')
+
+  return { success: true }
 }
