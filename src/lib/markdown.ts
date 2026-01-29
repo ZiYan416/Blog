@@ -23,11 +23,30 @@ export function calculateReadingTime(content: string): string {
 }
 
 export function getPostExcerpt(content: string, maxLength: number = 150): string {
-  // Remove markdown formatting and get plain text
+  // Enhanced markdown stripping
   const plainText = content
-    .replace(/[#*`_\[\]()]/g, '')
-    .replace(/<[^>]*>/g, '') // Remove HTML tags
-    .replace(/\n/g, ' ')
+    // Headers
+    .replace(/^#+\s+/gm, '')
+    // Bold/Italic
+    .replace(/(\*\*|__)(.*?)\1/g, '$2')
+    .replace(/(\*|_)(.*?)\1/g, '$2')
+    // Links [text](url) -> text
+    .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
+    // Images ![alt](url) -> [图片] or remove
+    .replace(/!\[([^\]]*)\]\([^\)]+\)/g, '')
+    // Blockquotes
+    .replace(/^>\s+/gm, '')
+    // Code blocks
+    .replace(/```[\s\S]*?```/g, '')
+    // Inline code
+    .replace(/`([^`]+)`/g, '$1')
+    // Lists
+    .replace(/^[-*+]\s+/gm, '')
+    .replace(/^\d+\.\s+/gm, '')
+    // HTML tags
+    .replace(/<[^>]*>/g, '')
+    // Remove extra whitespace
+    .replace(/\n+/g, ' ')
     .trim()
 
   if (plainText.length <= maxLength) {
