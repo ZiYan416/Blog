@@ -214,6 +214,27 @@ CREATE POLICY "Auth users upload images" ON storage.objects FOR INSERT
 WITH CHECK (bucket_id IN ('blog-images', 'avatars') AND auth.role() = 'authenticated');
 ```
 
+## 🔐 第三方登录配置 (GitHub OAuth)
+
+要启用 GitHub 登录功能，请按照以下步骤配置：
+
+1.  **在 GitHub 上注册 OAuth 应用**
+    *   访问 [GitHub Developer Settings](https://github.com/settings/developers)。
+    *   点击 **"New OAuth App"**。
+    *   **Application name**: 您的博客名称（例如 My Blog）。
+    *   **Homepage URL**: 您的网站首页 URL（本地开发填 `http://localhost:3000`）。
+    *   **Authorization callback URL**: `https://<您的-supabase-project-id>.supabase.co/auth/v1/callback`
+        *   (您可以在 Supabase Dashboard -> Authentication -> Providers -> GitHub -> Callback URL 中找到确切的 URL)。
+    *   注册成功后，生成 **Client Secret**。保留 **Client ID** 和 **Client Secret**。
+
+2.  **在 Supabase 中启用 GitHub**
+    *   进入 Supabase Dashboard -> **Authentication** -> **Providers**。
+    *   找到 **GitHub** 并启用它。
+    *   填入刚刚获取的 **Client ID** 和 **Client Secret**。
+    *   点击 **Save**。
+
+现在，您的用户可以使用 GitHub 账号直接登录。
+
 ## 👑 设置管理员权限
 
 执行完上述脚本后，你需要手动将自己的账号设置为管理员：

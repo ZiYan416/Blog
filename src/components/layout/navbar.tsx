@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { LoginModal } from "@/components/auth/login-modal";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 
 const navItems = [
@@ -134,11 +135,11 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button asChild variant="ghost" size="icon" className="rounded-full">
-              <Link href="/login">
+            <LoginModal>
+              <Button variant="ghost" size="icon" className="rounded-full">
                 <User className="w-5 h-5" />
-              </Link>
-            </Button>
+              </Button>
+            </LoginModal>
           )}
 
           {user && (

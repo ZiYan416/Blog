@@ -90,6 +90,14 @@
 - [x] Tiptap 富文本编辑器集成 ([editor/](src/components/editor/))
 - [x] 新建文章页面 ([new/page.tsx](src/app/admin/posts/new/page.tsx))
 - [x] 编辑文章页面 ([edit/page.tsx](src/app/admin/posts/[id]/edit/page.tsx))
+- [x] 编辑器功能增强
+  - [x] 双栏编辑与滚动同步
+  - [x] 源代码/富文本模式切换
+  - [x] 粘贴图片自动上传
+  - [x] 智能目录生成 (TOC)
+- [x] 登录体验优化
+  - [x] 模态框登录 (LoginModal)
+  - [x] GitHub 第三方登录集成
 
 ### ✅ 标签系统重构
 - [x] 数据库架构升级 (Many-to-Many: `post_tags` 表)
