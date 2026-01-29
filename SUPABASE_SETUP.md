@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS posts (
   excerpt TEXT,
   cover_image TEXT,
   published BOOLEAN DEFAULT false,
+  featured BOOLEAN DEFAULT false,
   view_count INTEGER DEFAULT 0,
   category TEXT,
   tags JSONB DEFAULT '[]'::jsonb, -- 前端显示缓存
@@ -88,14 +89,6 @@ CREATE TABLE IF NOT EXISTS comments (
   approved BOOLEAN DEFAULT false
 );
 
--- 1.6 热门文章表 (Featured Posts)
-CREATE TABLE IF NOT EXISTS featured_posts (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  post_id UUID REFERENCES posts(id) ON DELETE CASCADE,
-  order_index INTEGER DEFAULT 0,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-
 -- ==========================================
 -- 2. 索引优化 (Indexes)
 -- ==========================================
@@ -103,6 +96,7 @@ CREATE TABLE IF NOT EXISTS featured_posts (
 CREATE INDEX IF NOT EXISTS idx_post_tags_post_id ON post_tags(post_id);
 CREATE INDEX IF NOT EXISTS idx_post_tags_tag_id ON post_tags(tag_id);
 CREATE INDEX IF NOT EXISTS idx_posts_slug ON posts(slug);
+CREATE INDEX IF NOT EXISTS idx_posts_featured ON posts(featured);
 CREATE INDEX IF NOT EXISTS idx_tags_slug ON tags(slug);
 CREATE INDEX IF NOT EXISTS idx_posts_published ON posts(published, created_at DESC);
 
@@ -115,7 +109,6 @@ ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tags ENABLE ROW LEVEL SECURITY;
 ALTER TABLE post_tags ENABLE ROW LEVEL SECURITY;
 ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
-ALTER TABLE featured_posts ENABLE ROW LEVEL SECURITY;
 
 -- Profiles
 CREATE POLICY "Public profiles are viewable by everyone" ON profiles FOR SELECT USING (true);
