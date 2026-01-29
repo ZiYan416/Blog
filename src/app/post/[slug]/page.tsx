@@ -10,6 +10,7 @@ import { CommentSection } from '@/components/post/comment-section'
 import { getComments } from '@/app/actions/comment'
 import { MarkdownRenderer } from '@/components/post/markdown-renderer'
 import { getTagStyles } from '@/lib/tag-color'
+import { TableOfContents } from '@/components/post/table-of-contents'
 
 export async function generateMetadata({
   params,
@@ -156,6 +157,10 @@ export default async function PostPage({
           {/* Sidebar */}
           <div className="space-y-8">
             <div className="bg-white dark:bg-neutral-900 rounded-3xl p-6 shadow-sm border border-black/5 dark:border-white/5 sticky top-24">
+              <TableOfContents content={post.content} />
+            </div>
+
+            <div className="bg-white dark:bg-neutral-900 rounded-3xl p-6 shadow-sm border border-black/5 dark:border-white/5 sticky top-[calc(6rem+300px)]">
               <h3 className="font-bold mb-6 text-sm uppercase tracking-widest text-neutral-400">About Author</h3>
               <div className="flex flex-col items-center text-center">
                 <div className="w-20 h-20 rounded-full bg-neutral-100 dark:bg-neutral-800 mb-4 overflow-hidden">

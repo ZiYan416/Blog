@@ -9,6 +9,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import rehypeRaw from 'rehype-raw'
+import rehypeSlug from 'rehype-slug'
 import 'highlight.js/styles/github-dark.css'
 import { Toolbar, ViewMode, MarkdownAction } from './toolbar'
 import { cn } from '@/lib/utils'
@@ -145,7 +146,7 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
     <article className="prose prose-neutral dark:prose-invert max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-img:rounded-2xl prose-pre:bg-neutral-100 dark:prose-pre:bg-neutral-800 prose-pre:border prose-pre:border-black/5 dark:prose-pre:border-white/5 py-8 px-4 sm:px-8">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeHighlight, rehypeRaw]}
+        rehypePlugins={[rehypeSlug, rehypeHighlight, rehypeRaw]}
       >
         {content || '*暂无内容*'}
       </ReactMarkdown>
@@ -153,17 +154,17 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
   )
 
   return (
-    <div className="w-full border border-black/5 dark:border-white/5 bg-white dark:bg-neutral-900 rounded-[2rem] overflow-hidden transition-all focus-within:ring-1 ring-black/10 dark:ring-white/10 shadow-sm flex flex-col min-h-[600px]">
+    <div className="w-full h-full border border-black/5 dark:border-white/5 bg-white dark:bg-neutral-900 rounded-[2rem] overflow-hidden transition-all focus-within:ring-1 ring-black/10 dark:ring-white/10 shadow-sm flex flex-col">
       <Toolbar viewMode={viewMode} onViewModeChange={setViewMode} onAction={handleAction} />
 
       <div className="flex-1 relative flex overflow-hidden">
         {/* Write Mode */}
         <div className={cn(
-          "h-full transition-all duration-300 overflow-y-auto",
+          "h-full transition-all duration-300 flex flex-col",
           viewMode === 'edit' ? "w-full" :
           viewMode === 'split' ? "w-1/2 border-r border-black/5 dark:border-white/5" : "hidden"
         )}>
-          <div className="min-h-[500px] p-4 sm:p-6 font-mono text-sm" ref={containerRef}>
+          <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6 font-mono text-sm" ref={containerRef}>
             <CodeEditor
               ref={editorRef}
               value={content}
@@ -171,7 +172,7 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
               highlight={code => highlight(code, languages.markdown, 'markdown')}
               padding={10}
               placeholder={placeholder}
-              className="font-mono text-base leading-relaxed bg-transparent min-h-[500px] focus:outline-none"
+              className="font-mono text-base leading-relaxed bg-transparent min-h-full focus:outline-none"
               style={{
                 fontFamily: '"Fira Code", "JetBrains Mono", Menlo, Monaco, Consolas, "Courier New", monospace',
                 fontSize: 16,

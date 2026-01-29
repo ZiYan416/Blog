@@ -15,6 +15,8 @@ import { useToast } from '@/hooks/use-toast'
 import { extractTags, autoClassifyTags, generatePostSlug } from '@/lib/markdown'
 import { getTagNames, ensureTagsExist } from '@/app/actions/tags'
 
+import { TableOfContents } from '@/components/post/table-of-contents'
+
 interface EditPostPageProps {
   params: Promise<{ id: string }>
 }
@@ -166,51 +168,54 @@ export default function EditPostPage({ params }: EditPostPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[#fafafa] dark:bg-[#050505] pb-20">
-      <div className="container max-w-6xl mx-auto px-6">
+    <div className="min-h-screen bg-[#fafafa] dark:bg-[#050505] flex flex-col h-screen overflow-hidden">
+      <div className="container max-w-[95%] mx-auto px-6 py-4 flex-1 flex flex-col min-h-0">
         {/* Header Actions */}
-        <div className="flex items-center justify-between mb-12">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" asChild className="rounded-full hover:bg-black/5 dark:hover:bg-white/5">
-              <Link href="/post">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                返回列表
-              </Link>
-            </Button>
-            <Button
-              variant="outline"
-              className="rounded-full border-black/10 dark:border-white/10"
-              onClick={() => setPreviewOpen(true)}
-            >
-              <Eye className="w-4 h-4 mr-2" />
-              全屏预览
-            </Button>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              className="rounded-full border-black/10 dark:border-white/10"
-              onClick={() => handleUpdate(false)}
-              disabled={saving}
-            >
-              <Save className="w-4 h-4 mr-2" />
-              存为草稿
-            </Button>
-            <Button
-              className="rounded-full bg-black dark:bg-white text-white dark:text-black hover:opacity-90 px-6"
-              onClick={() => handleUpdate(true)}
-              disabled={saving}
-            >
-              <Send className="w-4 h-4 mr-2" />
-              {isPublished ? '保存并更新' : '立即发布'}
-            </Button>
+        <div className="flex-none mb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Button variant="ghost" asChild className="rounded-full hover:bg-black/5 dark:hover:bg-white/5">
+                <Link href="/post">
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  返回
+                </Link>
+              </Button>
+              <Button
+                variant="outline"
+                className="rounded-full border-black/10 dark:border-white/10"
+                onClick={() => setPreviewOpen(true)}
+              >
+                <Eye className="w-4 h-4 mr-2" />
+                预览
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                className="rounded-full border-black/10 dark:border-white/10"
+                onClick={() => handleUpdate(false)}
+                disabled={saving}
+              >
+                <Save className="w-4 h-4 mr-2" />
+                存草稿
+              </Button>
+              <Button
+                className="rounded-full bg-black dark:bg-white text-white dark:text-black hover:opacity-90 px-6"
+                onClick={() => handleUpdate(true)}
+                disabled={saving}
+              >
+                <Send className="w-4 h-4 mr-2" />
+                {isPublished ? '更新' : '发布'}
+              </Button>
+            </div>
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-4 gap-8">
+        <div className="flex-1 grid lg:grid-cols-4 gap-6 min-h-0">
           {/* Main Editor Area */}
-          <div className="lg:col-span-3 space-y-6">
-            <div className="space-y-4">
+          <div className="lg:col-span-3 flex flex-col h-full overflow-hidden gap-4">
+            <div className="flex-none space-y-4">
               <input
                 type="text"
                 placeholder="在此输入引人入胜的标题..."
@@ -233,15 +238,23 @@ export default function EditPostPage({ params }: EditPostPageProps) {
               </div>
             </div>
 
-            <Editor
-              content={content}
-              onChange={setContent}
-              placeholder="继续您的创作之旅..."
-            />
+            <div className="flex-1 min-h-0">
+              <Editor
+                content={content}
+                onChange={setContent}
+                placeholder="继续您的创作之旅..."
+              />
+            </div>
           </div>
 
           {/* Sidebar Settings */}
-          <div className="space-y-6">
+          <div className="h-full overflow-y-auto pr-2 pb-20 space-y-6 scrollbar-hide">
+            <Card className="border-none shadow-sm bg-white dark:bg-neutral-900 rounded-3xl overflow-hidden">
+              <CardContent className="p-6">
+                <TableOfContents content={content} />
+              </CardContent>
+            </Card>
+
             <Card className="border-none shadow-sm bg-white dark:bg-neutral-900 rounded-3xl overflow-hidden">
               <CardContent className="p-6">
                 <TagSelector
@@ -286,15 +299,6 @@ export default function EditPostPage({ params }: EditPostPageProps) {
                 </div>
               </CardContent>
             </Card>
-
-            <div className="p-6 rounded-3xl bg-black dark:bg-white text-white dark:text-black">
-              <h3 className="font-bold mb-2 text-sm">修改提示</h3>
-              <ul className="text-xs space-y-2 opacity-70">
-                <li>• 您正在编辑现有文章</li>
-                <li>• 修改 Slug 可能会导致旧链接失效</li>
-                <li>• 摘要将根据新内容自动生成</li>
-              </ul>
-            </div>
           </div>
         </div>
       </div>
