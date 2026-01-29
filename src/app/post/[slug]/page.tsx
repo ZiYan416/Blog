@@ -175,7 +175,7 @@ export default async function PostPage({
                 <h4 className="font-bold text-lg mb-1">{author?.display_name || 'Anonymous'}</h4>
                 <p className="text-xs text-neutral-500 mb-4">{author?.email}</p>
                 <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">
-                  {author?.bio || '热爱技术，热爱分享。'}
+                  {author?.bio || '暂无个人简介'}
                 </p>
               </div>
             </div>
