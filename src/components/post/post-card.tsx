@@ -11,6 +11,7 @@ import { getTagStyles } from '@/lib/tag-color'
 import { toggleFeaturedStatus } from '@/app/actions/post'
 import { useState } from 'react'
 import { useToast } from '@/hooks/use-toast'
+import { motion } from 'framer-motion'
 
 export interface Post {
   id: string
@@ -87,13 +88,39 @@ export default function PostCard({ post }: PostCardProps) {
 
   return (
     <div className={cn(
-      "group relative bg-white dark:bg-neutral-900 rounded-[2.5rem] border transition-all duration-500 hover:shadow-2xl hover:shadow-black/[0.02] dark:hover:shadow-white/[0.01] flex flex-col h-full overflow-hidden",
-      post.featured ? "border-amber-500/30 dark:border-amber-500/20" : "border-black/[0.03] dark:border-white/[0.03] hover:border-black/10 dark:hover:border-white/10"
+      "group relative bg-white dark:bg-neutral-900 rounded-[2.5rem] border transition-all duration-500 flex flex-col h-full overflow-hidden",
+      post.featured
+        ? "border-transparent shadow-[0_0_30px_-5px_rgba(245,158,11,0.15)] dark:shadow-[0_0_30px_-5px_rgba(245,158,11,0.1)]"
+        : "border-black/[0.03] dark:border-white/[0.03] hover:border-black/10 dark:hover:border-white/10 hover:shadow-2xl hover:shadow-black/[0.02] dark:hover:shadow-white/[0.01]"
     )}>
+      {/* Featured Border Animation - Using SVG for line drawing effect */}
+      {post.featured && (
+        <div className="absolute inset-0 z-10 pointer-events-none rounded-[2.5rem]">
+          <svg className="w-full h-full" style={{ overflow: 'visible' }}>
+            <motion.rect
+              width="100%"
+              height="100%"
+              x="0"
+              y="0"
+              rx="40" // Matches rounded-[2.5rem] (40px)
+              fill="none"
+              stroke="#f59e0b" // amber-500
+              strokeWidth="2"
+              initial={{ pathLength: 0, opacity: 0 }}
+              animate={{ pathLength: 1, opacity: 1 }}
+              transition={{
+                duration: 1.5,
+                ease: "easeInOut"
+              }}
+            />
+          </svg>
+        </div>
+      )}
+
       {/* Featured Ribbon for everyone */}
       {post.featured && (
-        <div className="absolute top-0 right-0 z-30">
-          <div className="bg-amber-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl shadow-sm">
+        <div className="absolute top-0 right-0 z-30 animate-in fade-in slide-in-from-top-2 duration-700 delay-500 fill-mode-both">
+          <div className="bg-amber-500/90 backdrop-blur-sm text-white text-[10px] font-bold px-4 py-1.5 rounded-bl-2xl shadow-sm border-l border-b border-white/10">
             FEATURED
           </div>
         </div>

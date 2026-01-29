@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS posts (
   excerpt TEXT,
   cover_image TEXT,
   published BOOLEAN DEFAULT false,
+  featured BOOLEAN DEFAULT false,
   view_count INTEGER DEFAULT 0,
   category TEXT,
   tags JSONB DEFAULT '[]'::jsonb, -- 仅用于前端快速展示 (Display Cache)
@@ -54,6 +55,7 @@ CREATE TABLE IF NOT EXISTS post_tags (
 CREATE INDEX IF NOT EXISTS idx_post_tags_post_id ON post_tags(post_id);
 CREATE INDEX IF NOT EXISTS idx_post_tags_tag_id ON post_tags(tag_id);
 CREATE INDEX IF NOT EXISTS idx_posts_slug ON posts(slug);
+CREATE INDEX IF NOT EXISTS idx_posts_featured ON posts(featured);
 CREATE INDEX IF NOT EXISTS idx_tags_slug ON tags(slug);
 
 -- 6. RLS Policies (Security)

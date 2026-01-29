@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import rehypeRaw from 'rehype-raw'
+import rehypeSlug from 'rehype-slug'
 import 'highlight.js/styles/github-dark.css'
 import { Check, Copy } from 'lucide-react'
 import { useState, useRef } from 'react'
@@ -17,7 +18,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
     <article className="prose prose-neutral dark:prose-invert max-w-none break-words prose-headings:font-bold prose-headings:tracking-tight prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-img:rounded-2xl prose-pre:bg-transparent prose-pre:p-0 prose-pre:border-none">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeHighlight, rehypeRaw]}
+        rehypePlugins={[rehypeSlug, rehypeHighlight, rehypeRaw]}
         components={{
           pre: PreBlock
         }}

@@ -10,6 +10,7 @@ import { CommentSection } from '@/components/post/comment-section'
 import { getComments } from '@/app/actions/comment'
 import { MarkdownRenderer } from '@/components/post/markdown-renderer'
 import { getTagStyles } from '@/lib/tag-color'
+import { TableOfContents } from '@/components/post/table-of-contents'
 
 export async function generateMetadata({
   params,
@@ -51,15 +52,18 @@ export default async function PostPage({
     .single()
 
   if (error || !post) {
+    if (error) console.error('Supabase Error:', error)
     notFound()
   }
 
-  // Fetch author profile
+  // Fetch author profile - Step 2 (Separate query to avoid join errors)
   const { data: author } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', post.author_id)
     .single()
+
+  // No longer blocking the whole page if author fetch fails (it just remains null)
 
   const comments = await getComments(post.id)
 
@@ -151,8 +155,12 @@ export default async function PostPage({
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-8">
-            <div className="bg-white dark:bg-neutral-900 rounded-3xl p-6 shadow-sm border border-black/5 dark:border-white/5 sticky top-24">
+          <div className="sticky top-24 h-[calc(100vh-8rem)] flex flex-col gap-6">
+            <div className="bg-white dark:bg-neutral-900 rounded-3xl shadow-sm border border-black/5 dark:border-white/5 min-h-0 flex flex-col overflow-hidden">
+              <TableOfContents content={post.content} className="h-full p-4 pl-2 pr-2" />
+            </div>
+
+            <div className="bg-white dark:bg-neutral-900 rounded-3xl p-6 shadow-sm border border-black/5 dark:border-white/5 flex-none">
               <h3 className="font-bold mb-6 text-sm uppercase tracking-widest text-neutral-400">About Author</h3>
               <div className="flex flex-col items-center text-center">
                 <div className="w-20 h-20 rounded-full bg-neutral-100 dark:bg-neutral-800 mb-4 overflow-hidden">
@@ -166,8 +174,8 @@ export default async function PostPage({
                 </div>
                 <h4 className="font-bold text-lg mb-1">{author?.display_name || 'Anonymous'}</h4>
                 <p className="text-xs text-neutral-500 mb-4">{author?.email}</p>
-                <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">
-                  {author?.bio || '热爱技术，热爱分享。'}
+                <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed italic">
+                  "{author?.bio || '暂无个人简介'}"
                 </p>
               </div>
             </div>

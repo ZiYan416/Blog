@@ -1,0 +1,180 @@
+'use client'
+
+import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { useToast } from '@/hooks/use-toast'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Github } from "lucide-react"
+
+interface LoginModalProps {
+  children?: React.ReactNode
+  redirectTo?: string
+}
+
+export function LoginModal({ children, redirectTo = '/dashboard' }: LoginModalProps) {
+  const supabase = createClient()
+  const router = useRouter()
+  const { toast } = useToast()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (error) {
+        setError(error.message)
+      } else {
+        toast({
+          title: "登录成功",
+          description: "欢迎回来！",
+        })
+        setIsOpen(false)
+        // 刷新页面或跳转
+        if (redirectTo) {
+          window.location.href = redirectTo
+        } else {
+          router.refresh()
+        }
+      }
+    } catch (err: any) {
+      setError("登录时发生意外错误")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleGithubSignIn = async () => {
+    setLoading(true)
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'github',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?next=${redirectTo}`,
+      },
+    })
+
+    if (error) {
+      setError(error.message)
+      setLoading(false)
+    }
+    // Note: OAuth redirect happens automatically, so we don't strictly need to setLoading(false) on success
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
+      <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden bg-white/80 dark:bg-black/80 backdrop-blur-xl border-black/5 dark:border-white/10 shadow-2xl rounded-3xl gap-0">
+        <div className="p-8 pb-6">
+          <DialogHeader className="mb-6 space-y-3">
+            <div className="mx-auto w-12 h-12 bg-black dark:bg-white flex items-center justify-center mb-2 shadow-lg shadow-black/5 dark:shadow-white/5">
+              <div className="w-5 h-5 bg-white dark:bg-black rounded-sm" />
+            </div>
+            <DialogTitle className="text-2xl font-bold text-center tracking-tight">欢迎回来</DialogTitle>
+            <DialogDescription className="text-center text-neutral-500 font-medium">
+              登录以发表评论或管理您的文章
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-5 order-last">
+            <div className="relative my-2">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-black/5 dark:border-white/5" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-transparent px-2 text-neutral-400 font-medium">
+                  或使用 GitHub 登录
+                </span>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              className="w-full h-11 rounded-xl bg-black dark:bg-white text-white dark:text-black font-medium hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-black/10 dark:shadow-white/10"
+              onClick={handleGithubSignIn}
+              disabled={loading}
+            >
+              <Github className="w-5 h-5 mr-2.5" />
+              使用 GitHub 继续
+            </Button>
+            </div>
+
+            <form onSubmit={handleSignIn} className="space-y-4">
+              {error && (
+                <div className="text-sm text-red-500 bg-red-50 dark:bg-red-950/30 p-3 rounded-xl text-center font-medium animate-in fade-in zoom-in-95">
+                  {error}
+                </div>
+              )}
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="email" className="text-xs font-semibold text-neutral-500 ml-1">邮箱地址</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="name@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="h-11 rounded-xl border-black/10 dark:border-white/10 bg-white/50 dark:bg-black/50 focus:bg-white dark:focus:bg-black focus:ring-black/5 dark:focus:ring-white/10 transition-all"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between ml-1">
+                    <Label htmlFor="password" className="text-xs font-semibold text-neutral-500">密码</Label>
+                    <span className="text-xs text-neutral-400 hover:text-black dark:hover:text-white cursor-pointer transition-colors">忘记密码?</span>
+                  </div>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="h-11 rounded-xl border-black/10 dark:border-white/10 bg-white/50 dark:bg-black/50 focus:bg-white dark:focus:bg-black focus:ring-black/5 dark:focus:ring-white/10 transition-all"
+                  />
+                </div>
+              </div>
+              <Button
+                type="submit"
+                variant="outline"
+                className="w-full h-11 rounded-xl border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 hover:border-black/20 dark:hover:border-white/20 font-medium transition-all"
+                disabled={loading}
+              >
+                {loading ? '登录中...' : '邮箱登录'}
+              </Button>
+            </form>
+          </div>
+        </div>
+        <div className="p-4 bg-black/5 dark:bg-white/5 border-t border-black/5 dark:border-white/5 text-center">
+          <p className="text-xs text-neutral-500">
+            还没有账号？{' '}
+            <span className="text-black dark:text-white font-semibold cursor-pointer hover:underline">
+              立即注册
+            </span>
+          </p>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
