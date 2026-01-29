@@ -155,12 +155,12 @@ export default async function PostPage({
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-8">
-            <div className="bg-white dark:bg-neutral-900 rounded-3xl p-6 shadow-sm border border-black/5 dark:border-white/5 sticky top-24">
-              <TableOfContents content={post.content} />
+          <div className="sticky top-24 h-[calc(100vh-8rem)] flex flex-col gap-6">
+            <div className="bg-white dark:bg-neutral-900 rounded-3xl shadow-sm border border-black/5 dark:border-white/5 min-h-0 flex flex-col overflow-hidden">
+              <TableOfContents content={post.content} className="h-full p-4 pl-2 pr-2" />
             </div>
 
-            <div className="bg-white dark:bg-neutral-900 rounded-3xl p-6 shadow-sm border border-black/5 dark:border-white/5 sticky top-[calc(6rem+300px)]">
+            <div className="bg-white dark:bg-neutral-900 rounded-3xl p-6 shadow-sm border border-black/5 dark:border-white/5 flex-none">
               <h3 className="font-bold mb-6 text-sm uppercase tracking-widest text-neutral-400">About Author</h3>
               <div className="flex flex-col items-center text-center">
                 <div className="w-20 h-20 rounded-full bg-neutral-100 dark:bg-neutral-800 mb-4 overflow-hidden">

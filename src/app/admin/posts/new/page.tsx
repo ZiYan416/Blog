@@ -9,16 +9,31 @@ import { Card, CardContent } from '@/components/ui/card'
 import Editor from '@/components/editor/editor'
 import { TagSelector } from '@/components/post/tag-selector'
 import { PostPreviewModal } from '@/components/post/post-preview-modal'
-import { ArrowLeft, Save, Send, Image as ImageIcon, Type, Upload, Eye } from 'lucide-react'
+import { ArrowLeft, Save, Send, Image as ImageIcon, Type, Upload, Eye, Loader2, X } from 'lucide-react'
 import Link from 'next/link'
 import { useToast } from '@/hooks/use-toast'
 import { extractTags, autoClassifyTags, generatePostSlug } from '@/lib/markdown'
-import { TableOfContents } from '@/components/post/table-of-contents'
+import { v4 as uuidv4 } from 'uuid'
 
 export default function NewPostPage() {
-  // ... existing hooks
+  const router = useRouter()
+  const { toast } = useToast()
 
-  // ... existing functions
+  const [loading, setLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
+
+  const [title, setTitle] = useState('')
+  const [slug, setSlug] = useState('')
+  const [coverImage, setCoverImage] = useState('')
+  const [content, setContent] = useState('')
+  const [tags, setTags] = useState<string[]>([])
+  const [availableTags, setAvailableTags] = useState<string[]>([])
+  const [loadingTags, setLoadingTags] = useState(false)
+  const [previewOpen, setPreviewOpen] = useState(false)
+
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const coverInputRef = useRef<HTMLInputElement>(null)
 
   return (
     <div className="min-h-screen bg-[#fafafa] dark:bg-[#050505] flex flex-col h-screen overflow-hidden">
@@ -119,13 +134,6 @@ export default function NewPostPage() {
 
           {/* Sidebar Settings - Scrollable Column */}
           <div className="h-full overflow-y-auto pr-2 pb-20 space-y-6 scrollbar-hide">
-            {/* Table Of Contents */}
-            <Card className="border-none shadow-sm bg-white dark:bg-neutral-900 rounded-3xl overflow-hidden">
-              <CardContent className="p-6">
-                 <TableOfContents content={content} />
-              </CardContent>
-            </Card>
-
             <Card className="border-none shadow-sm bg-white dark:bg-neutral-900 rounded-3xl overflow-hidden">
               <CardContent className="p-6">
                 <TagSelector
@@ -145,24 +153,55 @@ export default function NewPostPage() {
                   封面设置
                 </h3>
                 <div className="space-y-4">
+                  <input
+                    type="file"
+                    ref={coverInputRef}
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleCoverUpload}
+                  />
+
                   {coverImage ? (
-                    <div className="relative aspect-video rounded-2xl overflow-hidden border border-black/5 dark:border-white/5">
+                    <div className="relative aspect-video rounded-2xl overflow-hidden border border-black/5 dark:border-white/5 group">
                       <img src={coverImage} alt="Cover preview" className="w-full h-full object-cover" />
-                      <button
-                        onClick={() => setCoverImage('')}
-                        className="absolute top-2 right-2 p-1 bg-black/50 text-white rounded-full hover:bg-black transition-colors"
-                      >
-                        <ArrowLeft className="w-4 h-4 rotate-45" />
-                      </button>
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="h-8 px-3 rounded-full text-xs"
+                          onClick={() => coverInputRef.current?.click()}
+                        >
+                          更换
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="h-8 w-8 p-0 rounded-full"
+                          onClick={() => setCoverImage('')}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   ) : (
-                    <div className="aspect-video rounded-2xl border-2 border-dashed border-black/5 dark:border-white/5 flex flex-col items-center justify-center text-neutral-400 bg-neutral-50 dark:bg-neutral-950">
-                      <ImageIcon className="w-8 h-8 mb-2 opacity-20" />
-                      <p className="text-[10px] uppercase tracking-widest font-bold">暂无图片</p>
+                    <div
+                      onClick={() => coverInputRef.current?.click()}
+                      className="aspect-video rounded-2xl border-2 border-dashed border-black/5 dark:border-white/5 flex flex-col items-center justify-center text-neutral-400 bg-neutral-50 dark:bg-neutral-950 hover:bg-neutral-100 dark:hover:bg-neutral-900 transition-colors cursor-pointer group"
+                    >
+                      {uploading ? (
+                        <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
+                      ) : (
+                        <>
+                          <ImageIcon className="w-8 h-8 mb-2 opacity-20 group-hover:opacity-40 transition-opacity" />
+                          <p className="text-[10px] uppercase tracking-widest font-bold group-hover:text-black dark:group-hover:text-white transition-colors">
+                            点击上传封面
+                          </p>
+                        </>
+                      )}
                     </div>
                   )}
                   <Input
-                    placeholder="输入封面图片 URL..."
+                    placeholder="或输入图片 URL..."
                     className="rounded-xl border-black/5 dark:border-white/5 bg-neutral-50 dark:bg-neutral-950"
                     value={coverImage}
                     onChange={(e) => setCoverImage(e.target.value)}

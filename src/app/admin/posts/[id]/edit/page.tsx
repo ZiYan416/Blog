@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, use } from 'react'
+import { useState, useEffect, useRef, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -9,13 +9,12 @@ import { Card, CardContent } from '@/components/ui/card'
 import Editor from '@/components/editor/editor'
 import { TagSelector } from '@/components/post/tag-selector'
 import { PostPreviewModal } from '@/components/post/post-preview-modal'
-import { ArrowLeft, Save, Send, Image as ImageIcon, Type, Loader2, Eye } from 'lucide-react'
+import { ArrowLeft, Save, Send, Image as ImageIcon, Type, Loader2, Eye, X } from 'lucide-react'
 import Link from 'next/link'
 import { useToast } from '@/hooks/use-toast'
 import { extractTags, autoClassifyTags, generatePostSlug } from '@/lib/markdown'
 import { getTagNames, ensureTagsExist } from '@/app/actions/tags'
-
-import { TableOfContents } from '@/components/post/table-of-contents'
+import { v4 as uuidv4 } from 'uuid'
 
 interface EditPostPageProps {
   params: Promise<{ id: string }>
@@ -28,6 +27,7 @@ export default function EditPostPage({ params }: EditPostPageProps) {
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [title, setTitle] = useState('')
   const [slug, setSlug] = useState('')
   const [coverImage, setCoverImage] = useState('')
@@ -37,6 +37,8 @@ export default function EditPostPage({ params }: EditPostPageProps) {
   const [availableTags, setAvailableTags] = useState<string[]>([])
   const [loadingTags, setLoadingTags] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
+
+  const coverInputRef = useRef<HTMLInputElement>(null)
 
   const fetchAvailableTags = async () => {
     setLoadingTags(true)
@@ -88,6 +90,48 @@ export default function EditPostPage({ params }: EditPostPageProps) {
 
     fetchPost()
   }, [id, router, toast])
+
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    const supabase = createClient()
+
+    try {
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${uuidv4()}.${fileExt}`
+      const filePath = `${fileName}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('blog-images')
+        .upload(filePath, file)
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('blog-images')
+        .getPublicUrl(filePath)
+
+      setCoverImage(publicUrl)
+      toast({
+        title: "封面上传成功",
+        description: "图片已保存到云端",
+      })
+    } catch (error: any) {
+      toast({
+        title: "上传失败",
+        description: error.message,
+        variant: "destructive",
+      })
+    } finally {
+      setUploading(false)
+      // Reset input
+      if (coverInputRef.current) {
+        coverInputRef.current.value = ''
+      }
+    }
+  }
 
   const handleUpdate = async (published: boolean) => {
     if (!title) {
@@ -251,12 +295,6 @@ export default function EditPostPage({ params }: EditPostPageProps) {
           <div className="h-full overflow-y-auto pr-2 pb-20 space-y-6 scrollbar-hide">
             <Card className="border-none shadow-sm bg-white dark:bg-neutral-900 rounded-3xl overflow-hidden">
               <CardContent className="p-6">
-                <TableOfContents content={content} />
-              </CardContent>
-            </Card>
-
-            <Card className="border-none shadow-sm bg-white dark:bg-neutral-900 rounded-3xl overflow-hidden">
-              <CardContent className="p-6">
                 <TagSelector
                   value={tags}
                   onChange={setTags}
@@ -274,24 +312,55 @@ export default function EditPostPage({ params }: EditPostPageProps) {
                   封面设置
                 </h3>
                 <div className="space-y-4">
+                  <input
+                    type="file"
+                    ref={coverInputRef}
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleCoverUpload}
+                  />
+
                   {coverImage ? (
-                    <div className="relative aspect-video rounded-2xl overflow-hidden border border-black/5 dark:border-white/5">
+                    <div className="relative aspect-video rounded-2xl overflow-hidden border border-black/5 dark:border-white/5 group">
                       <img src={coverImage} alt="Cover preview" className="w-full h-full object-cover" />
-                      <button
-                        onClick={() => setCoverImage('')}
-                        className="absolute top-2 right-2 p-1 bg-black/50 text-white rounded-full hover:bg-black transition-colors"
-                      >
-                        <ArrowLeft className="w-4 h-4 rotate-45" />
-                      </button>
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="h-8 px-3 rounded-full text-xs"
+                          onClick={() => coverInputRef.current?.click()}
+                        >
+                          更换
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="h-8 w-8 p-0 rounded-full"
+                          onClick={() => setCoverImage('')}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   ) : (
-                    <div className="aspect-video rounded-2xl border-2 border-dashed border-black/5 dark:border-white/5 flex flex-col items-center justify-center text-neutral-400 bg-neutral-50 dark:bg-neutral-950">
-                      <ImageIcon className="w-8 h-8 mb-2 opacity-20" />
-                      <p className="text-[10px] uppercase tracking-widest font-bold">暂无图片</p>
+                    <div
+                      onClick={() => coverInputRef.current?.click()}
+                      className="aspect-video rounded-2xl border-2 border-dashed border-black/5 dark:border-white/5 flex flex-col items-center justify-center text-neutral-400 bg-neutral-50 dark:bg-neutral-950 hover:bg-neutral-100 dark:hover:bg-neutral-900 transition-colors cursor-pointer group"
+                    >
+                      {uploading ? (
+                        <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
+                      ) : (
+                        <>
+                          <ImageIcon className="w-8 h-8 mb-2 opacity-20 group-hover:opacity-40 transition-opacity" />
+                          <p className="text-[10px] uppercase tracking-widest font-bold group-hover:text-black dark:group-hover:text-white transition-colors">
+                            点击上传封面
+                          </p>
+                        </>
+                      )}
                     </div>
                   )}
                   <Input
-                    placeholder="输入封面图片 URL..."
+                    placeholder="或输入图片 URL..."
                     className="rounded-xl border-black/5 dark:border-white/5 bg-neutral-50 dark:bg-neutral-950"
                     value={coverImage}
                     onChange={(e) => setCoverImage(e.target.value)}
