@@ -36,10 +36,10 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} min-h-screen bg-[#fafafa] dark:bg-[#050505] text-neutral-900 dark:text-neutral-100 selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black antialiased`}>
+      <body className={`${inter.className} min-h-screen bg-[#fafafa] dark:bg-[#050505] text-neutral-900 dark:text-neutral-100 selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black antialiased flex flex-col`}>
         <AuthProvider initialUser={user} initialProfile={profile}>
           <Navbar user={user} />
-          <main className="pt-16 min-h-[calc(100vh-64px-160px)]">
+          <main className="flex-1 pt-16 flex flex-col">
             {children}
           </main>
           <Footer />
