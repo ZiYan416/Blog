@@ -32,8 +32,8 @@ export default function RegisterPage() {
     if (error) {
       setError(error.message)
     } else {
-      // Sign up successful, redirect to login page
-      router.push('/login?signup=success')
+      // Sign up successful, redirect to home
+      router.push('/?login=true')
       router.refresh()
     }
 
@@ -91,9 +91,9 @@ export default function RegisterPage() {
             >
               {loading ? '注册中...' : '注册'}
             </Button>
-            <Link href="/login" className="text-sm text-muted-foreground hover:underline">
-              已有账号？直接登录
-            </Link>
+            <Button variant="link" className="text-sm text-muted-foreground hover:underline" onClick={() => router.push('/')}>
+              已有账号？返回首页登录
+            </Button>
           </CardFooter>
         </form>
         <CardFooter className="flex flex-col space-y-2">

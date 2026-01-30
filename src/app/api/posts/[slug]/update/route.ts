@@ -1,13 +1,13 @@
-import { createRouteHandlerClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
 import { NextResponse, type NextRequest } from 'next/server'
 import { generatePostSlug } from '@/lib/markdown'
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
-  const supabase = createRouteHandlerClient({ cookies })
+  const supabase = await createClient()
+  const { slug: currentSlug } = await params
 
   // Check authentication
   const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -19,8 +19,8 @@ export async function PUT(
   // Check if post exists and user is the owner
   const { data: existingPost } = await supabase
     .from('posts')
-    .select('author_id')
-    .eq('slug', params.slug)
+    .select('author_id, id, published')
+    .eq('slug', currentSlug)
     .single()
 
   if (!existingPost) {
@@ -39,14 +39,14 @@ export async function PUT(
   }
 
   // Generate slug from title
-  const slug = generatePostSlug(title)
+  const newSlug = generatePostSlug(title)
 
   // Check if slug is different and doesn't exist
-  if (slug !== params.slug) {
+  if (newSlug !== currentSlug) {
     const { data: existing } = await supabase
       .from('posts')
       .select('id')
-      .eq('slug', slug)
+      .eq('slug', newSlug)
       .neq('id', existingPost.id)
       .single()
 
@@ -59,7 +59,7 @@ export async function PUT(
     .from('posts')
     .update({
       title,
-      slug,
+      slug: newSlug,
       content,
       excerpt: excerpt || content.slice(0, 150),
       cover_image,
@@ -68,7 +68,7 @@ export async function PUT(
       published: published !== undefined ? published : existingPost.published,
       updated_at: new Date().toISOString(),
     })
-    .eq('slug', params.slug)
+    .eq('slug', currentSlug)
     .select()
     .single()
 

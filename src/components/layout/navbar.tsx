@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { LoginModal } from "@/components/auth/login-modal";
-import { User as SupabaseUser } from "@supabase/supabase-js";
+import { Logo } from "@/components/ui/logo";
 
 const navItems = [
   { href: "/", label: "首页" },
@@ -40,11 +40,9 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-black/5 dark:border-white/5 bg-white/70 dark:bg-black/70 backdrop-blur-xl">
       <div className="container max-w-6xl mx-auto h-16 flex items-center justify-between px-6">
         <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 bg-black dark:bg-white rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
-              <div className="w-3 h-3 bg-white dark:bg-black rounded-sm" />
-            </div>
-            <span className="text-lg font-semibold tracking-tight">Blog</span>
+          <Link href="/" className="flex items-center gap-3 group">
+            <Logo className="group-hover:scale-105 transition-transform duration-300" />
+            <span className="text-xl font-bold tracking-tight font-serif italic">Blog</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">
