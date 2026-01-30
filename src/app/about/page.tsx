@@ -2,6 +2,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { Github, Mail, ArrowUpRight, Sparkles } from "lucide-react";
+import Image from "next/image";
 
 export const metadata: Metadata = {
   title: "About Me",
@@ -21,14 +22,13 @@ export default function AboutPage() {
             {/* Circular Avatar */}
             <div className="relative w-40 h-40 md:w-48 md:h-48 mb-6 rounded-full border-4 border-white dark:border-neutral-800 shadow-2xl overflow-hidden group-hover:scale-105 transition-transform duration-500">
               <div className="absolute inset-0 bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center text-neutral-400">
-                 {/* Replace with <Image src="/avatar.jpg" fill className="object-cover" /> */}
-                 <span className="text-5xl font-black opacity-20 select-none">ME</span>
+                <Image src="/avatar.jpg" alt="My Avatar" fill className="object-cover" />
               </div>
             </div>
 
             <div className="relative z-10">
-              <h1 className="text-3xl font-black tracking-tight text-black dark:text-white mb-2">Your Name</h1>
-              <p className="text-sm font-medium text-neutral-500 uppercase tracking-widest">Full Stack Developer</p>
+              <h1 className="text-3xl font-black tracking-tight text-black dark:text-white mb-2">荔冰酪 <br/> Lycheeling</h1>
+              <p className="text-sm font-medium text-neutral-500 uppercase tracking-widest">College Student</p>
             </div>
           </div>
 
@@ -51,7 +51,7 @@ export default function AboutPage() {
                 关于我
               </h2>
               <p className="text-white/70 dark:text-black/70 text-sm md:text-base leading-relaxed max-w-xl">
-                寻找实习......
+                找实习......
               </p>
             </div>
           </div>
