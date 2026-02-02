@@ -104,7 +104,8 @@ export function autoClassifyTags(content: string, existingTags: string[]): strin
 const renderer = new marked.Renderer()
 
 // Override specific renderer methods if needed
-renderer.link = (href, title, text) => {
+renderer.link = ({ href, title, tokens }: { href: string; title?: string | null; tokens: any[] }) => {
+  const text = tokens.map((t: any) => t.raw).join('');
   return `<a href="${href}" title="${title || ''}" class="text-blue-600 dark:text-blue-400 hover:underline" target="_blank" rel="noopener noreferrer">${text}</a>`
 }
 
