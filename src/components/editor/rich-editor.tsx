@@ -123,7 +123,7 @@ export function RichEditor({ content, onChange, onEditorReady, placeholder, clas
     },
     onUpdate: ({ editor }) => {
       isInternalUpdate.current = true
-      const markdown = editor.storage.markdown.getMarkdown()
+      const markdown = (editor.storage as any).markdown.getMarkdown()
       onChange(markdown)
       // Reset flag after render cycle
       setTimeout(() => {
@@ -149,7 +149,7 @@ export function RichEditor({ content, onChange, onEditorReady, placeholder, clas
     // So check if the update originated internally.
     if (isInternalUpdate.current) return
 
-    const currentContent = editor.storage.markdown.getMarkdown()
+    const currentContent = (editor.storage as any).markdown.getMarkdown()
     if (content !== currentContent) {
        // Save cursor position? Tiptap might handle setContent gracefully if keys match?
        // Unfortunately setContent usually resets selection.
