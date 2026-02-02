@@ -25,23 +25,23 @@ export default async function HomePage() {
           <span className="text-xs font-medium text-neutral-500">探索技术与创作的边界</span>
         </div>
 
-        <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-8 animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-200">
+        <h1 className="text-4xl md:text-7xl font-bold tracking-tight mb-8 animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-200">
           记录思想，<br />
           <span className="text-neutral-400 dark:text-neutral-600">分享技术的纯粹。</span>
         </h1>
 
-        <p className="text-lg md:text-xl text-neutral-500 max-w-2xl mx-auto mb-12 leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
+        <p className="text-base md:text-xl text-neutral-500 max-w-2xl mx-auto mb-10 md:mb-12 leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
           一个专注于内容与阅读体验的现代博客平台。支持 Markdown 写作，让您的每一篇文字都呈现出它应有的质感。
         </p>
 
-        <div className="flex flex-wrap items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-500">
-          <Button asChild size="lg" className="rounded-full px-8 bg-black dark:bg-white text-white dark:text-black hover:opacity-90 transition-opacity">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-500">
+          <Button asChild size="lg" className="w-full sm:w-auto rounded-full px-8 bg-black dark:bg-white text-white dark:text-black hover:opacity-90 transition-opacity">
             <Link href="/post">
               开始阅读
               <ArrowRight className="w-4 h-4 ml-2" />
             </Link>
           </Button>
-          <Button asChild variant="outline" size="lg" className="rounded-full px-8 border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+          <Button asChild variant="outline" size="lg" className="w-full sm:w-auto rounded-full px-8 border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
             <Link href="/about">了解更多</Link>
           </Button>
         </div>
@@ -71,10 +71,10 @@ export default async function HomePage() {
               <Link
                 key={post.id}
                 href={`/post/${post.slug}`}
-                className="group relative block p-8 rounded-3xl bg-white dark:bg-neutral-900 border border-black/[0.03] dark:border-white/[0.03] hover:border-black/10 dark:hover:border-white/10 transition-all duration-500"
+                className="group relative block p-6 md:p-8 rounded-3xl bg-white dark:bg-neutral-900 border border-black/[0.03] dark:border-white/[0.03] hover:border-black/10 dark:hover:border-white/10 transition-all duration-500"
               >
                 <div className="flex flex-col h-full">
-                  <div className="flex items-center gap-3 mb-6">
+                  <div className="flex items-center gap-3 mb-4 md:mb-6">
                     <span
                       className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5"
                       style={{

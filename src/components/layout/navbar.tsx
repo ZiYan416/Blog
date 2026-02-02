@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Plus, User, Search, Settings, LayoutDashboard, FileText } from "lucide-react";
+import { Plus, User, Search, Settings, LayoutDashboard, FileText, Menu } from "lucide-react";
 import { type User as SupabaseUser } from "@supabase/supabase-js";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { LoginModal } from "@/components/auth/login-modal";
 import { Logo } from "@/components/ui/logo";
@@ -40,7 +47,60 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-black/5 dark:border-white/5 bg-white/70 dark:bg-black/70 backdrop-blur-xl">
       <div className="container max-w-6xl mx-auto h-16 flex items-center justify-between px-6">
-        <div className="flex items-center gap-8">
+        <div className="flex items-center gap-4 md:gap-8">
+          {/* Mobile Menu */}
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden text-neutral-500 hover:text-black dark:hover:text-white">
+                <Menu className="w-5 h-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[300px] sm:w-[400px] p-0">
+              <SheetHeader className="p-6 pb-2 text-left">
+                <SheetTitle className="flex items-center gap-3">
+                  <Logo className="w-8 h-8" />
+                  <span className="text-lg font-bold tracking-tight font-serif italic">Blog</span>
+                </SheetTitle>
+              </SheetHeader>
+              <div className="flex flex-col gap-6 p-6 pt-2">
+                {/* Mobile Search */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                  <input
+                    type="text"
+                    placeholder="搜索文章..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && searchQuery.trim()) {
+                        router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+                      }
+                    }}
+                    className="w-full pl-9 pr-4 py-2.5 text-sm bg-neutral-100 dark:bg-neutral-900 border-none rounded-xl transition-all outline-none focus:ring-1 ring-black/10 dark:ring-white/10"
+                  />
+                </div>
+
+                {/* Mobile Nav Links */}
+                <nav className="flex flex-col gap-2">
+                  {navItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={cn(
+                        "px-4 py-3 text-sm font-medium rounded-xl transition-all flex items-center gap-3",
+                        pathname === item.href
+                          ? "bg-black/5 dark:bg-white/5 text-black dark:text-white"
+                          : "text-neutral-500 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5"
+                      )}
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </nav>
+              </div>
+            </SheetContent>
+          </Sheet>
+
           <Link href="/" className="flex items-center gap-3 group">
             <Logo className="group-hover:scale-105 transition-transform duration-300" />
             <span className="text-xl font-bold tracking-tight font-serif italic">Blog</span>

@@ -148,7 +148,7 @@ export default async function PostPage({
       <div className="container max-w-6xl mx-auto px-6 -mt-12 relative z-20">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8">
           {/* Main Content */}
-          <div className="bg-white dark:bg-neutral-900 rounded-3xl p-8 md:p-10 shadow-xl border border-black/5 dark:border-white/5">
+          <div className="bg-white dark:bg-neutral-900 rounded-3xl p-5 md:p-10 shadow-xl border border-black/5 dark:border-white/5">
             <MarkdownRenderer content={post.content} />
 
             <CommentSection postId={post.id} initialComments={comments} />
