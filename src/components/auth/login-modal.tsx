@@ -16,6 +16,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Github } from "lucide-react"
+import { Logo } from "@/components/ui/logo"
 
 interface LoginModalProps {
   children?: React.ReactNode
@@ -128,8 +129,8 @@ export function LoginModal({ children, redirectTo = '/dashboard' }: LoginModalPr
       <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden bg-white/80 dark:bg-black/80 backdrop-blur-xl border-black/5 dark:border-white/10 shadow-2xl rounded-3xl gap-0">
         <div className="p-8 pb-6">
           <DialogHeader className="mb-6 space-y-3">
-            <div className="mx-auto w-12 h-12 bg-black dark:bg-white flex items-center justify-center mb-2 shadow-lg shadow-black/5 dark:shadow-white/5">
-              <div className="w-5 h-5 bg-white dark:bg-black rounded-sm" />
+            <div className="mx-auto flex items-center justify-center mb-2">
+              <Logo className="w-12 h-12 text-2xl" />
             </div>
             <DialogTitle className="text-2xl font-bold text-center tracking-tight">
               {mode === 'login' ? '欢迎回来' : '创建账号'}
