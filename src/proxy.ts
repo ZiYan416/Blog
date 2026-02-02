@@ -36,23 +36,22 @@ export default async function proxy(request: NextRequest) {
   const isDashboard = request.nextUrl.pathname.startsWith('/dashboard')
   const isProfile = request.nextUrl.pathname.startsWith('/profile')
   const isAdmin = request.nextUrl.pathname.startsWith('/admin')
-  const isLoginPage = request.nextUrl.pathname.startsWith('/login')
   const isRegisterPage = request.nextUrl.pathname.startsWith('/register')
 
-  if (isApi || isAuth || isDashboard || isProfile || isAdmin || isLoginPage || isRegisterPage) {
+  if (isApi || isAuth || isDashboard || isProfile || isAdmin || isRegisterPage) {
     const {
       data: { user },
     } = await supabase.auth.getUser()
 
-    // 1. 未登录用户访问受保护页面 -> 重定向到登录页
+    // 1. 未登录用户访问受保护页面 -> 重定向到首页
     if (!user && (isDashboard || isProfile || isAdmin)) {
       const url = request.nextUrl.clone()
-      url.pathname = '/login'
+      url.pathname = '/'
       return NextResponse.redirect(url)
     }
 
-    // 2. 已登录用户访问登录/注册页 -> 重定向到控制台
-    if (user && (isLoginPage || isRegisterPage)) {
+    // 2. 已登录用户访问注册页 -> 重定向到控制台
+    if (user && (isRegisterPage)) {
       const url = request.nextUrl.clone()
       url.pathname = '/dashboard'
       return NextResponse.redirect(url)

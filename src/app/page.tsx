@@ -79,11 +79,11 @@ export default async function HomePage() {
                       className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5"
                       style={{
                         backgroundColor: styles.backgroundColor,
-                        color: '#333',
+                        color: styles.color,
                         border: `1px solid ${styles.borderColor}`
                       }}
                     >
-                      <Tag className="w-3 h-3 opacity-60" />
+                      <Tag className="w-3 h-3 opacity-60" style={{ color: styles.color }} />
                       {primaryTag}
                     </span>
                     <span className="text-xs text-neutral-400">

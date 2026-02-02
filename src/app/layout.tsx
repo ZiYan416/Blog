@@ -10,8 +10,14 @@ import { AuthProvider } from "@/components/providers/auth-provider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "My Blog",
+  title: {
+    default: "Blog",
+    template: "%s | Blog"
+  },
   description: "A modern personal blog built with Next.js and Supabase",
+  icons: {
+    icon: "/icon",
+  },
 };
 
 export default async function RootLayout({

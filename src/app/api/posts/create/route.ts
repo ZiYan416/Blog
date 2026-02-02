@@ -1,10 +1,9 @@
-import { createRouteHandlerClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
 import { NextResponse, type NextRequest } from 'next/server'
 import { generatePostSlug } from '@/lib/markdown'
 
 export async function POST(request: NextRequest) {
-  const supabase = createRouteHandlerClient({ cookies })
+  const supabase = await createClient()
 
   // Check authentication
   const { data: { user }, error: authError } = await supabase.auth.getUser()

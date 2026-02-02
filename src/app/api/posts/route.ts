@@ -1,9 +1,8 @@
-import { createRouteHandlerClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function GET(request: NextRequest) {
-  const supabase = createRouteHandlerClient({ cookies })
+  const supabase = await createClient()
   const { searchParams } = new URL(request.url)
 
   const page = parseInt(searchParams.get('page') || '1')
