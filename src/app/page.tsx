@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { getTagStyles } from "@/lib/tag-color";
 
+import { DailyQuote } from "@/components/home/daily-quote";
+
 export default async function HomePage() {
   const supabase = await createClient();
 
@@ -19,19 +21,16 @@ export default async function HomePage() {
   return (
     <div className="flex flex-col items-center">
       {/* Hero Section */}
-      <section className="w-full max-w-4xl mx-auto px-6 pt-24 pb-16 text-center">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.05] mb-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-          <Sparkles className="w-3.5 h-3.5 text-yellow-500" />
-          <span className="text-xs font-medium text-neutral-500">探索技术与创作的边界</span>
-        </div>
+      <section className="w-full max-w-4xl mx-auto px-6 pt-12 md:pt-24 pb-16 text-center">
+        <DailyQuote />
 
         <h1 className="text-4xl md:text-7xl font-bold tracking-tight mb-8 animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-200">
-          记录思想，<br />
-          <span className="text-neutral-400 dark:text-neutral-600">分享技术的纯粹。</span>
+          有些故事，<br />
+          <span className="text-neutral-400 dark:text-neutral-600">值得被记录。</span>
         </h1>
 
         <p className="text-base md:text-xl text-neutral-500 max-w-2xl mx-auto mb-10 md:mb-12 leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
-          一个专注于内容与阅读体验的现代博客平台。支持 Markdown 写作，让您的每一篇文字都呈现出它应有的质感。
+          用心感受生活的温度，用代码构建数字的花园。在这里，我们探讨技术，也分享生活。
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-500">
