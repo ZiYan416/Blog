@@ -226,7 +226,7 @@ export function LoginModal({ children, redirectTo = '/dashboard' }: LoginModalPr
               >
                 {loading
                   ? (mode === 'login' ? '登录中...' : '注册中...')
-                  : (mode === 'login' ? '邮箱登录' : '创建账号')}
+                  : (mode === 'login' ? '登录' : '创建账号')}
               </Button>
             </form>
           </div>

@@ -4,12 +4,12 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 export default function DashboardLoading() {
   return (
     <div className="min-h-screen bg-[#fafafa] dark:bg-[#050505] pb-20">
-      <div className="container max-w-6xl mx-auto px-6 pt-12">
+      <div className="container max-w-6xl mx-auto px-4 pt-6 md:px-6 md:pt-12">
         {/* Welcome Section Skeleton */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 md:gap-6 md:mb-12">
           <div className="space-y-3">
-            <Skeleton className="h-10 w-64" />
-            <Skeleton className="h-5 w-48" />
+            <Skeleton className="h-8 md:h-10 w-48 md:w-64" />
+            <Skeleton className="h-4 md:h-5 w-32 md:w-48" />
           </div>
           <div className="flex items-center gap-3">
             <Skeleton className="h-10 w-24 rounded-full" />
@@ -18,10 +18,10 @@ export default function DashboardLoading() {
         </div>
 
         {/* Stats Grid Skeleton */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-8 md:mb-12">
           {[...Array(4)].map((_, i) => (
             <Card key={i} className="border-none shadow-sm bg-white dark:bg-neutral-900 rounded-3xl overflow-hidden">
-              <CardContent className="p-6 space-y-4">
+              <CardContent className="p-4 md:p-6 space-y-4">
                 <div className="flex items-center justify-between">
                   <Skeleton className="h-9 w-9 rounded-xl" />
                   <Skeleton className="h-3 w-8" />
