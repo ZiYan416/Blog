@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Sparkles } from "lucide-react";
 
 const quotes = [
@@ -195,12 +195,76 @@ const quotes = [
 
 export function DailyQuote() {
   const [quote, setQuote] = useState("");
+  const [cardWidth, setCardWidth] = useState(280);
+  const [lightConeBottomWidth, setLightConeBottomWidth] = useState(0);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // 随机选择一句
     const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
     setQuote(randomQuote);
   }, []);
+
+  useEffect(() => {
+    // 根据视口宽度计算光锥底部宽度
+    const updateLightConeWidth = () => {
+      const isMobile = window.innerWidth < 768;
+      const bottomWidth = isMobile
+        ? window.innerWidth * 1.3     // 手机端：130% 视口宽度
+        : window.innerWidth * 0.5;    // PC端：50% 视口宽度
+      setLightConeBottomWidth(bottomWidth);
+    };
+
+    updateLightConeWidth();
+    window.addEventListener('resize', updateLightConeWidth);
+    return () => window.removeEventListener('resize', updateLightConeWidth);
+  }, []);
+
+  // 智能插入换行提示：优先在标点处换行，平衡两行宽度
+  const formatQuoteWithBreaks = (text: string) => {
+    // 中文标点符号
+    const chinesePunctuations = ['，', '。', '；', '：', '！', '？', '、', '…', '—'];
+    // 英文标点符号
+    const englishPunctuations = [',', '.', ';', ':', '!', '?'];
+
+    let formatted = text;
+
+    // 1. 在中文标点后插入零宽空格，优先在此处换行
+    chinesePunctuations.forEach(punct => {
+      formatted = formatted.replace(new RegExp(punct, 'g'), `${punct}\u200B`);
+    });
+
+    // 2. 在英文标点+空格后插入零宽空格，优先在此处换行
+    // 匹配：标点 + 空格 → 标点 + 零宽空格 + 空格
+    englishPunctuations.forEach(punct => {
+      // 需要转义特殊字符（如 . 和 ?）
+      const escapedPunct = punct.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      formatted = formatted.replace(new RegExp(`${escapedPunct} `, 'g'), `${punct}\u200B `);
+    });
+
+    return formatted;
+  };
+
+  useEffect(() => {
+    // 使用 ResizeObserver 实时监听卡片宽度变化
+    if (cardRef.current && quote) {
+      const resizeObserver = new ResizeObserver((entries) => {
+        for (let entry of entries) {
+          if (entry.contentBoxSize) {
+            // 使用 contentBoxSize 获取更精确的宽度
+            const width = entry.contentRect.width;
+            setCardWidth(width);
+          }
+        }
+      });
+
+      resizeObserver.observe(cardRef.current);
+
+      return () => {
+        resizeObserver.disconnect();
+      };
+    }
+  }, [quote]);
 
   // 避免服务端渲染不匹配
   if (!quote) return (
@@ -210,11 +274,83 @@ export function DailyQuote() {
   );
 
   return (
-    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.05] mb-6 md:mb-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 max-w-full">
-      <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-      <span className="text-xs font-medium text-neutral-600 dark:text-neutral-400 italic truncate sm:whitespace-normal line-clamp-1 sm:line-clamp-none">
-        {quote}
-      </span>
-    </div>
+    <>
+      {/* Quote Card */}
+      <div
+        ref={cardRef}
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-black/[0.03] dark:bg-black/40 border border-black/[0.05] dark:border-amber-200/40 mb-6 md:mb-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 relative z-[100] dark:shadow-[0_0_20px_2px_rgba(251,191,36,0.3)] backdrop-blur-sm transition-all"
+      >
+        <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0 dark:text-amber-300" />
+        <span
+          className="text-xs font-medium text-neutral-600 dark:text-amber-100/90 italic text-center leading-relaxed"
+          style={{
+            display: 'inline-block',        // 让span能够正确计算换行后的宽度
+            maxWidth: 'min(82vw, 560px)',   // 在文本上限制最大宽度（减去padding和icon的空间）
+            wordBreak: 'keep-all',          // 防止中文在字中间断开
+            overflowWrap: 'break-word',     // 长单词允许断开（后备方案）
+            textWrap: 'balance' as any,     // 平衡两行宽度（现代浏览器支持）
+          }}
+        >
+          {formatQuoteWithBreaks(quote)}
+        </span>
+
+        {/* Light Cone - Bottom width based on viewport, top matches card */}
+        <div className="hidden dark:block absolute top-full left-1/2 -translate-x-1/2 pointer-events-none overflow-visible">
+          {/* Soft cone with smooth edges and center-out animation */}
+          <div
+            style={{
+              width: `${lightConeBottomWidth}px`,
+              height: '280px',
+              background: 'linear-gradient(180deg, rgba(251, 191, 36, 0.18) 0%, rgba(251, 191, 36, 0.12) 25%, rgba(251, 191, 36, 0.06) 50%, rgba(251, 191, 36, 0.02) 75%, transparent 100%)',
+              clipPath: (() => {
+                // 计算光锥顶部（卡片宽度）相对于底部宽度的位置
+                const topLeftPercent = lightConeBottomWidth > 0
+                  ? ((lightConeBottomWidth - cardWidth) / 2) / lightConeBottomWidth * 100
+                  : 0;
+                const topRightPercent = 100 - topLeftPercent;
+                return `polygon(${topLeftPercent}% 0%, 0% 100%, 100% 100%, ${topRightPercent}% 0%)`;
+              })(),
+              filter: 'blur(50px)',
+              animation: 'lightSpread 2s ease-out 0.4s forwards',
+              opacity: 0,
+              transform: 'scale(0)',
+              transformOrigin: 'top center',
+              boxShadow: '0 0 60px 20px rgba(251, 191, 36, 0.08)',
+            }}
+          />
+
+          {/* Extra soft edge glow for smoothness */}
+          <div
+            className="absolute top-0 left-1/2 -translate-x-1/2"
+            style={{
+              width: `${lightConeBottomWidth * 0.7}px`,
+              height: '240px',
+              background: 'radial-gradient(ellipse at top, rgba(251, 191, 36, 0.12) 0%, rgba(251, 191, 36, 0.06) 40%, transparent 100%)',
+              filter: 'blur(35px)',
+              animation: 'lightSpread 2s ease-out 0.4s forwards',
+              opacity: 0,
+              transform: 'scale(0)',
+              transformOrigin: 'top center',
+            }}
+          />
+        </div>
+      </div>
+
+      <style jsx global>{`
+        @keyframes lightSpread {
+          0% {
+            opacity: 0;
+            transform: scale(0);
+          }
+          40% {
+            opacity: 0.5;
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+      `}</style>
+    </>
   );
 }

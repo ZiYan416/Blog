@@ -19,35 +19,37 @@ export default async function HomePage() {
     .limit(4);
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center overflow-visible">
       {/* Hero Section */}
-      <section className="w-full max-w-4xl mx-auto px-6 pt-12 md:pt-24 pb-16 text-center">
-        <DailyQuote />
+      <section className="relative w-full mx-auto px-6 pt-12 md:pt-24 pb-16 text-center overflow-visible isolate">
+        <div className="relative max-w-4xl mx-auto overflow-visible">
+          <DailyQuote />
 
-        <h1 className="text-4xl md:text-7xl font-bold tracking-tight mb-8 animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-200">
-          有些故事，<br />
-          <span className="text-neutral-400 dark:text-neutral-600">值得被记录。</span>
-        </h1>
+          <h1 className="text-4xl md:text-7xl font-bold tracking-tight mb-8 animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-200 dark:drop-shadow-[0_10px_35px_rgba(251,191,36,0.25)] transition-all">
+            有些故事，<br />
+            <span className="text-neutral-400 dark:text-neutral-600 dark:drop-shadow-none">值得被记录。</span>
+          </h1>
 
-        <p className="text-base md:text-xl text-neutral-500 max-w-2xl mx-auto mb-10 md:mb-12 leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
-          用心感受生活的温度，用代码构建数字的花园。在这里，我们探讨技术，也分享生活。
-        </p>
+          <p className="text-base md:text-xl text-neutral-500 max-w-2xl mx-auto mb-10 md:mb-12 leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
+            用心感受生活的温度，用代码构建数字的花园。在这里，我们探讨技术，也分享生活。
+          </p>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-500">
-          <Button asChild size="lg" className="w-full sm:w-auto rounded-full px-8 bg-black dark:bg-white text-white dark:text-black hover:opacity-90 transition-opacity">
-            <Link href="/post">
-              开始阅读
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Link>
-          </Button>
-          <Button asChild variant="outline" size="lg" className="w-full sm:w-auto rounded-full px-8 border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
-            <Link href="/about">了解更多</Link>
-          </Button>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-500">
+            <Button asChild size="lg" className="w-full sm:w-auto rounded-full px-8 bg-black dark:bg-white text-white dark:text-black hover:opacity-90 transition-opacity">
+              <Link href="/post">
+                开始阅读
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg" className="w-full sm:w-auto rounded-full px-8 border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+              <Link href="/about">了解更多</Link>
+            </Button>
+          </div>
         </div>
       </section>
 
       {/* Featured Posts Preview */}
-      <section className="w-full max-w-6xl mx-auto px-6 pt-12 pb-24">
+      <section className="w-full max-w-6xl mx-auto px-6 pt-12 pb-16 md:pb-24">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-semibold">精选文章</h2>
           <Link href="/post" className="text-sm font-medium text-neutral-500 hover:text-black dark:hover:text-white transition-colors">
@@ -55,7 +57,7 @@ export default async function HomePage() {
           </Link>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid md:grid-cols-2 gap-6 md:gap-8">
           {featuredPosts && featuredPosts.length > 0 ? (
             featuredPosts.map((post) => {
               // Try to find a primary tag to display
@@ -121,9 +123,9 @@ export default async function HomePage() {
       </section>
 
       {/* Modern Features Grid */}
-      <section className="w-full bg-black/[0.02] dark:bg-white/[0.02] py-24">
+      <section className="w-full bg-black/[0.02] dark:bg-white/[0.02] py-16 md:py-24">
         <div className="container max-w-6xl mx-auto px-6">
-          <div className="grid md:grid-cols-3 gap-12 text-center md:text-left">
+          <div className="grid md:grid-cols-3 gap-8 md:gap-12 text-center md:text-left">
             <div>
               <div className="w-10 h-10 bg-black dark:bg-white rounded-xl flex items-center justify-center mb-6 mx-auto md:mx-0">
                 <div className="w-2 h-2 bg-white dark:bg-black rounded-full" />
