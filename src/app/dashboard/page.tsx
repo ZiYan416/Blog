@@ -4,16 +4,17 @@ import Link from 'next/link'
 import {
   FileText,
   BarChart3,
-  Settings,
-  Plus,
   ArrowRight,
   MessageSquare,
   Users,
-  UserCircle
+  UserCircle,
+  Plus
 } from 'lucide-react'
 import { SignOutButton } from '@/components/auth/sign-out-button'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+
+import { DashboardHeader } from '@/components/dashboard/dashboard-header'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -29,6 +30,8 @@ export default async function DashboardPage() {
     .select('*')
     .eq('id', user.id)
     .single()
+
+  const displayName = profile?.display_name || user.email?.split('@')[0] || '朋友'
 
   // 1. 获取文章统计信息
   const { count: totalPosts } = await supabase
@@ -83,36 +86,15 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-[#fafafa] dark:bg-[#050505] pb-20">
-      <div className="container max-w-6xl mx-auto px-6 pt-12">
+      <div className="container max-w-6xl mx-auto px-4 pt-6 md:px-6 md:pt-12">
         {/* Welcome Section */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
-          <div>
-            <h1 className="text-4xl font-bold tracking-tight mb-2">
-              早安, {profile?.display_name || user.email?.split('@')[0]}
-            </h1>
-            <p className="text-neutral-500">欢迎回到您的创作指挥中心。</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button asChild variant="outline" className="rounded-full border-black/10 dark:border-white/10">
-              <Link href="/profile">
-                <Settings className="w-4 h-4 mr-2" />
-                设置
-              </Link>
-            </Button>
-            <Button asChild className="rounded-full bg-black dark:bg-white text-white dark:text-black hover:opacity-90 px-6">
-              <Link href="/admin/posts/new">
-                <Plus className="w-4 h-4 mr-2" />
-                撰写文章
-              </Link>
-            </Button>
-          </div>
-        </div>
+        <DashboardHeader displayName={displayName} />
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-8 md:mb-12">
           {stats.map((stat) => (
             <Card key={stat.label} className="border-none shadow-sm bg-white dark:bg-neutral-900 rounded-3xl overflow-hidden group">
-              <CardContent className="p-6">
+              <CardContent className="p-4 md:p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className={`p-2 rounded-xl bg-black/[0.03] dark:bg-white/[0.03] ${stat.color}`}>
                     <stat.icon className="w-5 h-5" />
@@ -128,25 +110,25 @@ export default async function DashboardPage() {
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Actions */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="lg:col-span-2 space-y-8 min-w-0">
             <section>
               <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
                 核心功能
               </h2>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <Link href="/post" className="group p-6 rounded-3xl bg-white dark:bg-neutral-900 border border-black/[0.03] dark:border-white/[0.03] hover:border-black/10 dark:hover:border-white/10 transition-all">
-                  <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center mb-4 text-blue-500">
+              <div className="grid grid-cols-2 gap-4">
+                <Link href="/post" className="group p-4 md:p-6 rounded-3xl bg-white dark:bg-neutral-900 border border-black/[0.03] dark:border-white/[0.03] hover:border-black/10 dark:hover:border-white/10 transition-all">
+                  <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center mb-3 md:mb-4 text-blue-500">
                     <FileText className="w-5 h-5" />
                   </div>
-                  <h3 className="font-bold mb-2 group-hover:translate-x-1 transition-transform">文章管理</h3>
-                  <p className="text-sm text-neutral-500">编辑、删除或管理您的所有博客内容。</p>
+                  <h3 className="font-bold mb-1 md:mb-2 group-hover:translate-x-1 transition-transform text-sm md:text-base">文章管理</h3>
+                  <p className="text-xs md:text-sm text-neutral-500 line-clamp-1 md:line-clamp-none">管理所有博客内容。</p>
                 </Link>
-                <Link href="/admin/posts/new" className="group p-6 rounded-3xl bg-white dark:bg-neutral-900 border border-black/[0.03] dark:border-white/[0.03] hover:border-black/10 dark:hover:border-white/10 transition-all">
-                  <div className="w-10 h-10 rounded-full bg-purple-500/10 flex items-center justify-center mb-4 text-purple-500">
+                <Link href="/admin/posts/new" className="group p-4 md:p-6 rounded-3xl bg-white dark:bg-neutral-900 border border-black/[0.03] dark:border-white/[0.03] hover:border-black/10 dark:hover:border-white/10 transition-all">
+                  <div className="w-10 h-10 rounded-full bg-purple-500/10 flex items-center justify-center mb-3 md:mb-4 text-purple-500">
                     <Plus className="w-5 h-5" />
                   </div>
-                  <h3 className="font-bold mb-2 group-hover:translate-x-1 transition-transform">发布内容</h3>
-                  <p className="text-sm text-neutral-500">使用现代编辑器开启您的新篇章。</p>
+                  <h3 className="font-bold mb-1 md:mb-2 group-hover:translate-x-1 transition-transform text-sm md:text-base">发布内容</h3>
+                  <p className="text-xs md:text-sm text-neutral-500 line-clamp-1 md:line-clamp-none">开启您的新篇章。</p>
                 </Link>
               </div>
             </section>
@@ -206,11 +188,17 @@ export default async function DashboardPage() {
           {/* Sidebar Info */}
           <div className="space-y-8">
             <Card className="border-none bg-black dark:bg-white text-white dark:text-black rounded-3xl overflow-hidden shadow-2xl">
-              <CardContent className="p-8">
-                <UserCircle className="w-12 h-12 mb-6 opacity-50" />
+              <CardContent className="p-6 md:p-8">
+                <div className="w-16 h-16 rounded-full bg-white/10 dark:bg-black/10 mb-6 overflow-hidden flex items-center justify-center">
+                  {profile?.avatar_url ? (
+                    <img src={profile.avatar_url} alt={profile.display_name} className="w-full h-full object-cover" />
+                  ) : (
+                    <UserCircle className="w-10 h-10 opacity-50" />
+                  )}
+                </div>
                 <h3 className="text-xl font-bold mb-2">博主账号</h3>
                 <div className="space-y-4 mb-8">
-                  <div className="opacity-70 text-sm">
+                  <div className="opacity-70 text-sm min-w-0">
                     <p className="font-medium">邮箱</p>
                     <p className="truncate">{user.email}</p>
                   </div>
@@ -219,10 +207,12 @@ export default async function DashboardPage() {
                     <p>{profile?.is_admin ? '超级管理员' : '普通用户'}</p>
                   </div>
                 </div>
-                <SignOutButton
-                  variant="ghost"
-                  className="w-full rounded-full bg-white/20 dark:bg-black/20 hover:bg-white/30 dark:hover:bg-black/30 text-white dark:text-black border-none"
-                />
+                <div className="w-full">
+                  <SignOutButton
+                    variant="ghost"
+                    className="w-full rounded-full bg-white/20 dark:bg-black/20 hover:bg-white/30 dark:hover:bg-black/30 text-white dark:text-black border-none"
+                  />
+                </div>
               </CardContent>
             </Card>
 

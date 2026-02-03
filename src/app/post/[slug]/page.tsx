@@ -77,7 +77,7 @@ export default async function PostPage({
       <ViewCounter slug={post.slug} />
 
       {/* Hero Header */}
-      <div className="relative w-full h-[35vh] min-h-[300px] bg-neutral-900 dark:bg-black overflow-hidden">
+      <div className="relative w-full h-[30vh] min-h-[250px] md:h-[35vh] md:min-h-[300px] bg-neutral-900 dark:bg-black overflow-hidden">
         {post.cover_image && (
           <div className="absolute inset-0 opacity-60">
             <img src={post.cover_image} alt={post.title} className="w-full h-full object-cover" />
@@ -85,7 +85,7 @@ export default async function PostPage({
           </div>
         )}
 
-        <div className="container max-w-6xl mx-auto px-6 h-full flex flex-col justify-end pb-24 relative z-10">
+        <div className="container max-w-6xl mx-auto px-6 h-full flex flex-col justify-end pb-16 md:pb-24 relative z-10">
           <Button variant="ghost" asChild className="absolute top-8 left-6 text-white/80 hover:text-white hover:bg-white/10 rounded-full">
             <Link href="/post">
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -94,7 +94,7 @@ export default async function PostPage({
           </Button>
 
           <div className="space-y-6">
-            <h1 className="text-4xl md:text-5xl font-bold text-white leading-tight tracking-tight drop-shadow-sm">
+            <h1 className="text-3xl md:text-5xl font-bold text-white leading-tight tracking-tight drop-shadow-sm">
               {post.title}
             </h1>
 
@@ -145,10 +145,10 @@ export default async function PostPage({
         </div>
       </div>
 
-      <div className="container max-w-6xl mx-auto px-6 -mt-12 relative z-20">
+      <div className="container max-w-6xl mx-auto px-4 md:px-6 -mt-8 md:-mt-12 relative z-20">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8">
           {/* Main Content */}
-          <div className="bg-white dark:bg-neutral-900 rounded-3xl p-5 md:p-10 shadow-xl border border-black/5 dark:border-white/5">
+          <div className="bg-white dark:bg-neutral-900 rounded-3xl p-6 md:p-10 shadow-xl border border-black/5 dark:border-white/5">
             <MarkdownRenderer content={post.content} />
 
             <CommentSection postId={post.id} initialComments={comments} />
