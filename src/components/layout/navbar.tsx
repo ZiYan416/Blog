@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Plus, User, Search, Settings, LayoutDashboard, FileText, Menu, ChevronUp, ChevronDown } from "lucide-react";
@@ -46,6 +46,13 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
   const user = clientUser || initialUser;
   // 优先使用 profile 中的头像 (用户上传的)，其次是 user_metadata (第三方登录的)，最后是 placeholder
   const avatarUrl = profile?.avatar_url || user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
+
+  const handleSearch = (e: FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
 
 
   return (
@@ -99,17 +106,17 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
                 <div className="mt-4 border-t border-black/5 dark:border-white/5 pt-6">
                   {user ? (
                     <div className="flex flex-col gap-4">
-                      <div className="flex flex-col items-start gap-3 px-2 text-left">
-                        <div className="w-22 h-22 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 overflow-hidden border border-black/5 dark:border-white/5">
+                      <div className="flex items-center gap-4 px-2 text-left">
+                        <div className="w-12 h-12 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 overflow-hidden border border-black/5 dark:border-white/5">
                            {avatarUrl ? (
                              <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                            ) : (
-                             <User className="w-8 h-8 text-neutral-500" />
+                             <User className="w-5 h-5 text-neutral-500" />
                            )}
                         </div>
-                        <div className="flex flex-col min-w-0 w-full">
-                           <span className="text-lg font-bold truncate">{profile?.display_name || user.email?.split('@')[0]}</span>
-                           <span className="text-sm text-neutral-500 truncate">{user.email}</span>
+                        <div className="flex flex-col min-w-0 flex-1">
+                           <span className="text-sm font-bold truncate">{profile?.display_name || user.email?.split('@')[0]}</span>
+                           <span className="text-xs text-neutral-500 truncate">{user.email}</span>
                         </div>
                       </div>
 
@@ -197,29 +204,25 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
         </div>
 
         <div className="flex items-center gap-3 pr-8 md:pr-0">
-          <div className="flex items-center mr-2 relative">
-            <Search className="absolute left-3 w-4 h-4 text-neutral-400" />
+          <form onSubmit={handleSearch} className="flex items-center mr-2 relative">
+            <Search className="absolute left-3 w-4 h-4 text-neutral-400 pointer-events-none" />
             <input
-              type="text"
+              type="search"
+              enterKeyHint="search"
               placeholder="搜索..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && searchQuery.trim()) {
-                  router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-                }
-              }}
-              className="pl-9 pr-4 py-1.5 text-sm bg-neutral-100 dark:bg-neutral-900 border-none rounded-full w-32 focus:w-48 transition-all outline-none focus:ring-1 ring-black/10 dark:ring-white/10"
+              className="pl-9 pr-4 py-1.5 text-sm bg-neutral-100 dark:bg-neutral-900 border-none rounded-full w-32 focus:w-48 transition-all outline-none focus:ring-1 ring-black/10 dark:ring-white/10 appearance-none"
             />
-          </div>
+          </form>
 
           <ThemeToggle />
 
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="hidden md:flex rounded-full">
-                   <div className="w-6 h-6 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center overflow-hidden">
+                <Button variant="ghost" size="icon" className="hidden md:flex rounded-full w-11 h-11">
+                   <div className="w-9 h-9 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center overflow-hidden border border-black/5 dark:border-white/5">
                       {avatarUrl ? (
                         <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                       ) : (
