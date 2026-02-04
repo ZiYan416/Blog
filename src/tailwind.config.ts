@@ -15,6 +15,37 @@ const config = {
       },
     },
     extend: {
+      fontFamily: {
+        sans: [
+          "ui-sans-serif",
+          "system-ui",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "Segoe UI",
+          "Roboto",
+          "Helvetica Neue",
+          "Arial",
+          "PingFang SC",    // 苹果设备中文
+          "Hiragino Sans GB", // macOS 备用中文
+          "Microsoft YaHei",  // Windows 中文
+          "WenQuanYi Micro Hei", // Linux 中文
+          "sans-serif",
+          "Apple Color Emoji",
+          "Segoe UI Emoji",
+          "Segoe UI Symbol",
+          "Noto Color Emoji",
+        ],
+        serif: [
+          "ui-serif",
+          "Georgia",
+          "Cambria",
+          "Times New Roman",
+          "Times",
+          "Songti SC",      // macOS 宋体
+          "SimSun",         // Windows 宋体
+          "serif",
+        ],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
