@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Plus, User, Search, Settings, LayoutDashboard, FileText, Menu, ChevronUp, ChevronDown } from "lucide-react";
@@ -46,6 +46,13 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
   const user = clientUser || initialUser;
   // 优先使用 profile 中的头像 (用户上传的)，其次是 user_metadata (第三方登录的)，最后是 placeholder
   const avatarUrl = profile?.avatar_url || user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
+
+  const handleSearch = (e: FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
 
 
   return (
@@ -197,21 +204,17 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
         </div>
 
         <div className="flex items-center gap-3 pr-8 md:pr-0">
-          <div className="flex items-center mr-2 relative">
-            <Search className="absolute left-3 w-4 h-4 text-neutral-400" />
+          <form onSubmit={handleSearch} className="flex items-center mr-2 relative">
+            <Search className="absolute left-3 w-4 h-4 text-neutral-400 pointer-events-none" />
             <input
-              type="text"
+              type="search"
+              enterKeyHint="search"
               placeholder="搜索..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && searchQuery.trim()) {
-                  router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-                }
-              }}
-              className="pl-9 pr-4 py-1.5 text-sm bg-neutral-100 dark:bg-neutral-900 border-none rounded-full w-32 focus:w-48 transition-all outline-none focus:ring-1 ring-black/10 dark:ring-white/10"
+              className="pl-9 pr-4 py-1.5 text-sm bg-neutral-100 dark:bg-neutral-900 border-none rounded-full w-32 focus:w-48 transition-all outline-none focus:ring-1 ring-black/10 dark:ring-white/10 appearance-none"
             />
-          </div>
+          </form>
 
           <ThemeToggle />
 

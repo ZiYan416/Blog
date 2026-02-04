@@ -57,7 +57,7 @@ export default async function HomePage() {
           </Link>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6 md:gap-8">
+        <div className="grid md:grid-cols-2 gap-4 md:gap-8">
           {featuredPosts && featuredPosts.length > 0 ? (
             featuredPosts.map((post) => {
               // Try to find a primary tag to display
@@ -72,10 +72,10 @@ export default async function HomePage() {
               <Link
                 key={post.id}
                 href={`/post/${post.slug}`}
-                className="group relative block p-6 md:p-8 rounded-3xl bg-white dark:bg-neutral-900 border border-black/[0.03] dark:border-white/[0.03] hover:border-black/10 dark:hover:border-white/10 transition-all duration-500"
+                className="group relative block p-5 md:p-8 rounded-2xl md:rounded-3xl bg-white dark:bg-neutral-900 border border-black/[0.03] dark:border-white/[0.03] hover:border-black/10 dark:hover:border-white/10 transition-all duration-500"
               >
                 <div className="flex flex-col h-full">
-                  <div className="flex items-center gap-3 mb-4 md:mb-6">
+                  <div className="flex items-center gap-2.5 md:gap-3 mb-3 md:mb-6">
                     <span
                       className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5"
                       style={{
@@ -91,13 +91,13 @@ export default async function HomePage() {
                       {new Date(post.created_at).toLocaleDateString()}
                     </span>
                   </div>
-                  <h3 className="text-2xl font-bold mb-4 group-hover:translate-x-1 transition-transform duration-500 line-clamp-2">
+                  <h3 className="text-lg md:text-2xl font-bold mb-2 md:mb-4 group-hover:translate-x-1 transition-transform duration-500 line-clamp-2">
                     {post.title}
                   </h3>
-                  <p className="text-neutral-500 text-sm leading-relaxed mb-8 line-clamp-2">
+                  <p className="text-neutral-500 text-sm leading-relaxed mb-4 md:mb-8 line-clamp-2">
                     {post.excerpt || "暂无摘要..."}
                   </p>
-                  <div className="mt-auto flex items-center justify-between pt-6 border-t border-black/[0.03] dark:border-white/[0.03]">
+                  <div className="mt-auto flex items-center justify-between pt-4 md:pt-6 border-t border-black/[0.03] dark:border-white/[0.03]">
                     <span className="text-xs font-medium text-neutral-400">
                       {post.view_count || 0} views
                     </span>
@@ -127,8 +127,8 @@ export default async function HomePage() {
         <div className="container max-w-6xl mx-auto px-6">
           <div className="grid md:grid-cols-3 gap-8 md:gap-12 text-center md:text-left">
             <div>
-              <div className="w-10 h-10 bg-black dark:bg-white rounded-xl flex items-center justify-center mb-6 mx-auto md:mx-0">
-                <div className="w-2 h-2 bg-white dark:bg-black rounded-full" />
+              <div className="w-10 h-10 border border-black/10 dark:border-white/10 rounded-xl flex items-center justify-center mb-6 mx-auto md:mx-0">
+                <div className="w-3 h-3 border-2 border-black dark:border-white rounded-sm" />
               </div>
               <h4 className="font-semibold mb-3">极致阅读</h4>
               <p className="text-sm text-neutral-500 leading-relaxed">
@@ -145,8 +145,8 @@ export default async function HomePage() {
               </p>
             </div>
             <div>
-              <div className="w-10 h-10 border border-black/10 dark:border-white/10 rounded-xl flex items-center justify-center mb-6 mx-auto md:mx-0">
-                <div className="w-3 h-3 border-2 border-black dark:border-white rounded-sm" />
+              <div className="w-10 h-10 bg-black dark:bg-white rounded-xl flex items-center justify-center mb-6 mx-auto md:mx-0">
+                <div className="w-2 h-2 bg-white dark:bg-black rounded-full" />
               </div>
               <h4 className="font-semibold mb-3">暗黑模式</h4>
               <p className="text-sm text-neutral-500 leading-relaxed">
