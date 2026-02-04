@@ -23,13 +23,13 @@ export default async function TagsPage() {
   const tags = await getAllTags()
 
   return (
-    <div className="container max-w-6xl mx-auto px-6 pt-12 pb-20">
-      <div className="flex items-center justify-between mb-12">
+    <div className="container max-w-6xl mx-auto px-6 pt-8 md:pt-12 pb-12 md:pb-20">
+      <div className="flex items-center justify-between mb-8 md:mb-12">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight mb-4">
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2 md:mb-4">
             {isAdmin ? '标签管理' : '所有标签'}
           </h1>
-          <p className="text-neutral-500">
+          <p className="text-sm md:text-base text-neutral-500">
             {isAdmin
               ? '管理全站文章标签，支持增删改查。'
               : '通过标签探索更多感兴趣的内容。'}

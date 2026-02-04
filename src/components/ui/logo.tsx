@@ -2,26 +2,35 @@ import { cn } from "@/lib/utils";
 
 interface LogoProps {
   className?: string;
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
 }
 
 export function Logo({ className, size = "md" }: LogoProps) {
   const sizeClasses = {
-    sm: "w-6 h-6",
-    md: "w-8 h-8",
-    lg: "w-12 h-12",
+    xs: "w-5 h-5 text-xs",
+    sm: "w-6 h-6 text-sm",
+    md: "w-8 h-8 text-lg",
+    lg: "w-12 h-12 text-2xl",
+  };
+
+  const radiusClasses = {
+    xs: "rounded",
+    sm: "rounded-md",
+    md: "rounded-xl",
+    lg: "rounded-2xl",
   };
 
   const dotSizes = {
-    sm: "w-2 h-2",
-    md: "w-3 h-3",
-    lg: "w-4 h-4",
+    xs: "w-1 h-1 bottom-0.5 right-0.5",
+    sm: "w-1.5 h-1.5 bottom-0.5 right-0.5",
+    md: "w-2.5 h-2.5 bottom-1 right-1",
+    lg: "w-3.5 h-3.5 bottom-1.5 right-1.5",
   };
 
   return (
-    <div className={cn("relative flex items-center justify-center bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold font-serif tracking-tighter select-none", sizeClasses[size], className)}>
-      <span className="relative z-10 italic">B</span>
-      <div className={cn("absolute bottom-1 right-1 bg-white dark:bg-black rounded-full", dotSizes[size])} />
+    <div className={cn("relative flex items-center justify-center bg-black dark:bg-white text-white dark:text-black font-bold font-serif tracking-tighter select-none shadow-sm", sizeClasses[size], radiusClasses[size], className)}>
+      <span className="relative z-10 italic leading-none pt-[1px] pr-[1px]">B</span>
+      <div className={cn("absolute bg-white dark:bg-black rounded-full", dotSizes[size])} />
     </div>
   );
 }

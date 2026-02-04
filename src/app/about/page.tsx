@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <div className="flex-1 flex items-center justify-center p-4 md:p-8 animate-in fade-in zoom-in-95 duration-700 mt-20 mb-12">
+    <div className="flex-1 flex items-center justify-center p-4 md:p-8 animate-in fade-in zoom-in-95 duration-700 pt-8 md:pt-12 mb-12">
       <div className="w-full max-w-5xl h-auto md:h-[550px]">
         <div className="grid grid-cols-1 md:grid-cols-3 md:grid-rows-3 gap-4 md:gap-6 h-full">
 

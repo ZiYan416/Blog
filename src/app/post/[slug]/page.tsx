@@ -12,17 +12,23 @@ import { MarkdownRenderer } from '@/components/post/markdown-renderer'
 import { getTagStyles } from '@/lib/tag-color'
 import { TableOfContents } from '@/components/post/table-of-contents'
 
+import { BackToTop } from '@/components/ui/back-to-top'
+
+// Force dynamic rendering since we use searchParams or cookies implicitly via headers in layout
+export const dynamic = 'force-dynamic'
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>
 }): Promise<Metadata> {
   const { slug } = await params
+  const decodedSlug = decodeURIComponent(slug)
   const supabase = await createClient()
   const { data: post } = await supabase
     .from('posts')
     .select('title, slug, excerpt')
-    .eq('slug', slug)
+    .eq('slug', decodedSlug)
     .single()
 
   if (!post) {
@@ -43,16 +49,19 @@ export default async function PostPage({
   params: Promise<{ slug: string }>
 }) {
   const { slug } = await params
+  const decodedSlug = decodeURIComponent(slug)
   const supabase = await createClient()
 
   const { data: post, error } = await supabase
     .from('posts')
     .select('*')
-    .eq('slug', slug)
+    .eq('slug', decodedSlug)
     .single()
 
   if (error || !post) {
-    if (error) console.error('Supabase Error:', error)
+    if (error && error.code !== 'PGRST116') {
+      console.error('Supabase Error:', error)
+    }
     notFound()
   }
 
@@ -73,11 +82,11 @@ export default async function PostPage({
   const formattedDate = formatDateString(post.created_at)
 
   return (
-    <div className="min-h-screen bg-[#fafafa] dark:bg-[#050505] pb-20">
+    <div className="min-h-screen bg-[#fafafa] dark:bg-[#050505] pb-8 md:pb-24">
       <ViewCounter slug={post.slug} />
 
       {/* Hero Header */}
-      <div className="relative w-full h-[30vh] min-h-[250px] md:h-[35vh] md:min-h-[300px] bg-neutral-900 dark:bg-black overflow-hidden">
+      <div className="relative w-full h-[35vh] min-h-[300px] md:h-[40vh] md:min-h-[350px] bg-neutral-900 dark:bg-black overflow-hidden group">
         {post.cover_image && (
           <div className="absolute inset-0 opacity-60">
             <img src={post.cover_image} alt={post.title} className="w-full h-full object-cover" />
@@ -85,34 +94,35 @@ export default async function PostPage({
           </div>
         )}
 
-        <div className="container max-w-6xl mx-auto px-6 h-full flex flex-col justify-end pb-16 md:pb-24 relative z-10">
-          <Button variant="ghost" asChild className="absolute top-8 left-6 text-white/80 hover:text-white hover:bg-white/10 rounded-full">
-            <Link href="/post">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              返回列表
-            </Link>
-          </Button>
-
-          <div className="space-y-6">
+        <div className="container max-w-6xl mx-auto px-6 h-full flex flex-col justify-end md:justify-start md: pb-12 pt-12 relative z-10">
+          <div className="space-y-4 pt-16 md:pt-0">
+            <div className="absolute top-4 left-6 md:static z-30">
+              <Button variant="ghost" asChild className="text-white hover:text-white hover:bg-white/20 rounded-full h-10 w-auto px-4 gap-2 bg-black/50 backdrop-blur-md md:bg-transparent md:backdrop-blur-none">
+                <Link href="/post">
+                  <ArrowLeft className="w-4 h-4" />
+                  <span className="text-sm font-medium">返回列表</span>
+                </Link>
+              </Button>
+            </div>
             <h1 className="text-3xl md:text-5xl font-bold text-white leading-tight tracking-tight drop-shadow-sm">
               {post.title}
             </h1>
 
-            <div className="flex flex-wrap items-center gap-4 text-sm font-medium text-neutral-400">
-              <span className="bg-black/20 dark:bg-white/10 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 flex items-center gap-2 text-white/90">
-                <Calendar className="w-3.5 h-3.5" />
+            <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm font-medium text-neutral-400">
+              <span className="bg-black/20 dark:bg-white/10 backdrop-blur-md px-2 py-1 md:px-3 md:py-1 rounded-full border border-white/10 flex items-center gap-2 text-white/90">
+                <Calendar className="w-3 h-3 md:w-3.5 md:h-3.5" />
                 {formattedDate}
               </span>
-              <span className="bg-black/20 dark:bg-white/10 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 flex items-center gap-2 text-white/90">
-                <Clock className="w-3.5 h-3.5" />
+              <span className="bg-black/20 dark:bg-white/10 backdrop-blur-md px-2 py-1 md:px-3 md:py-1 rounded-full border border-white/10 flex items-center gap-2 text-white/90">
+                <Clock className="w-3 h-3 md:w-3.5 md:h-3.5" />
                 {readingTime}
               </span>
-              <span className="bg-black/20 dark:bg-white/10 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 flex items-center gap-2 text-white/90">
-                <Eye className="w-3.5 h-3.5" />
+              <span className="bg-black/20 dark:bg-white/10 backdrop-blur-md px-2 py-1 md:px-3 md:py-1 rounded-full border border-white/10 flex items-center gap-2 text-white/90">
+                <Eye className="w-3 h-3 md:w-3.5 md:h-3.5" />
                 {post.view_count || 0} 阅读
               </span>
               {!post.published && (
-                <span className="bg-amber-500/80 backdrop-blur-md px-3 py-1 rounded-full border border-amber-400/50 text-white font-bold uppercase tracking-wider">
+                <span className="bg-amber-500/80 backdrop-blur-md px-2 py-1 md:px-3 md:py-1 rounded-full border border-amber-400/50 text-white font-bold uppercase tracking-wider">
                   草稿预览
                 </span>
               )}
@@ -145,22 +155,54 @@ export default async function PostPage({
         </div>
       </div>
 
-      <div className="container max-w-6xl mx-auto px-4 md:px-6 -mt-8 md:-mt-12 relative z-20">
+      <div className="container max-w-6xl mx-auto px-0 md:px-6 -mt-4 md:-mt-16 relative z-20">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8">
           {/* Main Content */}
-          <div className="bg-white dark:bg-neutral-900 rounded-3xl p-6 md:p-10 shadow-xl border border-black/5 dark:border-white/5">
+          <div className="bg-white dark:bg-neutral-900 rounded-none md:rounded-3xl p-5 md:p-10 shadow-none md:shadow-xl border-none md:border border-black/5 dark:border-white/5 min-h-[50vh]">
+            {/* Mobile TOC - Card Style */}
+            <div className="lg:hidden mb-8 p-5 bg-neutral-50 dark:bg-neutral-800/50 rounded-2xl border border-black/5 dark:border-white/5" id="mobile-toc">
+              <h3 className="font-bold text-base mb-4 flex items-center gap-2 text-neutral-900 dark:text-neutral-100">
+                <div className="w-1 h-4 bg-amber-500 rounded-full"/>
+                目录
+              </h3>
+              <div className="max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                <TableOfContents content={post.content} showTitle={false} />
+              </div>
+            </div>
+
             <MarkdownRenderer content={post.content} />
+
+             {/* Mobile Author Card */}
+            <div className="lg:hidden mt-8 md:mt-12 mb-0 pt-8 border-t border-dashed border-black/10 dark:border-white/10">
+              <div className="bg-neutral-50 dark:bg-neutral-800/30 rounded-2xl p-6 flex flex-col items-center text-center border border-black/5 dark:border-white/5">
+                <h3 className="font-bold mb-6 text-sm uppercase tracking-widest text-neutral-700">About Author</h3>
+                 <div className="w-16 h-16 rounded-full bg-neutral-100 dark:bg-neutral-800 mb-4 overflow-hidden ring-4 ring-white dark:ring-neutral-900 shadow-sm">
+                  {author?.avatar_url ? (
+                    <img src={author.avatar_url} alt={author.display_name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-neutral-300">
+                      <User className="w-8 h-8" />
+                    </div>
+                  )}
+                </div>
+                <h4 className="font-bold text-lg mb-1">{author?.display_name || 'Anonymous'}</h4>
+                <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-4 font-medium">{author?.email}</p>
+                <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed italic max-w-xs mx-auto">
+                  "{author?.bio || '暂无个人简介'}"
+                </p>
+              </div>
+            </div>
 
             <CommentSection postId={post.id} initialComments={comments} />
           </div>
 
           {/* Sidebar */}
-          <div className="sticky top-24 h-[calc(100vh-8rem)] flex flex-col gap-6">
-            <div className="bg-white dark:bg-neutral-900 rounded-3xl shadow-sm border border-black/5 dark:border-white/5 min-h-0 flex flex-col overflow-hidden">
+          <div className="lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)] flex flex-col gap-6 px-4 md:px-0">
+            <div className="hidden lg:flex bg-white dark:bg-neutral-900 rounded-3xl shadow-sm border border-black/5 dark:border-white/5 min-h-0 flex-col overflow-hidden">
               <TableOfContents content={post.content} className="h-full p-4 pl-2 pr-2" />
             </div>
 
-            <div className="bg-white dark:bg-neutral-900 rounded-3xl p-6 shadow-sm border border-black/5 dark:border-white/5 flex-none">
+            <div className="hidden lg:block bg-white dark:bg-neutral-900 rounded-3xl p-6 shadow-sm border border-black/5 dark:border-white/5 flex-none">
               <h3 className="font-bold mb-6 text-sm uppercase tracking-widest text-neutral-400">About Author</h3>
               <div className="flex flex-col items-center text-center">
                 <div className="w-20 h-20 rounded-full bg-neutral-100 dark:bg-neutral-800 mb-4 overflow-hidden">
@@ -182,6 +224,7 @@ export default async function PostPage({
           </div>
         </div>
       </div>
+      <BackToTop targetId="mobile-toc" />
     </div>
   )
 }
