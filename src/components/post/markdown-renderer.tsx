@@ -15,13 +15,15 @@ interface MarkdownRendererProps {
 
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
   return (
-    <article className="prose prose-neutral dark:prose-invert max-w-none break-words prose-headings:font-bold prose-headings:tracking-tight prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-img:rounded-2xl prose-pre:bg-transparent prose-pre:p-0 prose-pre:border-none">
+    <article className="prose prose-neutral dark:prose-invert max-w-none break-words prose-headings:font-bold prose-headings:tracking-tight prose-headings:leading-tight prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg md:prose-h1:text-3xl md:prose-h2:text-2xl md:prose-h3:text-xl prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-img:rounded-2xl prose-pre:bg-transparent prose-pre:p-0 prose-pre:border-none">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeSlug, rehypeHighlight, rehypeRaw]}
         components={{
-          pre: PreBlock
-        }}
+          pre: PreBlock,
+          // Handle <t> tags (often unescaped generics like <T>)
+          t: ({ children }: any) => <span className="font-mono text-sm">&lt;T&gt;{children}</span>
+        } as any}
       >
         {content}
       </ReactMarkdown>
@@ -51,9 +53,9 @@ function PreBlock({ children, ...props }: any) {
   }
 
   return (
-    <div className="rounded-xl overflow-hidden my-6 border border-black/5 dark:border-white/5 shadow-sm bg-[#0d1117] group">
+    <div className="rounded-xl overflow-hidden my-4 md:my-6 border border-black/5 dark:border-white/5 shadow-sm bg-[#0d1117] group">
       {/* Mac-style Window Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-[#161b22] border-b border-white/5">
+      <div className="flex items-center justify-between px-3 md:px-4 py-2 md:py-3 bg-[#161b22] border-b border-white/5">
         <div className="flex items-center gap-2">
           <div className="flex gap-1.5">
             <div className="w-3 h-3 rounded-full bg-[#ff5f56] border border-[#e0443e] opacity-80 group-hover:opacity-100 transition-opacity" />
@@ -78,7 +80,7 @@ function PreBlock({ children, ...props }: any) {
         <pre
           {...props}
           ref={preRef}
-          className="!m-0 !p-4 !bg-transparent font-mono text-sm leading-relaxed whitespace-pre-wrap break-words"
+          className="!m-0 !p-3 md:!p-4 !bg-transparent font-mono text-sm leading-relaxed whitespace-pre overflow-x-auto md:whitespace-pre-wrap md:break-words md:overflow-visible"
         >
             {children}
         </pre>
