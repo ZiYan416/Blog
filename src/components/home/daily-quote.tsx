@@ -198,9 +198,40 @@ export function DailyQuote() {
   const [cardWidth, setCardWidth] = useState(280);
   const [lightConeBottomWidth, setLightConeBottomWidth] = useState(0);
   const cardRef = useRef<HTMLDivElement>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // 状态：存储分行后的结果
   const [quoteLines, setQuoteLines] = useState<string[]>([]);
+
+  useEffect(() => {
+    // 监听 html 元素的 class 变化以检测主题切换
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+          const isDark = document.documentElement.classList.contains('dark');
+          if (isDark) {
+            // 切换到暗色模式：触发展开动画
+            setTimeout(() => setIsExpanded(true), 100);
+          } else {
+            // 切换到亮色模式：重置为收拢状态
+            setIsExpanded(false);
+          }
+        }
+      });
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+
+    // 初始化检查：如果是暗色模式，直接展开
+    if (document.documentElement.classList.contains('dark')) {
+      setIsExpanded(true);
+    }
+
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     // 随机选择一句
@@ -329,8 +360,8 @@ export function DailyQuote() {
     const updateLightConeWidth = () => {
       const isMobile = window.innerWidth < 768;
       const bottomWidth = isMobile
-        ? window.innerWidth * 1.6     // 手机端：130% 视口宽度
-        : window.innerWidth * 0.8;    // PC端：50% 视口宽度
+        ? window.innerWidth * 1.8     // 手机端：180% 视口宽度
+        : window.innerWidth * 0.6;    // PC端：60% 视口宽度
       setLightConeBottomWidth(bottomWidth);
     };
 
@@ -397,57 +428,48 @@ export function DailyQuote() {
           <div
             style={{
               width: `${lightConeBottomWidth}px`,
-              height: '280px',
-              background: 'linear-gradient(180deg, rgba(251, 191, 36, 0.18) 0%, rgba(251, 191, 36, 0.12) 25%, rgba(251, 191, 36, 0.06) 50%, rgba(251, 191, 36, 0.02) 75%, transparent 100%)',
+              height: '300px', // 稍微加长一点
+              background: 'linear-gradient(180deg, rgba(251, 191, 36, 0.2) 0%, rgba(251, 191, 36, 0.1) 30%, transparent 100%)',
+              // 关键帧动画效果：isExpanded ? 扇形展开 : 底部收拢
               clipPath: (() => {
-                // 计算光锥顶部（卡片宽度）相对于底部宽度的位置
                 const topLeftPercent = lightConeBottomWidth > 0
                   ? ((lightConeBottomWidth - cardWidth) / 2) / lightConeBottomWidth * 100
-                  : 0;
+                  : 50;
                 const topRightPercent = 100 - topLeftPercent;
-                return `polygon(${topLeftPercent}% 0%, 0% 100%, 100% 100%, ${topRightPercent}% 0%)`;
+
+                // 展开状态：底部扩散到 0% 和 100%，顶部扩散到卡片两端
+                if (isExpanded) {
+                  return `polygon(${topLeftPercent}% 0%, 0% 100%, 100% 100%, ${topRightPercent}% 0%)`;
+                }
+                // 初始状态：顶部和底部都收拢在中心线 (完全闭合，像一束激光)
+                return `polygon(50% 0%, 50% 100%, 50% 100%, 50% 0%)`;
               })(),
-              filter: 'blur(50px)',
-              animation: 'lightSpread 2s ease-out 0.4s forwards',
-              opacity: 0,
-              transform: 'scale(0)',
+              // 添加遮罩以柔化边缘（消除硬边）
+              maskImage: 'linear-gradient(to right, transparent, black 15%, black 85%, transparent)',
+              WebkitMaskImage: 'linear-gradient(to right, transparent, black 15%, black 85%, transparent)',
+              filter: 'blur(40px)',
+              opacity: isExpanded ? 1 : 0,
+              transition: 'clip-path 1.5s ease-out, opacity 1s ease-in',
               transformOrigin: 'top center',
-              boxShadow: '0 0 60px 20px rgba(251, 191, 36, 0.08)',
             }}
           />
 
-          {/* Extra soft edge glow for smoothness */}
+          {/* Core Beam - Stronger center light */}
           <div
-            className="absolute top-0 left-1/2 -translate-x-1/2"
-            style={{
-              width: `${lightConeBottomWidth * 0.7}px`,
-              height: '240px',
-              background: 'radial-gradient(ellipse at top, rgba(251, 191, 36, 0.12) 0%, rgba(251, 191, 36, 0.06) 40%, transparent 100%)',
-              filter: 'blur(35px)',
-              animation: 'lightSpread 2s ease-out 0.4s forwards',
-              opacity: 0,
-              transform: 'scale(0)',
-              transformOrigin: 'top center',
-            }}
+             className="absolute top-0 left-1/2 -translate-x-1/2"
+             style={{
+               width: `${cardWidth * 0.8}px`, // 核心光束较窄
+               height: '250px',
+               background: 'linear-gradient(180deg, rgba(251, 191, 36, 0.15) 0%, transparent 80%)',
+               filter: 'blur(20px)',
+               opacity: isExpanded ? 1 : 0,
+               transition: 'opacity 1.5s ease-out 0.2s', // 稍微延迟显示核心
+             }}
           />
         </div>
       </div>
 
-      <style jsx global>{`
-        @keyframes lightSpread {
-          0% {
-            opacity: 0;
-            transform: scale(0);
-          }
-          40% {
-            opacity: 0.5;
-          }
-          100% {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-      `}</style>
+      {/* Remove global styles as we use inline transitions now */}
     </>
   );
 }
