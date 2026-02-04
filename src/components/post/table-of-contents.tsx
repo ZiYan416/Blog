@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 interface TOCProps {
   content: string
   className?: string
+  showTitle?: boolean
 }
 
 interface Header {
@@ -14,7 +15,7 @@ interface Header {
   level: number
 }
 
-export function TableOfContents({ content, className }: TOCProps) {
+export function TableOfContents({ content, className, showTitle = true }: TOCProps) {
   const [headers, setHeaders] = useState<Header[]>([])
   const [activeId, setActiveId] = useState<string>('')
 
@@ -68,7 +69,7 @@ export function TableOfContents({ content, className }: TOCProps) {
 
   return (
     <div className={cn("flex flex-col gap-4", className)}>
-      <h3 className="font-bold text-sm uppercase tracking-widest text-neutral-400 pl-3 shrink-0">目录</h3>
+      {showTitle && <h3 className="font-bold text-sm uppercase tracking-widest text-neutral-400 pl-3 shrink-0">目录</h3>}
 
       {headers.length > 0 ? (
         <ul className="space-y-1 overflow-y-auto pr-2 flex-1 min-h-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">

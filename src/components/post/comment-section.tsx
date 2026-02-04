@@ -65,7 +65,7 @@ export function CommentSection({ postId, initialComments }: CommentSectionProps)
   }
 
   return (
-    <div className="mt-16 pt-12 border-t border-black/5 dark:border-white/5" id="comments">
+    <div className="mt-8 md:mt-16 pt-8 md:pt-12 border-t border-black/5 dark:border-white/5" id="comments">
       <h3 className="text-2xl font-bold mb-8 flex items-center gap-2">
         <MessageSquare className="w-6 h-6" />
         评论 ({initialComments.length})

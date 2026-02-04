@@ -20,8 +20,10 @@ export default async function PostsPage() {
     isAdmin = profile?.is_admin || false;
   }
 
-  // 构建查询
-  let query = supabase.from('posts').select('*');
+  // 构建查询 - 优化性能，只查询列表需要的字段
+  let query = supabase
+    .from('posts')
+    .select('id, title, slug, excerpt, cover_image, published, featured, created_at, updated_at, tags, category, view_count, author_id');
 
   // 权限控制：
   // 1. 管理员：可以看到所有文章
@@ -38,12 +40,12 @@ export default async function PostsPage() {
   const { data: posts, error } = await query.order('created_at', { ascending: false });
 
   return (
-    <div className="container max-w-6xl mx-auto px-6 pt-12 pb-20">
-      <div className="flex items-center justify-between mb-12">
+    <div className="container max-w-6xl mx-auto px-6 pt-8 md:pt-12 pb-12 md:pb-20">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 md:mb-12">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight mb-4">全部文章</h1>
-          <p className="text-neutral-500">
-            {isAdmin ? '作为管理员，您可以查看所有文章（包括草稿）并进行管理。' : '阅读我的所有思考、技术分享与生活记录。'}
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2 md:mb-4">全部文章</h1>
+          <p className="text-sm md:text-base text-neutral-500">
+            {isAdmin ? '欢迎回来。这里是您的数字花园，随时准备记录下新的灵感与思考。' : '文字是凝固的时间。在这里，分享技术探索的足迹，也记录生活温暖的瞬间。'}
           </p>
         </div>
         {isAdmin && (
