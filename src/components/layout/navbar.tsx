@@ -99,17 +99,17 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
                 <div className="mt-4 border-t border-black/5 dark:border-white/5 pt-6">
                   {user ? (
                     <div className="flex flex-col gap-4">
-                      <div className="flex flex-col items-start gap-3 px-2 text-left">
-                        <div className="w-22 h-22 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 overflow-hidden border border-black/5 dark:border-white/5">
+                      <div className="flex items-center gap-4 px-2 text-left">
+                        <div className="w-12 h-12 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 overflow-hidden border border-black/5 dark:border-white/5">
                            {avatarUrl ? (
                              <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                            ) : (
-                             <User className="w-8 h-8 text-neutral-500" />
+                             <User className="w-5 h-5 text-neutral-500" />
                            )}
                         </div>
-                        <div className="flex flex-col min-w-0 w-full">
-                           <span className="text-lg font-bold truncate">{profile?.display_name || user.email?.split('@')[0]}</span>
-                           <span className="text-sm text-neutral-500 truncate">{user.email}</span>
+                        <div className="flex flex-col min-w-0 flex-1">
+                           <span className="text-sm font-bold truncate">{profile?.display_name || user.email?.split('@')[0]}</span>
+                           <span className="text-xs text-neutral-500 truncate">{user.email}</span>
                         </div>
                       </div>
 
@@ -218,8 +218,8 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="hidden md:flex rounded-full">
-                   <div className="w-6 h-6 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center overflow-hidden">
+                <Button variant="ghost" size="icon" className="hidden md:flex rounded-full w-11 h-11">
+                   <div className="w-9 h-9 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center overflow-hidden border border-black/5 dark:border-white/5">
                       {avatarUrl ? (
                         <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                       ) : (
