@@ -88,30 +88,42 @@ export default function PostCard({ post }: PostCardProps) {
 
   return (
     <div className={cn(
-      "group relative bg-white dark:bg-neutral-900 rounded-[2.5rem] border transition-all duration-500 flex flex-col h-full overflow-hidden",
+      "group relative bg-white dark:bg-neutral-900 rounded-2xl md:rounded-[2.5rem] border transition-all duration-500 flex flex-row md:flex-col overflow-hidden",
       post.featured
         ? "border-transparent shadow-[0_0_30px_-5px_rgba(245,158,11,0.15)] dark:shadow-[0_0_30px_-5px_rgba(245,158,11,0.1)]"
         : "border-black/[0.03] dark:border-white/[0.03] hover:border-black/10 dark:hover:border-white/10 hover:shadow-2xl hover:shadow-black/[0.02] dark:hover:shadow-white/[0.01]"
     )}>
       {/* Featured Border Animation - Using SVG for line drawing effect */}
       {post.featured && (
-        <div className="absolute inset-0 z-10 pointer-events-none rounded-[2.5rem]">
+        <div className="absolute inset-0 z-10 pointer-events-none rounded-2xl md:rounded-[2.5rem]">
           <svg className="w-full h-full" style={{ overflow: 'visible' }}>
             <motion.rect
               width="100%"
               height="100%"
               x="0"
               y="0"
-              rx="40" // Matches rounded-[2.5rem] (40px)
+              rx="16" // Mobile radius
+              className="md:hidden"
               fill="none"
-              stroke="#f59e0b" // amber-500
+              stroke="#f59e0b"
               strokeWidth="2"
               initial={{ pathLength: 0, opacity: 0 }}
               animate={{ pathLength: 1, opacity: 1 }}
-              transition={{
-                duration: 1.5,
-                ease: "easeInOut"
-              }}
+              transition={{ duration: 1.5, ease: "easeInOut" }}
+            />
+            <motion.rect
+              width="100%"
+              height="100%"
+              x="0"
+              y="0"
+              rx="40" // Desktop radius
+              className="hidden md:block"
+              fill="none"
+              stroke="#f59e0b"
+              strokeWidth="2"
+              initial={{ pathLength: 0, opacity: 0 }}
+              animate={{ pathLength: 1, opacity: 1 }}
+              transition={{ duration: 1.5, ease: "easeInOut" }}
             />
           </svg>
         </div>
@@ -128,7 +140,7 @@ export default function PostCard({ post }: PostCardProps) {
 
       {/* Admin Actions Overlay */}
       {isAdmin && (
-        <div className="absolute top-6 left-6 z-20 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
+        <div className="absolute top-4 left-4 md:top-6 md:left-6 z-20 flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 md:translate-y-2 md:group-hover:translate-y-0">
           <Link
             href={`/admin/posts/${post.id}/edit`}
             className="w-10 h-10 rounded-full bg-white/90 dark:bg-black/90 backdrop-blur-md flex items-center justify-center shadow-sm hover:scale-110 transition-transform text-black dark:text-white"
@@ -143,15 +155,18 @@ export default function PostCard({ post }: PostCardProps) {
 
       {/* Status Badge */}
       {!post.published && (
-        <div className="absolute top-6 right-6 z-20">
-          <span className="px-4 py-1.5 text-xs font-bold bg-amber-100/90 dark:bg-amber-900/60 text-amber-600 dark:text-amber-400 backdrop-blur-md rounded-full uppercase tracking-widest border border-amber-200/50 dark:border-amber-800/50 shadow-sm">
+        <div className="absolute top-4 right-4 md:top-6 md:right-6 z-20">
+          <span className="px-3 py-1 md:px-4 md:py-1.5 text-[10px] md:text-xs font-bold bg-amber-100/90 dark:bg-amber-900/60 text-amber-600 dark:text-amber-400 backdrop-blur-md rounded-full uppercase tracking-widest border border-amber-200/50 dark:border-amber-800/50 shadow-sm">
             草稿
           </span>
         </div>
       )}
 
-      {/* Image Section */}
-      <Link href={`/post/${post.slug || post.id}`} className="block relative aspect-[16/10] overflow-hidden">
+      {/* Image Section - Mobile: Right side (w-1/3), Desktop: Top (w-full) */}
+      <Link
+        href={`/post/${post.slug || post.id}`}
+        className="block relative w-[35%] md:w-full md:aspect-[16/10] shrink-0 order-last md:order-first border-l md:border-l-0 md:border-b border-black/5 dark:border-white/5"
+      >
         {post.cover_image ? (
           <img
             src={post.cover_image}
@@ -160,8 +175,8 @@ export default function PostCard({ post }: PostCardProps) {
           />
         ) : (
           <div className="w-full h-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-            <div className="w-12 h-12 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center">
-              <span className="text-2xl font-bold opacity-10">{post.title[0]}</span>
+            <div className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center">
+              <span className="text-lg md:text-2xl font-bold opacity-10">{post.title[0]}</span>
             </div>
           </div>
         )}
@@ -169,32 +184,34 @@ export default function PostCard({ post }: PostCardProps) {
       </Link>
 
       {/* Content Section */}
-      <div className="p-8 flex flex-col flex-1">
-        <div className="flex items-center gap-4 text-[11px] font-bold uppercase tracking-widest text-neutral-400 mb-4">
-          <span className="flex items-center gap-1.5">
-            <Calendar className="w-3 h-3" />
-            {formattedDate}
-          </span>
-          <span className="flex items-center gap-1.5">
-            <Eye className="w-3 h-3" />
-            {post.view_count || 0}
-          </span>
+      <div className="p-4 md:p-6 flex flex-col flex-1 min-w-0 justify-between">
+        <div>
+          <div className="flex items-center gap-3 text-[10px] md:text-[11px] font-bold uppercase tracking-widest text-neutral-400 mb-2 md:mb-4">
+            <span className="flex items-center gap-1.5">
+              <Calendar className="w-3 h-3" />
+              {formattedDate}
+            </span>
+            <span className="flex items-center gap-1.5 hidden sm:flex">
+              <Eye className="w-3 h-3" />
+              {post.view_count || 0}
+            </span>
+          </div>
+
+          <Link href={`/post/${post.slug || post.id}`} className="group/title inline-block w-full">
+            <h3 className="text-base md:text-2xl font-bold leading-snug md:leading-tight mb-2 md:mb-4 group-hover/title:text-neutral-600 dark:group-hover/title:text-neutral-400 transition-colors flex items-start gap-2 line-clamp-1 md:line-clamp-none md:flex">
+              {post.title}
+              <ArrowUpRight className="hidden md:block w-5 h-5 opacity-0 -translate-y-1 translate-x-1 group-hover/title:opacity-100 group-hover/title:translate-y-0 group-hover/title:translate-x-0 transition-all duration-300 shrink-0 mt-1" />
+            </h3>
+          </Link>
+
+          {post.excerpt && (
+            <p className="text-neutral-500 dark:text-neutral-400 text-xs md:text-sm leading-relaxed mb-3 md:mb-4 line-clamp-1 md:line-clamp-3">
+              {post.excerpt}
+            </p>
+          )}
         </div>
 
-        <Link href={`/post/${post.slug || post.id}`} className="group/title inline-block">
-          <h3 className="text-2xl font-bold leading-tight mb-4 group-hover/title:text-neutral-600 dark:group-hover/title:text-neutral-400 transition-colors flex items-start gap-2">
-            {post.title}
-            <ArrowUpRight className="w-5 h-5 opacity-0 -translate-y-1 translate-x-1 group-hover/title:opacity-100 group-hover/title:translate-y-0 group-hover/title:translate-x-0 transition-all duration-300 shrink-0 mt-1" />
-          </h3>
-        </Link>
-
-        {post.excerpt && (
-          <p className="text-neutral-500 dark:text-neutral-400 text-sm leading-relaxed mb-6 line-clamp-2">
-            {post.excerpt}
-          </p>
-        )}
-
-        <div className="mt-auto pt-6 border-t border-black/[0.03] dark:border-white/[0.03] flex items-center justify-between">
+        <div className="mt-auto pt-0 md:pt-6 md:border-t md:border-black/[0.03] md:dark:border-white/[0.03] flex items-center justify-between">
           <div className="flex flex-wrap gap-2">
             {tags.length > 0 ? (
               tags.slice(0, 2).map((tag: string) => {
@@ -203,7 +220,7 @@ export default function PostCard({ post }: PostCardProps) {
                   <span
                     key={tag}
                     className={cn(
-                      "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-colors",
+                      "px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[9px] md:text-[10px] font-bold uppercase tracking-wider transition-colors",
                     )}
                     style={{ backgroundColor: styles.backgroundColor, color: '#333' }}
                   >
@@ -212,7 +229,7 @@ export default function PostCard({ post }: PostCardProps) {
                 )
               })
             ) : (
-              <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-300 dark:text-neutral-700">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-300 dark:text-neutral-700 hidden md:inline-block">
                 Uncategorized
               </span>
             )}
@@ -220,7 +237,7 @@ export default function PostCard({ post }: PostCardProps) {
 
           <Link
             href={`/post/${post.slug || post.id}`}
-            className="text-[11px] font-bold uppercase tracking-widest hover:underline underline-offset-4"
+            className="text-[11px] font-bold uppercase tracking-widest hover:underline underline-offset-4 hidden md:inline-block"
           >
             Read More
           </Link>
