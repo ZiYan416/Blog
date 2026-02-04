@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { Sparkles } from "lucide-react";
 
 const quotes = [
@@ -198,6 +198,40 @@ export function DailyQuote() {
   const [cardWidth, setCardWidth] = useState(280);
   const [lightConeBottomWidth, setLightConeBottomWidth] = useState(0);
   const cardRef = useRef<HTMLDivElement>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // 状态：存储分行后的结果
+  const [quoteLines, setQuoteLines] = useState<string[]>([]);
+
+  useEffect(() => {
+    // 监听 html 元素的 class 变化以检测主题切换
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+          const isDark = document.documentElement.classList.contains('dark');
+          if (isDark) {
+            // 切换到暗色模式：触发展开动画
+            setTimeout(() => setIsExpanded(true), 100);
+          } else {
+            // 切换到亮色模式：重置为收拢状态
+            setIsExpanded(false);
+          }
+        }
+      });
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+
+    // 初始化检查：如果是暗色模式，直接展开
+    if (document.documentElement.classList.contains('dark')) {
+      setIsExpanded(true);
+    }
+
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     // 随机选择一句
@@ -205,13 +239,129 @@ export function DailyQuote() {
     setQuote(randomQuote);
   }, []);
 
+  // 智能分行逻辑：基于 Canvas 测量文本宽度，仅在超出容器宽度时分行
+  useEffect(() => {
+    if (!quote) return;
+
+    const checkAndSplitQuote = () => {
+      // 1. 获取当前容器允许的最大宽度
+      // 对应 JSX 中的 style={{ maxWidth: 'min(82vw, 560px)' }}
+      // 注意：这里需要考虑一定的安全边距，因为 Canvas 测量和 DOM 渲染可能有细微差异
+      const maxContainerWidth = Math.min(window.innerWidth * 0.82, 560);
+
+      // 2. 测量当前文本如果不换行的实际宽度
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      if (!context) {
+        setQuoteLines([quote]);
+        return;
+      }
+
+      // 设置字体参数需与 CSS 保持一致: text-xs (12px), font-medium (500), italic
+      // 字体族尽量涵盖常见的系统字体，顺序参考 Tailwind 默认配置
+      context.font = "italic 500 12px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
+
+      const textWidth = context.measureText(quote).width;
+
+      // 3. 判断逻辑：宽松触发分行
+      // 之前的阈值太严格 (maxContainerWidth - 10)，导致某些几乎填满一行的文本在浏览器中渲染时刚好溢出几个字
+      // 从而产生了“孤儿行”且未触发我们的智能分行。
+      // 现在的策略：如果文本宽度超过了容器宽度的 85%，或者距离满行不到 60px，就尝试去寻找更好的分行点，以求视觉平衡。
+      const isTight = textWidth > maxContainerWidth - 60 || textWidth > maxContainerWidth * 0.85;
+
+      if (!isTight) {
+        setQuoteLines([quote]);
+        return;
+      }
+
+      // 4. 需要分行：执行智能找分界点逻辑
+      const punctuations = ['，', '。', '；', '：', '！', '？', '、', '…', '—', ',', '.', ';', ':', '!', '?'];
+      const mid = quote.length / 2;
+      let bestSplitIndex = -1;
+      let minDistanceToMid = Infinity;
+
+      // 4.1 优先寻找中间附近的标点符号
+      for (let i = 0; i < quote.length; i++) {
+        if (punctuations.includes(quote[i])) {
+          const distance = Math.abs(i - mid);
+          // 只有当标点在 25% - 75% 区域内才考虑，避免孤儿行
+          if (distance < minDistanceToMid && i > quote.length * 0.25 && i < quote.length * 0.75) {
+            minDistanceToMid = distance;
+            bestSplitIndex = i;
+          }
+        }
+      }
+
+      // 4.2 如果没有合适的标点，尝试寻找中间附近的空格（针对英文）
+      if (bestSplitIndex === -1) {
+        const spaces = [' '];
+        for (let i = 0; i < quote.length; i++) {
+          if (spaces.includes(quote[i])) {
+            const distance = Math.abs(i - mid);
+            if (distance < minDistanceToMid && i > quote.length * 0.3 && i < quote.length * 0.7) {
+              minDistanceToMid = distance;
+              bestSplitIndex = i;
+            }
+          }
+        }
+      }
+
+      // 5. 执行分行
+      if (bestSplitIndex !== -1) {
+        // 找到了理想的标点或空格分割点
+        setQuoteLines([
+          quote.slice(0, bestSplitIndex + 1),
+          quote.slice(bestSplitIndex + 1).trim()
+        ]);
+      } else {
+        // 6. 兜底策略：如果没有找到合适的分割点（如长中文长句），强制在中间平衡分割
+        // 防止出现第一行很满，第二行只有几个字的“孤儿行”
+
+        let forcedSplitIndex = Math.floor(quote.length / 2);
+
+        // 如果是英文（包含空格），尝试寻找离中间最近的空格，避免截断单词
+        if (quote.includes(' ')) {
+           let minSpaceDist = Infinity;
+           let nearestSpaceIndex = -1;
+           for (let i = 0; i < quote.length; i++) {
+             if (quote[i] === ' ') {
+               const dist = Math.abs(i - mid);
+               if (dist < minSpaceDist) {
+                 minSpaceDist = dist;
+                 nearestSpaceIndex = i;
+               }
+             }
+           }
+
+           if (nearestSpaceIndex !== -1) {
+             setQuoteLines([
+                quote.slice(0, nearestSpaceIndex),
+                quote.slice(nearestSpaceIndex + 1).trim()
+             ]);
+             return;
+           }
+        }
+
+        // 纯中文或无空格长文，直接中间切开
+        setQuoteLines([
+          quote.slice(0, forcedSplitIndex),
+          quote.slice(forcedSplitIndex).trim()
+        ]);
+      }
+    };
+
+    checkAndSplitQuote();
+    window.addEventListener('resize', checkAndSplitQuote);
+    return () => window.removeEventListener('resize', checkAndSplitQuote);
+  }, [quote]);
+
   useEffect(() => {
     // 根据视口宽度计算光锥底部宽度
     const updateLightConeWidth = () => {
       const isMobile = window.innerWidth < 768;
       const bottomWidth = isMobile
-        ? window.innerWidth * 1.3     // 手机端：130% 视口宽度
-        : window.innerWidth * 0.5;    // PC端：50% 视口宽度
+        ? window.innerWidth * 1.8     // 手机端：180% 视口宽度
+        : window.innerWidth * 0.6;    // PC端：60% 视口宽度
       setLightConeBottomWidth(bottomWidth);
     };
 
@@ -220,30 +370,6 @@ export function DailyQuote() {
     return () => window.removeEventListener('resize', updateLightConeWidth);
   }, []);
 
-  // 智能插入换行提示：优先在标点处换行，平衡两行宽度
-  const formatQuoteWithBreaks = (text: string) => {
-    // 中文标点符号
-    const chinesePunctuations = ['，', '。', '；', '：', '！', '？', '、', '…', '—'];
-    // 英文标点符号
-    const englishPunctuations = [',', '.', ';', ':', '!', '?'];
-
-    let formatted = text;
-
-    // 1. 在中文标点后插入零宽空格，优先在此处换行
-    chinesePunctuations.forEach(punct => {
-      formatted = formatted.replace(new RegExp(punct, 'g'), `${punct}\u200B`);
-    });
-
-    // 2. 在英文标点+空格后插入零宽空格，优先在此处换行
-    // 匹配：标点 + 空格 → 标点 + 零宽空格 + 空格
-    englishPunctuations.forEach(punct => {
-      // 需要转义特殊字符（如 . 和 ?）
-      const escapedPunct = punct.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      formatted = formatted.replace(new RegExp(`${escapedPunct} `, 'g'), `${punct}\u200B `);
-    });
-
-    return formatted;
-  };
 
   useEffect(() => {
     // 使用 ResizeObserver 实时监听卡片宽度变化
@@ -284,14 +410,16 @@ export function DailyQuote() {
         <span
           className="text-xs font-medium text-neutral-600 dark:text-amber-100/90 italic text-center leading-relaxed"
           style={{
-            display: 'inline-block',        // 让span能够正确计算换行后的宽度
-            maxWidth: 'min(82vw, 560px)',   // 在文本上限制最大宽度（减去padding和icon的空间）
-            wordBreak: 'keep-all',          // 防止中文在字中间断开
-            overflowWrap: 'break-word',     // 长单词允许断开（后备方案）
-            textWrap: 'balance' as any,     // 平衡两行宽度（现代浏览器支持）
+            display: 'inline-block',
+            width: 'fit-content',
+            maxWidth: 'min(82vw, 560px)',
           }}
         >
-          {formatQuoteWithBreaks(quote)}
+          {quoteLines.map((line, i) => (
+            <span key={i} style={{ display: 'block' }}>
+              {line}
+            </span>
+          ))}
         </span>
 
         {/* Light Cone - Bottom width based on viewport, top matches card */}
@@ -300,57 +428,48 @@ export function DailyQuote() {
           <div
             style={{
               width: `${lightConeBottomWidth}px`,
-              height: '280px',
-              background: 'linear-gradient(180deg, rgba(251, 191, 36, 0.18) 0%, rgba(251, 191, 36, 0.12) 25%, rgba(251, 191, 36, 0.06) 50%, rgba(251, 191, 36, 0.02) 75%, transparent 100%)',
+              height: '300px', // 稍微加长一点
+              background: 'linear-gradient(180deg, rgba(251, 191, 36, 0.2) 0%, rgba(251, 191, 36, 0.1) 30%, transparent 100%)',
+              // 关键帧动画效果：isExpanded ? 扇形展开 : 底部收拢
               clipPath: (() => {
-                // 计算光锥顶部（卡片宽度）相对于底部宽度的位置
                 const topLeftPercent = lightConeBottomWidth > 0
                   ? ((lightConeBottomWidth - cardWidth) / 2) / lightConeBottomWidth * 100
-                  : 0;
+                  : 50;
                 const topRightPercent = 100 - topLeftPercent;
-                return `polygon(${topLeftPercent}% 0%, 0% 100%, 100% 100%, ${topRightPercent}% 0%)`;
+
+                // 展开状态：底部扩散到 0% 和 100%，顶部扩散到卡片两端
+                if (isExpanded) {
+                  return `polygon(${topLeftPercent}% 0%, 0% 100%, 100% 100%, ${topRightPercent}% 0%)`;
+                }
+                // 初始状态：顶部和底部都收拢在中心线 (完全闭合，像一束激光)
+                return `polygon(50% 0%, 50% 100%, 50% 100%, 50% 0%)`;
               })(),
-              filter: 'blur(50px)',
-              animation: 'lightSpread 2s ease-out 0.4s forwards',
-              opacity: 0,
-              transform: 'scale(0)',
+              // 添加遮罩以柔化边缘（消除硬边）
+              maskImage: 'linear-gradient(to right, transparent, black 15%, black 85%, transparent)',
+              WebkitMaskImage: 'linear-gradient(to right, transparent, black 15%, black 85%, transparent)',
+              filter: 'blur(40px)',
+              opacity: isExpanded ? 1 : 0,
+              transition: 'clip-path 1.5s ease-out, opacity 1s ease-in',
               transformOrigin: 'top center',
-              boxShadow: '0 0 60px 20px rgba(251, 191, 36, 0.08)',
             }}
           />
 
-          {/* Extra soft edge glow for smoothness */}
+          {/* Core Beam - Stronger center light */}
           <div
-            className="absolute top-0 left-1/2 -translate-x-1/2"
-            style={{
-              width: `${lightConeBottomWidth * 0.7}px`,
-              height: '240px',
-              background: 'radial-gradient(ellipse at top, rgba(251, 191, 36, 0.12) 0%, rgba(251, 191, 36, 0.06) 40%, transparent 100%)',
-              filter: 'blur(35px)',
-              animation: 'lightSpread 2s ease-out 0.4s forwards',
-              opacity: 0,
-              transform: 'scale(0)',
-              transformOrigin: 'top center',
-            }}
+             className="absolute top-0 left-1/2 -translate-x-1/2"
+             style={{
+               width: `${cardWidth * 0.8}px`, // 核心光束较窄
+               height: '250px',
+               background: 'linear-gradient(180deg, rgba(251, 191, 36, 0.15) 0%, transparent 80%)',
+               filter: 'blur(20px)',
+               opacity: isExpanded ? 1 : 0,
+               transition: 'opacity 1.5s ease-out 0.2s', // 稍微延迟显示核心
+             }}
           />
         </div>
       </div>
 
-      <style jsx global>{`
-        @keyframes lightSpread {
-          0% {
-            opacity: 0;
-            transform: scale(0);
-          }
-          40% {
-            opacity: 0.5;
-          }
-          100% {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-      `}</style>
+      {/* Remove global styles as we use inline transitions now */}
     </>
   );
 }
