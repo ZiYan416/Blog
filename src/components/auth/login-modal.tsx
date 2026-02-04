@@ -67,16 +67,39 @@ export function LoginModal({ children, redirectTo = '/dashboard' }: LoginModalPr
 
         if (error) throw error
 
+        const { data: { user } } = await supabase.auth.getUser()
+
+        // Get user display name (fallback to email part)
+        let displayName = user?.email?.split('@')[0] || '用户'
+
+        // Try to get profile display_name if available
+        if (user) {
+           const { data: profile } = await supabase
+             .from('profiles')
+             .select('display_name')
+             .eq('id', user.id)
+             .single()
+           if (profile?.display_name) {
+             displayName = profile.display_name
+           }
+        }
+
+        // Calculate time of day greeting
+        const hour = new Date().getHours()
+        let greeting = '你好'
+        if (hour >= 5 && hour < 12) greeting = '上午好'
+        else if (hour >= 12 && hour < 18) greeting = '下午好'
+        else if (hour >= 18 || hour < 5) greeting = '晚上好'
+
         toast({
           title: "登录成功",
-          description: "欢迎回来！",
+          description: `${greeting}，${displayName}`,
         })
         setIsOpen(false)
-        if (redirectTo) {
-          window.location.href = redirectTo
-        } else {
-          router.refresh()
-        }
+
+        // Refresh the current route instead of hard redirect
+        // allowing for "seamless" login feeling
+        router.refresh()
       } else {
         // Registration logic
         if (password.length < 6) {

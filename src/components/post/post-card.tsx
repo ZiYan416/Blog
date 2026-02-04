@@ -138,19 +138,34 @@ export default function PostCard({ post }: PostCardProps) {
         </div>
       )}
 
-      {/* Admin Actions Overlay */}
+      {/* Admin Actions Overlay - Desktop: Top Left, Mobile: Bottom Right (in content) */}
       {isAdmin && (
-        <div className="absolute top-4 left-4 md:top-6 md:left-6 z-20 flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 md:translate-y-2 md:group-hover:translate-y-0">
-          <Link
-            href={`/admin/posts/${post.id}/edit`}
-            className="w-10 h-10 rounded-full bg-white/90 dark:bg-black/90 backdrop-blur-md flex items-center justify-center shadow-sm hover:scale-110 transition-transform text-black dark:text-white"
-            title="编辑文章"
-          >
-            <Edit2 className="w-4 h-4" />
-          </Link>
-          <FeaturedToggle id={post.id} isFeatured={post.featured} />
-          <DeletePostButton slug={post.slug || post.id} title={post.title} />
-        </div>
+        <>
+          {/* Desktop Version */}
+          <div className="hidden md:flex absolute top-6 left-6 z-20 gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
+            <Link
+              href={`/admin/posts/${post.id}/edit`}
+              className="w-10 h-10 rounded-full bg-white/90 dark:bg-black/90 backdrop-blur-md flex items-center justify-center shadow-sm hover:scale-110 transition-transform text-black dark:text-white"
+              title="编辑文章"
+            >
+              <Edit2 className="w-4 h-4" />
+            </Link>
+            <FeaturedToggle id={post.id} isFeatured={post.featured} />
+            <DeletePostButton slug={post.slug || post.id} title={post.title} />
+          </div>
+
+          {/* Mobile Version - Inside Content Area */}
+          <div className="md:hidden absolute bottom-3 right-3 z-20 flex gap-2 origin-bottom-right">
+             <Link
+              href={`/admin/posts/${post.id}/edit`}
+              className="w-10 h-10 rounded-full bg-neutral-100/90 dark:bg-neutral-800/90 backdrop-blur-md flex items-center justify-center shadow-sm text-black dark:text-white"
+            >
+              <Edit2 className="w-4 h-4" />
+            </Link>
+            <FeaturedToggle id={post.id} isFeatured={post.featured} />
+            <DeletePostButton slug={post.slug || post.id} title={post.title} />
+          </div>
+        </>
       )}
 
       {/* Status Badge */}
