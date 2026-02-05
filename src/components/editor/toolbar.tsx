@@ -14,10 +14,20 @@ import {
   Eye,
   Pencil,
   Columns,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Settings
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { useState } from 'react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 export type ViewMode = 'source' | 'rich' | 'split'
 export type MarkdownAction = 'bold' | 'italic' | 'h1' | 'h2' | 'list' | 'ordered-list' | 'quote' | 'code' | 'code-block' | 'image' | 'link'
@@ -29,6 +39,7 @@ interface ToolbarProps {
 }
 
 export function Toolbar({ viewMode, onViewModeChange, onAction }: ToolbarProps) {
+  const [showAdvancedMode, setShowAdvancedMode] = useState(false)
   const items = [
     {
       icon: Bold,
@@ -88,8 +99,9 @@ export function Toolbar({ viewMode, onViewModeChange, onAction }: ToolbarProps) 
   ]
 
   return (
-    <div className="flex flex-wrap items-center gap-1 p-2 border-b border-black/5 dark:border-white/5 bg-neutral-50/50 dark:bg-neutral-800/50 sticky top-0 z-10 backdrop-blur-md">
-      <div className="flex items-center gap-1 border-r border-black/10 dark:border-white/10 pr-2 mr-2">
+    <div className="flex items-center gap-1 p-2 md:p-2 border-b border-black/5 dark:border-white/5 bg-neutral-50/50 dark:bg-neutral-800/50 sticky top-0 z-10 backdrop-blur-md overflow-x-auto">
+      {/* 桌面端视图模式切换 */}
+      <div className="hidden md:flex items-center gap-1 border-r border-black/10 dark:border-white/10 pr-2 mr-2 flex-shrink-0">
         {/* Mode Switcher Logic:
             If in Split mode, button can switch back to Source or Rich (Single).
             If in Single mode, button toggles between Source/Rich or switches to Split.
@@ -128,17 +140,58 @@ export function Toolbar({ viewMode, onViewModeChange, onAction }: ToolbarProps) 
         </Button>
       </div>
 
-      <div className="flex items-center gap-1">
+      {/* 移动端高级模式切换（下拉菜单） */}
+      <div className="md:hidden flex items-center border-r border-black/10 dark:border-white/10 pr-2 mr-2 flex-shrink-0">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-lg text-neutral-500 hover:bg-black/5 dark:hover:bg-white/5"
+              title="编辑器设置"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuLabel>编辑器模式</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => {
+                setShowAdvancedMode(false)
+                onViewModeChange('rich')
+              }}
+              className={viewMode === 'rich' && !showAdvancedMode ? "bg-black/5 dark:bg-white/5" : ""}
+            >
+              <Eye className="w-4 h-4 mr-2" />
+              富文本模式（推荐）
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                setShowAdvancedMode(true)
+                onViewModeChange('source')
+              }}
+              className={viewMode === 'source' && showAdvancedMode ? "bg-black/5 dark:bg-white/5" : ""}
+            >
+              <Code className="w-4 h-4 mr-2" />
+              源码模式（高级）
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* 工具栏按钮 - 移动端横向滚动 */}
+      <div className="flex items-center gap-1 flex-shrink-0">
         {items.map((item, index) => (
           <Button
             key={index}
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-lg text-neutral-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+            className="h-9 w-9 md:h-8 md:w-8 rounded-lg text-neutral-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex-shrink-0"
             onClick={item.action}
             title={item.title}
           >
-            <item.icon className="h-4 w-4" />
+            <item.icon className="h-4 w-4 md:h-4 md:w-4" />
           </Button>
         ))}
       </div>
