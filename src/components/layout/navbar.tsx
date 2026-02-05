@@ -71,7 +71,7 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
           {/* Mobile Menu */}
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden text-neutral-500 hover:text-black dark:hover:text-white">
+              <Button variant="ghost" size="icon" className="md:hidden text-neutral-500 hover:text-black dark:hover:text-white" suppressHydrationWarning>
                 <Menu className="w-5 h-5" />
               </Button>
             </SheetTrigger>
@@ -221,7 +221,7 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="hidden md:flex rounded-full w-11 h-11">
+                <Button variant="ghost" size="icon" className="hidden md:flex rounded-full w-11 h-11" suppressHydrationWarning>
                    <div className="w-9 h-9 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center overflow-hidden border border-black/5 dark:border-white/5">
                       {avatarUrl ? (
                         <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />

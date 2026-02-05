@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Inter, Noto_Serif_SC } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
@@ -6,6 +7,14 @@ import { Toaster } from "@/components/ui/toaster";
 import { SplashScreen } from "@/components/layout/splash-screen";
 import { createClient } from "@/lib/supabase/server";
 import { AuthProvider } from "@/components/providers/auth-provider";
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+const notoSerifSC = Noto_Serif_SC({
+  subsets: ["latin"],
+  weight: ["400", "500", "700", "900"],
+  variable: "--font-serif",
+  preload: false,
+});
 
 export const metadata: Metadata = {
   title: {
@@ -51,7 +60,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`min-h-screen bg-[#fafafa] dark:bg-[#050505] text-neutral-900 dark:text-neutral-100 selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black antialiased flex flex-col font-sans`}>
+      <body className={`min-h-screen bg-[#fafafa] dark:bg-[#050505] text-neutral-900 dark:text-neutral-100 selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black antialiased flex flex-col ${inter.variable} ${notoSerifSC.variable} font-sans`}>
         <SplashScreen />
         <AuthProvider initialUser={user} initialProfile={profile}>
           <Navbar user={user} />
