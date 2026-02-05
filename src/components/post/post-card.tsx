@@ -237,7 +237,7 @@ export default function PostCard({ post }: PostCardProps) {
                     className={cn(
                       "px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[9px] md:text-[10px] font-bold uppercase tracking-wider transition-colors",
                     )}
-                    style={{ backgroundColor: styles.backgroundColor, color: '#333' }}
+                    style={{ backgroundColor: styles.backgroundColor, color: styles.color }}
                   >
                     {tag}
                   </span>

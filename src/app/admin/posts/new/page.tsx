@@ -120,18 +120,12 @@ export default function NewPostPage() {
     }
 
     setLoading(true)
-    const supabase = createClient()
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('未登录')
-
       let finalTags = tags
       if (finalTags.length === 0) {
         finalTags = autoClassifyTags(content, availableTags)
       }
-
-      await ensureTagsExist(finalTags)
 
       const postData = {
         title,
@@ -139,16 +133,24 @@ export default function NewPostPage() {
         content,
         cover_image: coverImage || null,
         published,
-        author_id: user.id,
         excerpt: getPostExcerpt(content),
         tags: finalTags
       }
 
-      const { error } = await supabase
-        .from('posts')
-        .insert(postData)
+      // 调用 API 路由而不是直接使用 Supabase 客户端
+      const response = await fetch('/api/posts/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(postData)
+      })
 
-      if (error) throw error
+      const result = await response.json()
+
+      if (!response.ok || result.error) {
+        throw new Error(result.error || '创建文章失败')
+      }
 
       toast({
         title: published ? "发布成功" : "草稿已保存",

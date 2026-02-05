@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
 
   // Handle tags relationship
   if (tags && Array.isArray(tags)) {
+    console.log(`[CREATE] Processing ${tags.length} tags for post ${post.id}:`, tags)
     for (const tagName of tags) {
       // Check if tag exists
       const { data: existingTag } = await supabase
@@ -66,32 +67,61 @@ export async function POST(request: NextRequest) {
 
       if (!tagId) {
         // Create new tag
-        const tagSlug = generatePostSlug(tagName)
-        // Generate a random color for DB consistency, though UI uses client-side gen
-        const hue = Math.floor(Math.random() * 360)
-        const color = `hsl(${hue}, 80%, 75%)`
+        let tagSlug = generatePostSlug(tagName)
 
-        const { data: newTag } = await supabase
+        // Check if slug exists
+        const { data: existingSlugTag } = await supabase
+          .from('tags')
+          .select('id')
+          .eq('slug', tagSlug)
+          .maybeSingle()
+
+        if (existingSlugTag) {
+          // Slug collision! Append a random suffix
+          tagSlug = `${tagSlug}-${Math.floor(Math.random() * 1000)}`
+        }
+
+        const { data: newTag, error: createError } = await supabase
           .from('tags')
           .insert({
             name: tagName,
-            slug: tagSlug,
-            color
+            slug: tagSlug
+            // Note: color is handled dynamically on frontend, not stored in DB
           })
           .select('id')
           .single()
-        tagId = newTag?.id
+
+        if (createError) {
+           console.error("Failed to create tag:", tagName, createError)
+           // Try one last time to find it (race condition?)
+           const { data: retryTag } = await supabase
+             .from('tags')
+             .select('id')
+             .eq('name', tagName)
+             .maybeSingle()
+           tagId = retryTag?.id
+        } else {
+           tagId = newTag?.id
+        }
       }
 
       if (tagId) {
         // Insert relationship
-        // Ignore duplicate key errors if any
-        await supabase
+        console.log(`[CREATE] Inserting post_tags: post_id=${post.id}, tag_id=${tagId}, tag_name=${tagName}`)
+        const { error: insertError } = await supabase
           .from('post_tags')
           .upsert({
             post_id: post.id,
             tag_id: tagId
           }, { onConflict: 'post_id, tag_id' })
+
+        if (insertError) {
+          console.error(`[CREATE] Failed to insert post_tags for tag "${tagName}":`, insertError)
+        } else {
+          console.log(`[CREATE] Successfully inserted post_tags for tag "${tagName}"`)
+        }
+      } else {
+        console.warn(`[CREATE] Skipping tag "${tagName}" - no tagId available`)
       }
     }
   }

@@ -97,9 +97,21 @@ export async function PUT(
 
       if (!tagId) {
         // Create new tag
-        const tagSlug = generatePostSlug(tagName)
+        let tagSlug = generatePostSlug(tagName)
 
-        const { data: newTag } = await supabase
+        // Check if slug exists
+        const { data: existingSlugTag } = await supabase
+          .from('tags')
+          .select('id')
+          .eq('slug', tagSlug)
+          .maybeSingle()
+
+        if (existingSlugTag) {
+          // Slug collision! Append a random suffix
+          tagSlug = `${tagSlug}-${Math.floor(Math.random() * 1000)}`
+        }
+
+        const { data: newTag, error: createError } = await supabase
           .from('tags')
           .insert({
             name: tagName,
@@ -107,16 +119,37 @@ export async function PUT(
           })
           .select('id')
           .single()
-        tagId = newTag?.id
+
+        if (createError) {
+           console.error("Failed to create tag:", tagName, createError)
+           // Try one last time to find it (race condition?)
+           const { data: retryTag } = await supabase
+             .from('tags')
+             .select('id')
+             .eq('name', tagName)
+             .maybeSingle()
+           tagId = retryTag?.id
+        } else {
+           tagId = newTag?.id
+        }
       }
 
       if (tagId) {
-        await supabase
+        console.log(`[UPDATE] Inserting post_tags: post_id=${post.id}, tag_id=${tagId}, tag_name=${tagName}`)
+        const { error: insertError } = await supabase
           .from('post_tags')
           .insert({
             post_id: post.id,
             tag_id: tagId
           })
+
+        if (insertError) {
+          console.error(`[UPDATE] Failed to insert post_tags for tag "${tagName}":`, insertError)
+        } else {
+          console.log(`[UPDATE] Successfully inserted post_tags for tag "${tagName}"`)
+        }
+      } else {
+        console.warn(`[UPDATE] Skipping tag "${tagName}" - no tagId available`)
       }
     }
   }
