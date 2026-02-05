@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { SplashScreen } from "@/components/layout/splash-screen";
 import { createClient } from "@/lib/supabase/server";
 import { AuthProvider } from "@/components/providers/auth-provider";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 const notoSerifSC = Noto_Serif_SC({
@@ -70,6 +71,7 @@ export default async function RootLayout({
           <Footer />
           <Toaster />
         </AuthProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
