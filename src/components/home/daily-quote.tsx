@@ -257,9 +257,11 @@ export function DailyQuote() {
         return;
       }
 
-      // 设置字体参数需与 CSS 保持一致: text-xs (12px), font-medium (500), italic
-      // 字体族尽量涵盖常见的系统字体，顺序参考 Tailwind 默认配置
-      context.font = "italic 500 12px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
+      // 设置字体参数需与 CSS 保持一致: text-xs (12px), font-medium (500), italic, font-serif
+      // 字体族优先使用 CSS 变量中定义的字体，这里无法直接获取变量，只能尽可能匹配
+      // Tailwind 的 font-serif 栈: var(--font-serif), ui-serif, Georgia...
+      // 在 Canvas 中我们尽量模拟这个栈
+      context.font = "italic 500 12px 'Noto Serif SC', ui-serif, Georgia, Cambria, 'Times New Roman', Times, 'Songti SC', SimSun, serif";
 
       const textWidth = context.measureText(quote).width;
 
@@ -408,7 +410,7 @@ export function DailyQuote() {
       >
         <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0 dark:text-amber-300" />
         <span
-          className="text-xs font-medium text-neutral-600 dark:text-amber-100/90 italic text-center leading-relaxed"
+          className="text-xs font-medium font-serif text-neutral-600 dark:text-amber-100/90 italic text-center leading-relaxed"
           style={{
             display: 'inline-block',
             width: 'fit-content',

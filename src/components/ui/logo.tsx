@@ -28,8 +28,11 @@ export function Logo({ className, size = "md" }: LogoProps) {
   };
 
   return (
-    <div className={cn("relative flex items-center justify-center bg-black dark:bg-white text-white dark:text-black font-bold font-serif tracking-tighter select-none shadow-sm", sizeClasses[size], radiusClasses[size], className)}>
-      <span className="relative z-10 italic leading-none pt-[1px] pr-[1px]">B</span>
+    <div
+      className={cn("relative flex items-center justify-center bg-black dark:bg-white text-white dark:text-black font-bold tracking-tighter select-none shadow-sm", sizeClasses[size], radiusClasses[size], className)}
+      style={{ fontFamily: '"Times New Roman", Times, serif' }}
+    >
+      <span className="relative z-10 italic leading-none">B</span>
       <div className={cn("absolute bg-white dark:bg-black rounded-full", dotSizes[size])} />
     </div>
   );

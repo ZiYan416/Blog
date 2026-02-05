@@ -41,6 +41,18 @@ export function AuthProvider({
   const supabase = createClient();
 
   useEffect(() => {
+    // When router.refresh() updates server components, these props might change.
+    // We need to sync them to our local state to reflect changes (like avatar updates) immediately.
+    if (initialProfile) {
+        setState(prev => ({
+            ...prev,
+            profile: initialProfile,
+            isAdmin: initialProfile?.is_admin || false
+        }));
+    }
+  }, [initialProfile]);
+
+  useEffect(() => {
     // Sync with client-side events
     const {
       data: { subscription },
