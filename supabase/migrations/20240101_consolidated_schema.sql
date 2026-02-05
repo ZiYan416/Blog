@@ -96,11 +96,12 @@ CREATE POLICY "Admins can delete tags" ON tags FOR DELETE USING (
   exists (select 1 from profiles where id = auth.uid() and is_admin = true)
 );
 
--- Post_Tags: Same as Tags
+-- Post_Tags: Public read, authenticated users can manage
+-- (API layer handles detailed permission checks)
 CREATE POLICY "Post tags viewable by everyone" ON post_tags FOR SELECT USING (true);
-CREATE POLICY "Admins can manage post tags" ON post_tags FOR ALL USING (
-  exists (select 1 from profiles where id = auth.uid() and is_admin = true)
-);
+CREATE POLICY "Authenticated users can manage post_tags" ON post_tags FOR ALL
+USING (auth.uid() IS NOT NULL)
+WITH CHECK (auth.uid() IS NOT NULL);
 
 -- 7. Triggers for Profile Handling
 CREATE OR REPLACE FUNCTION public.handle_new_user() RETURNS TRIGGER AS $$

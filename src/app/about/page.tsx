@@ -11,12 +11,12 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <div className="flex-1 flex items-center justify-center p-4 md:p-8 animate-in fade-in zoom-in-95 duration-700 pt-8 md:pt-12 mb-12">
-      <div className="w-full max-w-5xl h-auto md:h-[550px]">
-        <div className="grid grid-cols-1 md:grid-cols-3 md:grid-rows-3 gap-4 md:gap-6 h-full">
+    <div className="flex-1 flex items-start md:items-center justify-center p-4 md:p-8 animate-in fade-in zoom-in-95 duration-700 min-h-[calc(100vh-12rem)]">
+      <div className="w-full max-w-5xl h-auto md:h-[600px] py-4 md:py-0">
+        <div className="grid grid-cols-2 md:grid-cols-3 md:grid-rows-3 gap-4 md:gap-6 h-full">
 
           {/* Card 1: Avatar & Profile - Left Column (Spans 2 Rows) */}
-          <div className="md:col-span-1 md:row-span-3 rounded-[2rem] bg-white dark:bg-neutral-900 border border-black/5 dark:border-white/5 p-8 flex flex-col items-center justify-center text-center shadow-sm hover:shadow-xl transition-all duration-500 group relative overflow-hidden min-h-[300px]">
+          <div className="order-1 md:order-none col-span-2 md:col-span-1 md:row-span-3 rounded-[2rem] bg-white dark:bg-neutral-900 border border-black/5 dark:border-white/5 p-8 flex flex-col items-center justify-center text-center shadow-sm hover:shadow-xl transition-all duration-500 group relative overflow-hidden min-h-[300px] md:min-h-0">
             <div className="absolute inset-0 bg-gradient-to-b from-neutral-50 to-transparent dark:from-neutral-800/50 dark:to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
             {/* Circular Avatar */}
@@ -33,7 +33,7 @@ export default function AboutPage() {
           </div>
 
           {/* Card 2: Blog Intro - Top Right (Spans 2 Cols) */}
-          <div className="md:col-span-2 md:row-span-2 rounded-[2rem] bg-neutral-900 dark:bg-white text-white dark:text-black p-8 py-10 md:py-8 flex flex-col justify-center relative overflow-hidden group border border-black/5 dark:border-white/5 min-h-[250px]">
+          <div className="order-2 md:order-none col-span-2 md:col-span-2 md:row-span-2 rounded-[2rem] bg-neutral-900 dark:bg-white text-white dark:text-black p-8 py-10 md:py-8 flex flex-col justify-center relative overflow-hidden group border border-black/5 dark:border-white/5 min-h-[250px] md:min-h-0">
             <div className="absolute top-0 right-0 -mr-10 -mt-10 w-48 h-48 bg-white/10 dark:bg-black/5 rounded-full blur-3xl transition-transform duration-700 group-hover:scale-150" />
 
             <div className="relative z-10 space-y-3">
@@ -60,7 +60,7 @@ export default function AboutPage() {
           <Link
             href="https://github.com"
             target="_blank"
-            className="md:col-span-1 md:row-span-1 group relative rounded-[2rem] bg-[#181717] dark:bg-white text-white dark:text-black p-6 flex flex-col justify-between overflow-hidden hover:scale-[1.02] transition-transform duration-300 border border-black/5 min-h-[160px]"
+            className="order-3 md:order-none col-span-1 md:col-span-1 md:row-span-1 group relative rounded-[2rem] bg-[#181717] dark:bg-white text-white dark:text-black p-6 flex flex-col justify-between overflow-hidden hover:scale-[1.02] transition-transform duration-300 border border-black/5 min-h-[160px] md:min-h-0"
           >
             <div className="flex justify-between items-start z-10">
               <Github className="w-8 h-8" />
@@ -75,7 +75,7 @@ export default function AboutPage() {
           {/* Card 4: Email - Bottom Right (1x1) */}
           <Link
             href="mailto:hello@example.com"
-            className="md:col-span-1 md:row-span-1 group relative rounded-[2rem] bg-blue-300 dark:bg-purple-300 text-white p-6 flex flex-col justify-between overflow-hidden hover:scale-[1.02] transition-transform duration-300 border border-black/5 min-h-[160px]"
+            className="order-4 md:order-none col-span-1 md:col-span-1 md:row-span-1 group relative rounded-[2rem] bg-blue-300 dark:bg-purple-300 text-white p-6 flex flex-col justify-between overflow-hidden hover:scale-[1.02] transition-transform duration-300 border border-black/5 min-h-[160px] md:min-h-0"
           >
              <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-white/20 rounded-full blur-2xl group-hover:bg-white/30 transition-colors" />
             <div className="flex justify-between items-start z-10">

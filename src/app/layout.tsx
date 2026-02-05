@@ -22,9 +22,6 @@ export const metadata: Metadata = {
     template: "%s | Blog"
   },
   description: "A modern personal blog built with Next.js and Supabase",
-  icons: {
-    icon: "/icon",
-  },
 };
 
 export const viewport: Viewport = {

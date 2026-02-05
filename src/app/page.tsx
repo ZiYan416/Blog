@@ -19,7 +19,7 @@ export default async function HomePage() {
     .limit(4);
 
   return (
-    <div className="flex flex-col items-center overflow-visible">
+    <div className="flex flex-col items-center w-full overflow-x-hidden">
       {/* Hero Section */}
       <section className="relative w-full mx-auto px-6 pt-12 md:pt-24 pb-16 text-center overflow-visible isolate">
         <div className="relative max-w-4xl mx-auto overflow-visible">
