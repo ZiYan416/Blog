@@ -79,10 +79,10 @@ export default async function TagPage({
   const styles = getTagStyles(tag.name)
 
   return (
-    <div className="min-h-screen bg-[#fafafa] dark:bg-[#050505] pb-20">
+    <div className="min-h-screen bg-[#fafafa] dark:bg-[#050505] pb-12 md:pb-20">
       {/* Header */}
       <div
-        className="relative overflow-hidden py-20 mb-12"
+        className="relative overflow-hidden py-12 md:py-20 mb-8 md:mb-12"
         style={{
           backgroundColor: styles.backgroundColor,
         }}
@@ -90,14 +90,14 @@ export default async function TagPage({
         <div className="absolute inset-0 bg-white/40 dark:bg-black/20 backdrop-blur-sm" />
 
         <div className="container relative z-10 max-w-6xl mx-auto px-6">
-          <div className="flex items-center gap-4 mb-4 opacity-80 text-neutral-800 dark:text-neutral-200">
-            <Tag className="w-6 h-6" />
-            <span className="text-lg font-bold tracking-widest uppercase">Tag Collection</span>
+          <div className="flex items-center gap-3 md:gap-4 mb-3 md:mb-4 opacity-80 text-neutral-800 dark:text-neutral-200">
+            <Tag className="w-5 h-5 md:w-6 md:h-6" />
+            <span className="text-base md:text-lg font-bold tracking-widest uppercase">Tag Collection</span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-black text-neutral-900 dark:text-white drop-shadow-sm">
+          <h1 className="text-3xl md:text-5xl font-black text-neutral-900 dark:text-white drop-shadow-sm">
             #{tag.name}
           </h1>
-          <p className="mt-4 text-neutral-700 dark:text-neutral-300 font-medium">
+          <p className="mt-3 md:mt-4 text-sm md:text-base text-neutral-700 dark:text-neutral-300 font-medium">
             共找到 {safePosts.length} 篇相关文章
           </p>
         </div>
