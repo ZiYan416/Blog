@@ -212,13 +212,13 @@ export default function EditPostPage({ params }: EditPostPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[#fafafa] dark:bg-[#050505] pb-20">
-      <div className="container max-w-6xl mx-auto px-6 py-12">
+    <div className="min-h-screen bg-[#fafafa] dark:bg-[#050505] pb-16 md:pb-20">
+      <div className="container max-w-6xl mx-auto px-4 sm:px-6 py-6 md:py-12">
         {/* Header Actions */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" asChild className="rounded-full hover:bg-black/5 dark:hover:bg-white/5">
+        <div className="mb-6 md:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0">
+              <Button variant="ghost" asChild className="rounded-full hover:bg-black/5 dark:hover:bg-white/5 h-9 md:h-10 flex-shrink-0">
                 <Link href="/post">
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   返回
@@ -226,18 +226,18 @@ export default function EditPostPage({ params }: EditPostPageProps) {
               </Button>
               <Button
                 variant="outline"
-                className="rounded-full border-black/10 dark:border-white/10"
+                className="rounded-full border-black/10 dark:border-white/10 h-9 md:h-10 flex-shrink-0"
                 onClick={() => setPreviewOpen(true)}
               >
                 <Eye className="w-4 h-4 mr-2" />
-                预览
+                <span className="hidden sm:inline">预览</span>
               </Button>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <Button
                 variant="outline"
-                className="rounded-full border-black/10 dark:border-white/10"
+                className="flex-1 sm:flex-none rounded-full border-black/10 dark:border-white/10 h-9 md:h-10"
                 onClick={() => handleUpdate(false)}
                 disabled={saving}
               >
@@ -245,7 +245,7 @@ export default function EditPostPage({ params }: EditPostPageProps) {
                 存草稿
               </Button>
               <Button
-                className="rounded-full bg-black dark:bg-white text-white dark:text-black hover:opacity-90 px-6"
+                className="flex-1 sm:flex-none rounded-full bg-black dark:bg-white text-white dark:text-black hover:opacity-90 px-4 sm:px-6 h-9 md:h-10"
                 onClick={() => handleUpdate(true)}
                 disabled={saving}
               >
@@ -256,25 +256,25 @@ export default function EditPostPage({ params }: EditPostPageProps) {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 md:gap-8 items-start">
           {/* Main Editor Area */}
-          <div className="flex flex-col gap-6">
-            <div className="space-y-4">
+          <div className="flex flex-col gap-4 md:gap-6">
+            <div className="space-y-3 md:space-y-4">
               <input
                 type="text"
                 placeholder="在此输入引人入胜的标题..."
-                className="w-full text-4xl font-bold bg-transparent border-none outline-none placeholder:text-neutral-300 dark:placeholder:text-neutral-800"
+                className="w-full text-2xl sm:text-3xl md:text-4xl font-bold bg-transparent border-none outline-none placeholder:text-neutral-300 dark:placeholder:text-neutral-800"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
               />
-              <div className="flex items-center gap-4 text-sm text-neutral-500">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-neutral-500">
                 <div className="flex items-center gap-1.5">
-                  <Type className="w-4 h-4" />
-                  <span>链接别名:</span>
+                  <Type className="w-4 h-4 flex-shrink-0" />
+                  <span className="whitespace-nowrap">链接别名:</span>
                   <input
                     type="text"
                     placeholder="文章链接别名 (如: my-first-post)"
-                    className="bg-transparent border-none outline-none focus:text-black dark:focus:text-white transition-colors"
+                    className="flex-1 bg-transparent border-none outline-none focus:text-black dark:focus:text-white transition-colors min-w-0"
                     value={slug}
                     onChange={(e) => setSlug(e.target.value)}
                   />
@@ -290,9 +290,9 @@ export default function EditPostPage({ params }: EditPostPageProps) {
           </div>
 
           {/* Sidebar Settings */}
-          <div className="sticky top-8 space-y-6">
-            <Card className="border-none shadow-sm bg-white dark:bg-neutral-900 rounded-3xl overflow-hidden">
-              <CardContent className="p-6">
+          <div className="lg:sticky lg:top-8 space-y-4 md:space-y-6">
+            <Card className="border-none shadow-sm bg-white dark:bg-neutral-900 rounded-2xl md:rounded-3xl overflow-hidden">
+              <CardContent className="p-4 md:p-6">
                 <TagSelector
                   value={tags}
                   onChange={setTags}
@@ -303,13 +303,13 @@ export default function EditPostPage({ params }: EditPostPageProps) {
               </CardContent>
             </Card>
 
-            <Card className="border-none shadow-sm bg-white dark:bg-neutral-900 rounded-3xl overflow-hidden">
-              <CardContent className="p-6">
-                <h3 className="font-bold mb-4 flex items-center gap-2">
+            <Card className="border-none shadow-sm bg-white dark:bg-neutral-900 rounded-2xl md:rounded-3xl overflow-hidden">
+              <CardContent className="p-4 md:p-6">
+                <h3 className="font-bold mb-3 md:mb-4 flex items-center gap-2 text-sm md:text-base">
                   <ImageIcon className="w-4 h-4" />
                   封面设置
                 </h3>
-                <div className="space-y-4">
+                <div className="space-y-3 md:space-y-4">
                   <input
                     type="file"
                     ref={coverInputRef}
