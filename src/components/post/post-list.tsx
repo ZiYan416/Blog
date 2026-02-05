@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useInView } from "react-intersection-observer"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { PostGrid } from "./post-grid"
@@ -30,6 +30,7 @@ interface PostListProps {
   error?: string
   header?: React.ReactNode
   extraActions?: React.ReactNode
+  alignment?: 'start' | 'between' | 'end'
 }
 
 export default function PostList({
@@ -42,7 +43,8 @@ export default function PostList({
   limit = 9,
   error,
   header,
-  extraActions
+  extraActions,
+  alignment = 'between'
 }: PostListProps) {
   // Use initialPosts if available, otherwise fall back to legacy posts
   const startPosts = initialPosts || legacyPosts || []
@@ -53,6 +55,9 @@ export default function PostList({
   const [total, setTotal] = useState(startTotal)
   const [loading, setLoading] = useState(false)
   const [sort, setSort] = useState<'latest' | 'oldest' | 'views'>('latest')
+
+  // AbortController ref to handle race conditions and unmounts
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   // For mobile infinite scroll
   const [hasMore, setHasMore] = useState(startPosts.length < startTotal)
@@ -70,6 +75,13 @@ export default function PostList({
     setPage(1)
     setHasMore(currentPosts.length < currentTotal)
     setSort('latest')
+
+    // Cleanup abort controller on unmount or deps change
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+    }
   }, [initialPosts, legacyPosts, initialTotal, category, tag, search])
 
   // Mobile Infinite Scroll Effect
@@ -80,7 +92,18 @@ export default function PostList({
   }, [inView, isDesktop, hasMore, loading])
 
   const loadMoreMobile = async () => {
+    // Prevent duplicate requests
+    if (loading) return
+
     setLoading(true)
+
+    // Cancel previous request if exists
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+    const controller = new AbortController()
+    abortControllerRef.current = controller
+
     const nextPage = page + 1
     const params = new URLSearchParams({
       page: nextPage.toString(),
@@ -93,7 +116,9 @@ export default function PostList({
     if (search) params.append("search", search)
 
     try {
-      const res = await fetch(`/api/posts?${params.toString()}`)
+      const res = await fetch(`/api/posts?${params.toString()}`, {
+        signal: controller.signal
+      })
       const data = await res.json()
 
       if (data.error) throw new Error(data.error)
@@ -111,14 +136,29 @@ export default function PostList({
       } else {
         setHasMore(false)
       }
-    } catch (error) {
+    } catch (error: any) {
+      // Ignore abort errors which happen on rapid navigation/filtering
+      if (error.name === 'AbortError' || error.message === 'The user aborted a request.') return
+
       console.error("Failed to load posts", error)
+      // Only set error state if it's not a cancellation
+      // setHasMore(false) // Optional: stop trying?
     } finally {
-      setLoading(false)
+      if (abortControllerRef.current === controller) {
+        abortControllerRef.current = null
+        setLoading(false)
+      }
     }
   }
 
   const handlePageChange = async (newPage: number) => {
+    // Cancel previous request if exists
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+    const controller = new AbortController()
+    abortControllerRef.current = controller
+
     setLoading(true)
     const params = new URLSearchParams({
       page: newPage.toString(),
@@ -131,7 +171,9 @@ export default function PostList({
     if (search) params.append("search", search)
 
     try {
-      const res = await fetch(`/api/posts?${params.toString()}`)
+      const res = await fetch(`/api/posts?${params.toString()}`, {
+        signal: controller.signal
+      })
       const data = await res.json()
 
       if (data.error) throw new Error(data.error)
@@ -144,15 +186,26 @@ export default function PostList({
 
       // Scroll to top of list
       window.scrollTo({ top: 0, behavior: 'smooth' })
-    } catch (error) {
+    } catch (error: any) {
+      if (error.name === 'AbortError') return
       console.error("Failed to load page", error)
     } finally {
-      setLoading(false)
+      if (abortControllerRef.current === controller) {
+        abortControllerRef.current = null
+        setLoading(false)
+      }
     }
   }
 
   const handleSortChange = async (newSort: 'latest' | 'oldest' | 'views') => {
     if (sort === newSort) return
+
+    // Cancel previous request if exists
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+    const controller = new AbortController()
+    abortControllerRef.current = controller
 
     setSort(newSort)
     setLoading(true)
@@ -168,7 +221,9 @@ export default function PostList({
     if (search) params.append("search", search)
 
     try {
-      const res = await fetch(`/api/posts?${params.toString()}`)
+      const res = await fetch(`/api/posts?${params.toString()}`, {
+        signal: controller.signal
+      })
       const data = await res.json()
 
       if (data.error) throw new Error(data.error)
@@ -181,10 +236,14 @@ export default function PostList({
 
       // Scroll to top of list
       window.scrollTo({ top: 0, behavior: 'smooth' })
-    } catch (error) {
+    } catch (error: any) {
+      if (error.name === 'AbortError') return
       console.error("Failed to load sorted posts", error)
     } finally {
-      setLoading(false)
+      if (abortControllerRef.current === controller) {
+        abortControllerRef.current = null
+        setLoading(false)
+      }
     }
   }
 
@@ -201,16 +260,24 @@ export default function PostList({
   return (
     <div className="space-y-8">
       {/* Header & Controls Section */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div className={cn(
+        "flex flex-col md:flex-row md:items-end gap-4",
+        alignment === 'between' ? "justify-between" :
+        alignment === 'start' ? "justify-start" : "justify-end"
+      )}>
         {header && (
-          <div className="w-full md:w-auto flex-1">
+          <div className={cn(
+            "w-full md:w-auto",
+            alignment === 'between' && "flex-1"
+          )}>
             {header}
           </div>
         )}
 
         <div className={cn(
           "flex items-center gap-3",
-          header ? "w-full md:w-auto" : "w-full justify-end"
+          (header && alignment === 'between') ? "w-full md:w-auto" :
+          (!header && alignment === 'between') ? "w-full justify-end" : ""
         )}>
           {/* Extra Actions (e.g., New Post Button) */}
           <div className="flex-1 md:flex-none flex">

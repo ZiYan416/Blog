@@ -30,6 +30,7 @@ export default function EditPostPage({ params }: EditPostPageProps) {
   const [uploading, setUploading] = useState(false)
   const [title, setTitle] = useState('')
   const [slug, setSlug] = useState('')
+  const [originalSlug, setOriginalSlug] = useState('')
   const [coverImage, setCoverImage] = useState('')
   const [content, setContent] = useState('')
   const [isPublished, setIsPublished] = useState(false)
@@ -71,6 +72,7 @@ export default function EditPostPage({ params }: EditPostPageProps) {
         if (data) {
           setTitle(data.title || '')
           setSlug(data.slug || '')
+          setOriginalSlug(data.slug || '')
           setCoverImage(data.cover_image || '')
           setContent(data.content || '')
           setIsPublished(data.published || false)
@@ -143,12 +145,8 @@ export default function EditPostPage({ params }: EditPostPageProps) {
     }
 
     setSaving(true)
-    const supabase = createClient()
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('未登录')
-
       // 智能标签处理
       let finalTags = tags
       if (finalTags.length === 0) {
@@ -159,12 +157,6 @@ export default function EditPostPage({ params }: EditPostPageProps) {
             description: `根据内容自动添加了标签: ${finalTags.join(', ')}`,
           })
         }
-      }
-
-      // 确保所有新标签都已存在于 tags 表中
-      const tagsSynced = await ensureTagsExist(finalTags)
-      if (!tagsSynced) {
-        console.warn('部分标签同步失败，但将继续保存文章')
       }
 
       const postData = {
@@ -178,12 +170,20 @@ export default function EditPostPage({ params }: EditPostPageProps) {
         tags: finalTags
       }
 
-      const { error } = await supabase
-        .from('posts')
-        .update(postData)
-        .eq('id', id)
+      // 使用 API 路由进行更新，以确保标签和其他关联数据正确处理
+      const response = await fetch(`/api/posts/${originalSlug}/update`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(postData)
+      })
 
-      if (error) throw error
+      const result = await response.json()
+
+      if (!response.ok || result.error) {
+        throw new Error(result.error || '更新文章失败')
+      }
 
       toast({
         title: "文章已更新",

@@ -25,58 +25,82 @@ export async function GET(request: NextRequest) {
     isAdmin = profile?.is_admin || false
   }
 
-  let query = supabase
-    .from('posts')
-    .select('*', { count: 'exact' })
+  let query = supabase.from('posts')
+
+  // Prepare the select statement
+  // We need to determine if we are filtering by a relational tag BEFORE starting the query chain
+  // or use a let variable for the query builder.
+
+  // Tag handling logic
+  let tagId: string | null = null
+  if (tag) {
+    const { data: tagData } = await supabase
+      .from('tags')
+      .select('id')
+      .eq('name', tag)
+      .maybeSingle()
+
+    if (tagData) {
+      tagId = tagData.id
+    }
+  }
+
+  // Build the main query
+  // If we have a valid tagId, we need to join with post_tags
+  const selectString = tagId ? '*, post_tags!inner(tag_id)' : '*'
+
+  // Start the query with the correct select statement
+  // Note: We assign it to 'postQuery' to avoid type issues with reassigning 'query'
+  let postQuery = query.select(selectString, { count: 'exact' })
 
   // Auth/Visibility logic
   if (!isAdmin) {
     if (user) {
-      // Logged in users see published posts OR their own drafts
-      query = query.or(`published.eq.true,author_id.eq.${user.id}`)
+      postQuery = postQuery.or(`published.eq.true,author_id.eq.${user.id}`)
     } else {
-      // Anonymous users only see published posts
-      query = query.eq('published', true)
+      postQuery = postQuery.eq('published', true)
     }
   }
-  // If admin, no filter applied (sees everything)
-
-  // Apply filters
 
   // Apply filters
   if (category) {
-    query = query.eq('category', category)
+    postQuery = postQuery.eq('category', category)
   }
 
   if (tag) {
-    query = query.contains('tags', [tag])
+    if (tagId) {
+      // 使用 post_tags 关联表进行精确查询
+      // selectString 已经在上面设置为 '*, post_tags!inner(tag_id)'
+      postQuery = postQuery.eq('post_tags.tag_id', tagId)
+    } else {
+      // 如果找不到 tagId (可能是旧数据)，回退到数组查询
+      postQuery = postQuery.contains('tags', [tag])
+    }
   }
 
   if (search) {
-    query = query.or(`title.ilike.%${search}%,content.ilike.%${search}%`)
+    postQuery = postQuery.or(`title.ilike.%${search}%,content.ilike.%${search}%`)
   }
 
   if (featured === 'true') {
-    query = query.eq('featured', true)
+    postQuery = postQuery.eq('featured', true)
   }
 
-  // Sort logic: Featured first, then by selected criteria
-  // Only apply featured sorting if we're not specifically filtering for it
+  // Sort logic
   if (featured !== 'true') {
-    query = query.order('featured', { ascending: false })
+    postQuery = postQuery.order('featured', { ascending: false })
   }
 
-  // Secondary sort based on user selection
   switch (sort) {
     case 'oldest':
-      query = query.order('created_at', { ascending: true })
+      postQuery = postQuery.order('created_at', { ascending: true })
       break
     case 'views':
-      query = query.order('view_count', { ascending: false })
+      postQuery = postQuery.order('view_count', { ascending: false })
       break
     case 'latest':
     default:
-      query = query.order('created_at', { ascending: false })
+      postQuery = postQuery.order('created_at', { ascending: false })
       break
   }
 
@@ -84,9 +108,9 @@ export async function GET(request: NextRequest) {
   const from = (page - 1) * limit
   const to = from + limit - 1
 
-  query = query.range(from, to)
+  postQuery = postQuery.range(from, to)
 
-  const { data, error, count } = await query
+  const { data, error, count } = await postQuery
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })

@@ -50,15 +50,15 @@ export default async function TagPage({
   const tag = await getTagName(slug)
   const supabase = await createClient()
 
-  // Update query to use the relationship
-  // We need to query posts that have a record in post_tags matching this tag_id
+  // 优先使用 post_tags 关联表查询
+  let query = supabase.from('posts')
   let posts: any[] = []
   let count = 0
 
   if (tag.id !== 'legacy') {
-    const { data, count: total } = await supabase
-      .from('posts')
-      .select('*, post_tags!inner(*)', { count: 'exact' })
+    // 使用关联表查询
+    const { data, count: total } = await query
+      .select('*, post_tags!inner(tag_id)', { count: 'exact' })
       .eq('post_tags.tag_id', tag.id)
       .eq('published', true)
       .order('featured', { ascending: false })
@@ -68,9 +68,8 @@ export default async function TagPage({
     posts = data || []
     count = total || 0
   } else {
-    // Legacy fallback using the contains operator on the tags array column
-    const { data, count: total } = await supabase
-      .from('posts')
+    // 降级策略：使用数组字段查询 (针对旧数据或未同步的标签)
+    const { data, count: total } = await query
       .select('*', { count: 'exact' })
       .contains('tags', [tag.name])
       .eq('published', true)
