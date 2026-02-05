@@ -261,8 +261,8 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
   }
 
   return (
-    <div className="w-full border border-black/5 dark:border-white/5 bg-white dark:bg-neutral-900 rounded-[2rem] transition-all focus-within:ring-1 ring-black/10 dark:ring-white/10 shadow-sm flex flex-col min-h-[calc(100vh-12rem)] relative">
-      <div className="sticky top-0 z-40 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm border-b border-black/5 dark:border-white/5 rounded-t-[2rem]">
+    <div className="w-full border border-black/5 dark:border-white/5 bg-white dark:bg-neutral-900 rounded-2xl md:rounded-[2rem] transition-all focus-within:ring-1 ring-black/10 dark:ring-white/10 shadow-sm flex flex-col min-h-[calc(100vh-12rem)] relative">
+      <div className="sticky top-0 z-40 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm border-b border-black/5 dark:border-white/5 rounded-t-2xl md:rounded-t-[2rem]">
          <Toolbar viewMode={viewMode} onViewModeChange={setViewMode} onAction={handleAction} />
       </div>
 
@@ -275,7 +275,7 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
           viewMode === 'split' ? "w-1/2 border-r border-black/5 dark:border-white/5" : "hidden"
         )}>
           <div
-            className="flex-1 min-h-0 p-4 sm:p-6 font-mono text-sm"
+            className="flex-1 min-h-0 p-3 sm:p-4 md:p-6 font-mono text-sm"
           >
             <div ref={containerRef} className="min-h-full">
               <CodeEditor
@@ -306,7 +306,7 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
           viewMode === 'split' ? "w-1/2" : "hidden"
         )}>
            <div
-            className="flex-1 min-h-0 p-4 sm:p-8"
+            className="flex-1 min-h-0 p-3 sm:p-4 md:p-8"
            >
              <RichEditor
                 content={content}
