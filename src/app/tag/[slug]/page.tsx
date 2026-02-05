@@ -53,26 +53,33 @@ export default async function TagPage({
   // Update query to use the relationship
   // We need to query posts that have a record in post_tags matching this tag_id
   let posts: any[] = []
+  let count = 0
 
   if (tag.id !== 'legacy') {
-    const { data } = await supabase
+    const { data, count: total } = await supabase
       .from('posts')
-      .select('*, post_tags!inner(*)')
+      .select('*, post_tags!inner(*)', { count: 'exact' })
       .eq('post_tags.tag_id', tag.id)
       .eq('published', true)
+      .order('featured', { ascending: false })
       .order('created_at', { ascending: false })
+      .range(0, 8)
 
     posts = data || []
+    count = total || 0
   } else {
     // Legacy fallback using the contains operator on the tags array column
-    const { data } = await supabase
+    const { data, count: total } = await supabase
       .from('posts')
-      .select('*')
+      .select('*', { count: 'exact' })
       .contains('tags', [tag.name])
       .eq('published', true)
+      .order('featured', { ascending: false })
       .order('created_at', { ascending: false })
+      .range(0, 8)
 
     posts = data || []
+    count = total || 0
   }
 
   const safePosts = posts || []
@@ -98,14 +105,18 @@ export default async function TagPage({
             #{tag.name}
           </h1>
           <p className="mt-3 md:mt-4 text-sm md:text-base text-neutral-700 dark:text-neutral-300 font-medium">
-            共找到 {safePosts.length} 篇相关文章
+            共找到 {count} 篇相关文章
           </p>
         </div>
       </div>
 
       {/* Content */}
       <div className="container max-w-6xl mx-auto px-6">
-        <PostList posts={safePosts} />
+        <PostList
+          initialPosts={safePosts}
+          initialTotal={count}
+          tag={tag.name}
+        />
       </div>
     </div>
   )

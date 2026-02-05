@@ -23,7 +23,7 @@ export default async function PostsPage() {
   // 构建查询 - 优化性能，只查询列表需要的字段
   let query = supabase
     .from('posts')
-    .select('id, title, slug, excerpt, cover_image, published, featured, created_at, updated_at, tags, category, view_count, author_id');
+    .select('id, title, slug, excerpt, cover_image, published, featured, created_at, updated_at, tags, category, view_count, author_id', { count: 'exact' });
 
   // 权限控制：
   // 1. 管理员：可以看到所有文章
@@ -37,30 +37,35 @@ export default async function PostsPage() {
     }
   }
 
-  const { data: posts, error } = await query.order('created_at', { ascending: false });
+  const { data: posts, error, count } = await query
+    .order('featured', { ascending: false })
+    .order('created_at', { ascending: false })
+    .range(0, 8);
 
   return (
     <div className="container max-w-6xl mx-auto px-6 pt-8 md:pt-12 pb-12 md:pb-20">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 md:mb-12">
-        <div>
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2 md:mb-4">全部文章</h1>
-          <p className="text-sm md:text-base text-neutral-500">
-            {isAdmin ? '欢迎回来。这里是您的数字花园，随时准备记录下新的灵感与思考。' : '文字是凝固的时间。在这里，分享技术探索的足迹，也记录生活温暖的瞬间。'}
-          </p>
-        </div>
-        {isAdmin && (
-          <Button asChild className="rounded-full bg-black dark:bg-white text-white dark:text-black hover:opacity-90">
-            <Link href="/admin/posts/new">
-              <Plus className="w-4 h-4 mr-2" />
-              新建文章
-            </Link>
-          </Button>
-        )}
-      </div>
-
       <PostList
-        posts={posts || []}
+        initialPosts={posts || []}
+        initialTotal={count || 0}
         error={error?.message}
+        header={
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2 md:mb-4">全部文章</h1>
+            <p className="text-sm md:text-base text-neutral-500">
+              {isAdmin ? '欢迎回来。这里是您的数字花园，随时准备记录下新的灵感与思考。' : '文字是凝固的时间。在这里，分享技术探索的足迹，也记录生活温暖的瞬间。'}
+            </p>
+          </div>
+        }
+        extraActions={
+          isAdmin && (
+            <Button asChild className="w-full md:w-auto rounded-full bg-black dark:bg-white text-white dark:text-black hover:opacity-90 h-9 md:h-10">
+              <Link href="/admin/posts/new">
+                <Plus className="w-4 h-4 mr-2" />
+                <span>新建文章</span>
+              </Link>
+            </Button>
+          )
+        }
       />
     </div>
   );
