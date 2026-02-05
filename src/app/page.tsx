@@ -25,12 +25,12 @@ export default async function HomePage() {
         <div className="relative max-w-4xl mx-auto overflow-visible">
           <DailyQuote />
 
-          <h1 className="text-4xl md:text-7xl font-bold tracking-tight mb-8 animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-200 dark:drop-shadow-[0_10px_35px_rgba(251,191,36,0.25)] transition-all">
+          <h1 className="text-4xl md:text-7xl font-black font-serif tracking-tight mb-8 animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-200 dark:drop-shadow-[0_10px_35px_rgba(251,191,36,0.25)] transition-all">
             有些故事<span className="inline-block -mr-[1em]">，</span><br />
             <span className="text-neutral-400 dark:text-neutral-600 dark:drop-shadow-none">值得被记录<span className="inline-block -mr-[1em]">。</span></span>
           </h1>
 
-          <p className="text-base md:text-xl text-neutral-500 max-w-2xl mx-auto mb-10 md:mb-12 leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
+          <p className="text-base md:text-xl text-neutral-500 font-serif max-w-2xl mx-auto mb-10 md:mb-12 leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
             用心感受生活的温度，用代码构建数字的花园。在这里，我们探讨技术，也分享生活<span className="inline-block -mr-[1em]">。</span>
           </p>
 

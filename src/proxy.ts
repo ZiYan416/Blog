@@ -39,9 +39,14 @@ export default async function proxy(request: NextRequest) {
   const isRegisterPage = request.nextUrl.pathname.startsWith('/register')
 
   if (isApi || isAuth || isDashboard || isProfile || isAdmin || isRegisterPage) {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    let user = null
+    try {
+      const { data } = await supabase.auth.getUser()
+      user = data.user
+    } catch (error) {
+      // 捕获 "Invalid Refresh Token" 等错误，防止中间件崩溃
+      // 视为未登录状态，后续逻辑会处理重定向
+    }
 
     // 1. 未登录用户访问受保护页面 -> 重定向到首页
     if (!user && (isDashboard || isProfile || isAdmin)) {

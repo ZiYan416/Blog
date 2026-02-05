@@ -5,7 +5,7 @@ import { Logo } from "@/components/ui/logo"
 
 export default function Loading() {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#fafafa] dark:bg-[#050505]">
+    <div className="fixed top-0 left-0 w-screen h-[100dvh] z-50 flex items-center justify-center bg-[#fafafa] dark:bg-[#050505] touch-none">
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{

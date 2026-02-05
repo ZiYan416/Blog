@@ -87,6 +87,20 @@ export default function ProfilePage() {
 
     setUploading(true);
     try {
+      // 0. 尝试删除旧头像以节省空间
+      if (profile.avatar_url && profile.avatar_url.includes('/avatars/')) {
+        try {
+          // 假设 URL 结构是 .../avatars/user_id/filename
+          const oldPath = profile.avatar_url.split('/avatars/')[1];
+          if (oldPath) {
+             await supabase.storage.from('avatars').remove([oldPath]);
+          }
+        } catch (e) {
+          console.error("Failed to delete old avatar:", e);
+          // 删除失败不阻止新头像上传
+        }
+      }
+
       const fileExt = file.name.split('.').pop();
       const filePath = `${user.id}/${Date.now()}.${fileExt}`;
 
