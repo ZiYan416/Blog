@@ -1,5 +1,6 @@
 -- 全新整合的数据库 Schema (Consolidated Schema)
--- 包含：Posts, Tags, Profiles, M2M Relations, RLS Policies, Triggers
+-- 包含：Posts, Tags, Profiles, Comments, M2M Relations, RLS Policies, Triggers
+-- 最后更新：2024-01-05 (整合 card_bg 和 handle_new_user 逻辑)
 
 -- 1. Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -11,6 +12,8 @@ CREATE TABLE IF NOT EXISTS profiles (
   display_name TEXT,
   avatar_url TEXT,
   bio TEXT,
+  website TEXT,
+  card_bg TEXT DEFAULT 'default', -- Added from 20240103
   is_admin BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -51,18 +54,32 @@ CREATE TABLE IF NOT EXISTS post_tags (
   PRIMARY KEY (post_id, tag_id)
 );
 
+-- 6. Comments Table (Linked to profiles)
+CREATE TABLE IF NOT EXISTS comments (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  post_id UUID REFERENCES posts(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE, -- Link to profile
+  content TEXT NOT NULL,
+  approved BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_post_tags_post_id ON post_tags(post_id);
 CREATE INDEX IF NOT EXISTS idx_post_tags_tag_id ON post_tags(tag_id);
 CREATE INDEX IF NOT EXISTS idx_posts_slug ON posts(slug);
 CREATE INDEX IF NOT EXISTS idx_posts_featured ON posts(featured);
 CREATE INDEX IF NOT EXISTS idx_tags_slug ON tags(slug);
+CREATE INDEX IF NOT EXISTS idx_comments_post_id ON comments(post_id);
+CREATE INDEX IF NOT EXISTS idx_comments_user_id ON comments(user_id);
 
--- 6. RLS Policies (Security)
+-- 7. RLS Policies (Security)
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tags ENABLE ROW LEVEL SECURITY;
 ALTER TABLE post_tags ENABLE ROW LEVEL SECURITY;
+ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
 
 -- Profiles: Public read, User edit own
 CREATE POLICY "Public profiles are viewable by everyone" ON profiles FOR SELECT USING (true);
@@ -97,17 +114,49 @@ CREATE POLICY "Admins can delete tags" ON tags FOR DELETE USING (
 );
 
 -- Post_Tags: Public read, authenticated users can manage
--- (API layer handles detailed permission checks)
 CREATE POLICY "Post tags viewable by everyone" ON post_tags FOR SELECT USING (true);
 CREATE POLICY "Authenticated users can manage post_tags" ON post_tags FOR ALL
 USING (auth.uid() IS NOT NULL)
 WITH CHECK (auth.uid() IS NOT NULL);
 
--- 7. Triggers for Profile Handling
+-- Comments RLS
+-- Everyone can read approved comments
+CREATE POLICY "Approved comments are viewable by everyone" ON comments FOR SELECT
+USING (approved = true);
+
+-- Authenticated users can insert comments (linked to their own id)
+CREATE POLICY "Users can insert their own comments" ON comments FOR INSERT
+WITH CHECK (auth.uid() = user_id);
+
+-- Admins can view all comments (even unapproved)
+CREATE POLICY "Admins can view all comments" ON comments FOR SELECT
+USING (
+  exists (select 1 from profiles where id = auth.uid() and is_admin = true)
+);
+
+-- Admins can update/delete comments
+CREATE POLICY "Admins can manage comments" ON comments FOR ALL
+USING (
+  exists (select 1 from profiles where id = auth.uid() and is_admin = true)
+);
+
+-- 8. Triggers for Profile Handling (Updated 2024-01-05)
 CREATE OR REPLACE FUNCTION public.handle_new_user() RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, email, display_name)
-  VALUES (new.id, new.email, split_part(new.email, '@', 1));
+  INSERT INTO public.profiles (
+    id,
+    email,
+    display_name,
+    card_bg,
+    avatar_url
+  )
+  VALUES (
+    new.id,
+    new.email,
+    split_part(new.email, '@', 1),
+    'default', -- Default card background
+    new.raw_user_meta_data->>'avatar_url' -- Support avatar from OAuth (GitHub, etc.)
+  );
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -117,7 +166,7 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
--- 8. Triggers for Tag Counts (The Robust Logic)
+-- 9. Triggers for Tag Counts
 CREATE OR REPLACE FUNCTION update_tag_counts() RETURNS TRIGGER AS $$
 BEGIN
   IF (TG_OP = 'DELETE') THEN
@@ -144,7 +193,7 @@ CREATE TRIGGER on_post_tags_change
 AFTER INSERT OR DELETE ON post_tags
 FOR EACH ROW EXECUTE FUNCTION update_tag_counts();
 
--- 9. Trigger for Post Publish Status Change
+-- 10. Trigger for Post Publish Status Change
 CREATE OR REPLACE FUNCTION update_tag_counts_on_post_change() RETURNS TRIGGER AS $$
 DECLARE
   tid UUID;
