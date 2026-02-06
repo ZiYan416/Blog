@@ -164,7 +164,7 @@ export function CommentSection({ postId, initialComments, currentUser }: Comment
                   </PopoverTrigger>
                   <PopoverContent className="w-80 p-0 overflow-hidden rounded-2xl border-none shadow-xl">
                     <div className={cn("relative h-24 transition-colors", bgStyle.class)}>
-                      <div className="absolute -bottom-6 left-6 w-16 h-16 rounded-full border-4 border-white dark:border-neutral-900 overflow-hidden bg-white dark:bg-black">
+                      <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-16 h-16 rounded-full border-4 border-white dark:border-neutral-900 overflow-hidden bg-white dark:bg-black">
                         {author.avatar_url ? (
                           <img src={author.avatar_url} alt={displayName} className="w-full h-full object-cover" />
                         ) : (
@@ -174,20 +174,22 @@ export function CommentSection({ postId, initialComments, currentUser }: Comment
                         )}
                       </div>
                     </div>
-                    <div className="pt-8 px-6 pb-6 bg-white dark:bg-neutral-900">
-                      <div className="flex items-baseline gap-2 mb-1 flex-wrap">
-                        <h4 className="font-bold text-lg text-neutral-900 dark:text-neutral-100">
+                    <div className="pt-14 px-8 pb-8 bg-white dark:bg-neutral-900 text-center">
+                      <div className="mb-0">
+                        <h4 className="font-bold text-lg mb-1 text-neutral-900 dark:text-neutral-100 truncate">
                           {displayName}
                         </h4>
                         {author.email && (
-                          <span className="text-xs text-neutral-400 font-normal break-all">
+                          <p className="text-xs text-neutral-500 truncate mb-6">
                             {author.email}
-                          </span>
+                          </p>
                         )}
                       </div>
-                      <p className="text-sm text-neutral-500 dark:text-neutral-400 italic line-clamp-2">
-                        "{author.bio || '这个人很懒，什么都没写'}"
-                      </p>
+                      <div className="pt-6 border-t border-black/5 dark:border-white/5">
+                        <p className="text-xs text-neutral-400 italic line-clamp-2">
+                          "{author.bio || '这个人很懒，什么都没写'}"
+                        </p>
+                      </div>
                     </div>
                   </PopoverContent>
                 </Popover>
