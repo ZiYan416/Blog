@@ -18,7 +18,7 @@ export function Footer() {
             <Link href="/about" className="hover:text-black dark:hover:text-white transition-colors">关于</Link>
             <Link href="/privacy" className="hover:text-black dark:hover:text-white transition-colors">隐私</Link>
             <Link
-              href="https://github.com"
+              href="https://github.com/ZiYan416/Blog"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-black dark:hover:text-white transition-colors"

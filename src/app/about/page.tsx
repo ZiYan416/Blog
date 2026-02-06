@@ -58,7 +58,7 @@ export default function AboutPage() {
 
           {/* Card 3: GitHub - Bottom Middle (1x1) */}
           <Link
-            href="https://github.com"
+            href="https://github.com/ZiYan416/Blog"
             target="_blank"
             className="order-3 md:order-none col-span-1 md:col-span-1 md:row-span-1 group relative rounded-[2rem] bg-[#181717] dark:bg-white text-white dark:text-black p-6 flex flex-col justify-between overflow-hidden hover:scale-[1.02] transition-transform duration-300 border border-black/5 min-h-[160px] md:min-h-0"
           >

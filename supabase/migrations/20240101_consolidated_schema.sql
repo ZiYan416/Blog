@@ -166,3 +166,42 @@ DROP TRIGGER IF EXISTS on_post_publish_change_tags ON posts;
 CREATE TRIGGER on_post_publish_change_tags
 AFTER UPDATE OF published ON posts
 FOR EACH ROW EXECUTE FUNCTION update_tag_counts_on_post_change();
+
+-- 10. Comments Table (New structure linked to profiles)
+CREATE TABLE IF NOT EXISTS comments (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  post_id UUID REFERENCES posts(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE, -- Link to profile
+  content TEXT NOT NULL,
+  approved BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Comments Indexes
+CREATE INDEX IF NOT EXISTS idx_comments_post_id ON comments(post_id);
+CREATE INDEX IF NOT EXISTS idx_comments_user_id ON comments(user_id);
+
+-- Comments RLS
+ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
+
+-- Everyone can read approved comments
+CREATE POLICY "Approved comments are viewable by everyone" ON comments FOR SELECT
+USING (approved = true);
+
+-- Authenticated users can insert comments (linked to their own id)
+CREATE POLICY "Users can insert their own comments" ON comments FOR INSERT
+WITH CHECK (auth.uid() = user_id);
+
+-- Admins can view all comments (even unapproved)
+CREATE POLICY "Admins can view all comments" ON comments FOR SELECT
+USING (
+  exists (select 1 from profiles where id = auth.uid() and is_admin = true)
+);
+
+-- Admins can update/delete comments
+CREATE POLICY "Admins can manage comments" ON comments FOR ALL
+USING (
+  exists (select 1 from profiles where id = auth.uid() and is_admin = true)
+);
+

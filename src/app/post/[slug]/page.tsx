@@ -76,6 +76,26 @@ export default async function PostPage({
 
   const comments = await getComments(post.id)
 
+  // 获取当前登录用户用于评论区预填充
+  const { data: { user } } = await supabase.auth.getUser()
+  let currentUser = null
+
+  if (user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single()
+
+    currentUser = {
+      id: user.id,
+      name: profile?.display_name || user.email?.split('@')[0] || 'User',
+      email: user.email || '',
+      avatar_url: profile?.avatar_url,
+      card_bg: profile?.card_bg || 'default'
+    }
+  }
+
   const tags = post.tags || extractTags(post.content)
 
   const readingTime = calculateReadingTime(post.content)
@@ -193,7 +213,11 @@ export default async function PostPage({
               </div>
             </div>
 
-            <CommentSection postId={post.id} initialComments={comments} />
+            <CommentSection
+              postId={post.id}
+              initialComments={comments}
+              currentUser={currentUser}
+            />
           </div>
 
           {/* Sidebar */}
