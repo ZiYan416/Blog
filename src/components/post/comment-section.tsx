@@ -9,29 +9,54 @@ import { useToast } from '@/hooks/use-toast'
 import { User, Clock, MessageSquare } from 'lucide-react'
 import { formatDateString } from '@/lib/markdown'
 import { useRouter } from 'next/navigation'
+import { getCardStyle } from '@/lib/card-styles'
+import { cn } from '@/lib/utils'
 
 interface CommentSectionProps {
   postId: string
   initialComments: Comment[]
+  currentUser?: {
+    id: string
+    name: string
+    email: string
+    avatar_url?: string | null
+    card_bg?: string | null
+  } | null
 }
 
-export function CommentSection({ postId, initialComments }: CommentSectionProps) {
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+
+export function CommentSection({ postId, initialComments, currentUser }: CommentSectionProps) {
   const [content, setContent] = useState('')
-  const [authorName, setAuthorName] = useState('')
-  const [authorEmail, setAuthorEmail] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!currentUser) {
+      toast({
+        title: "请先登录",
+        description: "登录后即可发表精彩评论",
+        action: (
+          <Button variant="outline" size="sm" onClick={() => router.push('/auth/login')}>
+            去登录
+          </Button>
+        ),
+      })
+      return
+    }
+
     if (!content.trim()) return
 
     setIsSubmitting(true)
     const formData = new FormData()
     formData.append('content', content)
-    formData.append('authorName', authorName)
-    formData.append('authorEmail', authorEmail)
 
     try {
       const result = await submitComment(postId, formData)
@@ -48,7 +73,6 @@ export function CommentSection({ postId, initialComments }: CommentSectionProps)
           description: result.approved ? "您的评论已显示。" : "您的评论正在等待审核，管理员通过后将显示。",
         })
         setContent('')
-        // 刷新页面以显示新评论（如果是自动通过的话）
         if (result.approved) {
           router.refresh()
         }
@@ -73,30 +97,40 @@ export function CommentSection({ postId, initialComments }: CommentSectionProps)
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="bg-neutral-50 dark:bg-neutral-900/50 p-6 rounded-3xl mb-12 border border-black/5 dark:border-white/5">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <Input
-            placeholder="昵称 (可选)"
-            value={authorName}
-            onChange={e => setAuthorName(e.target.value)}
-            className="bg-white dark:bg-black/20 border-transparent focus:border-black/10 dark:focus:border-white/10 rounded-xl"
-          />
-          <Input
-            placeholder="邮箱 (可选，保密)"
-            type="email"
-            value={authorEmail}
-            onChange={e => setAuthorEmail(e.target.value)}
-            className="bg-white dark:bg-black/20 border-transparent focus:border-black/10 dark:focus:border-white/10 rounded-xl"
-          />
-        </div>
+        {currentUser ? (
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden flex-shrink-0">
+              {currentUser.avatar_url ? (
+                <img src={currentUser.avatar_url} alt={currentUser.name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-neutral-400">
+                  <User className="w-5 h-5" />
+                </div>
+              )}
+            </div>
+            <div className="text-sm">
+              <span className="text-neutral-500 dark:text-neutral-400">正在以</span>
+              <span className="font-bold mx-1 text-black dark:text-white">{currentUser.name}</span>
+              <span className="text-neutral-500 dark:text-neutral-400">的身份发表评论</span>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3 mb-4 text-sm text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-950/30 px-4 py-2 rounded-xl border border-amber-200 dark:border-amber-900/50">
+            <User className="w-4 h-4" />
+            登录后即可发表评论
+          </div>
+        )}
+
         <Textarea
-          placeholder="写下您的想法..."
+          placeholder={currentUser ? "写下您的想法..." : "请先登录后再发表评论..."}
           className="bg-white dark:bg-black/20 border-transparent focus:border-black/10 dark:focus:border-white/10 min-h-[120px] rounded-xl mb-4 resize-none"
           value={content}
           onChange={e => setContent(e.target.value)}
           required
+          disabled={!currentUser}
         />
         <div className="flex justify-end">
-          <Button type="submit" disabled={isSubmitting} className="rounded-full px-6">
+          <Button type="submit" disabled={isSubmitting || !currentUser} className="rounded-full px-6">
             {isSubmitting ? '提交中...' : '发送评论'}
           </Button>
         </div>
@@ -109,25 +143,72 @@ export function CommentSection({ postId, initialComments }: CommentSectionProps)
             <p className="text-neutral-400">暂无评论，来坐沙发吧！</p>
           </div>
         ) : (
-          initialComments.map(comment => (
-            <div key={comment.id} className="flex gap-4 group">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 flex items-center justify-center shrink-0 text-blue-600 dark:text-blue-400 font-bold text-sm">
-                {comment.author_name ? comment.author_name[0].toUpperCase() : 'A'}
-              </div>
-              <div className="flex-1 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-sm">{comment.author_name || '匿名用户'}</span>
-                  <span className="text-xs text-neutral-400 flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {formatDateString(comment.created_at)}
-                  </span>
+          initialComments.map(comment => {
+            const author = comment.profiles || { display_name: '匿名用户', avatar_url: null, bio: null, email: null, card_bg: 'default' }
+            const displayName = author.display_name || '匿名用户'
+            const bgStyle = getCardStyle(author.card_bg)
+
+            return (
+              <div key={comment.id} className="flex gap-4 group">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <div className="w-10 h-10 rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center shrink-0 overflow-hidden cursor-pointer hover:ring-2 ring-black/5 transition-all">
+                      {author.avatar_url ? (
+                        <img src={author.avatar_url} alt={displayName} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-neutral-500 font-bold text-sm">
+                          {displayName[0].toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 p-0 overflow-hidden rounded-2xl border-none shadow-xl">
+                    <div className={cn("relative h-24 transition-colors", bgStyle.class)}>
+                      <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-16 h-16 rounded-full border-4 border-white dark:border-neutral-900 overflow-hidden bg-white dark:bg-black">
+                        {author.avatar_url ? (
+                          <img src={author.avatar_url} alt={displayName} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-neutral-100 dark:bg-neutral-800 text-neutral-400">
+                            <User className="w-8 h-8" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="pt-14 px-8 pb-8 bg-white dark:bg-neutral-900 text-center">
+                      <div className="mb-0">
+                        <h4 className="font-bold text-lg mb-1 text-neutral-900 dark:text-neutral-100 truncate">
+                          {displayName}
+                        </h4>
+                        {author.email && (
+                          <p className="text-xs text-neutral-500 truncate mb-6">
+                            {author.email}
+                          </p>
+                        )}
+                      </div>
+                      <div className="pt-6 border-t border-black/5 dark:border-white/5">
+                        <p className="text-xs text-neutral-400 italic line-clamp-2">
+                          "{author.bio || '这个人很懒，什么都没写'}"
+                        </p>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-sm text-neutral-900 dark:text-neutral-100">{displayName}</span>
+                    <span className="text-xs text-neutral-400 flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {formatDateString(comment.created_at)}
+                    </span>
+                  </div>
+                  <div className="text-neutral-600 dark:text-neutral-300 text-sm leading-relaxed bg-white dark:bg-neutral-900 p-4 rounded-r-2xl rounded-bl-2xl shadow-sm border border-black/5 dark:border-white/5">
+                    {comment.content}
+                  </div>
                 </div>
-                <div className="text-neutral-600 dark:text-neutral-300 text-sm leading-relaxed bg-white dark:bg-neutral-900 p-4 rounded-r-2xl rounded-bl-2xl shadow-sm border border-black/5 dark:border-white/5">
-                  {comment.content}
-                </div>
               </div>
-            </div>
-          ))
+            )
+          })
         )}
       </div>
     </div>

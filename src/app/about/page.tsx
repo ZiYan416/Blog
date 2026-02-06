@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <div className="flex-1 flex items-start md:items-center justify-center p-4 md:p-8 animate-in fade-in zoom-in-95 duration-700 min-h-[calc(100vh-12rem)]">
-      <div className="w-full max-w-5xl h-auto md:h-[600px] py-4 md:py-0">
+      <div className="w-full max-w-5xl h-auto md:h-[600px] py-0">
         <div className="grid grid-cols-2 md:grid-cols-3 md:grid-rows-3 gap-4 md:gap-6 h-full">
 
           {/* Card 1: Avatar & Profile - Left Column (Spans 2 Rows) */}
@@ -58,7 +58,7 @@ export default function AboutPage() {
 
           {/* Card 3: GitHub - Bottom Middle (1x1) */}
           <Link
-            href="https://github.com"
+            href="https://github.com/ZiYan416/Blog"
             target="_blank"
             className="order-3 md:order-none col-span-1 md:col-span-1 md:row-span-1 group relative rounded-[2rem] bg-[#181717] dark:bg-white text-white dark:text-black p-6 flex flex-col justify-between overflow-hidden hover:scale-[1.02] transition-transform duration-300 border border-black/5 min-h-[160px] md:min-h-0"
           >
