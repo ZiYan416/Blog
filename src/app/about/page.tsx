@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <div className="flex-1 flex items-start md:items-center justify-center p-4 md:p-8 animate-in fade-in zoom-in-95 duration-700 min-h-[calc(100vh-12rem)]">
-      <div className="w-full max-w-5xl h-auto md:h-[600px] py-4 md:py-0">
+      <div className="w-full max-w-5xl h-auto md:h-[600px] py-0">
         <div className="grid grid-cols-2 md:grid-cols-3 md:grid-rows-3 gap-4 md:gap-6 h-full">
 
           {/* Card 1: Avatar & Profile - Left Column (Spans 2 Rows) */}

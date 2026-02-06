@@ -122,15 +122,23 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
 
                       <nav className="flex flex-col gap-1">
                         <Link
-                          href="/dashboard"
+                          href="/profile"
                           onClick={() => setIsSheetOpen(false)}
                           className="px-4 py-3 text-sm font-medium text-neutral-500 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all flex items-center gap-3"
                         >
-                           <LayoutDashboard className="w-4 h-4" />
+                           <User className="w-4 h-4" />
                            个人中心
                         </Link>
                         {isAdmin && (
                           <>
+                            <Link
+                              href="/dashboard"
+                              onClick={() => setIsSheetOpen(false)}
+                              className="px-4 py-3 text-sm font-medium text-neutral-500 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all flex items-center gap-3"
+                            >
+                               <LayoutDashboard className="w-4 h-4" />
+                               管理面板
+                            </Link>
                             <Link
                               href="/admin/posts/new"
                               onClick={() => setIsSheetOpen(false)}
@@ -149,14 +157,6 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
                             </Link>
                           </>
                         )}
-                        <Link
-                          href="/profile"
-                          onClick={() => setIsSheetOpen(false)}
-                          className="px-4 py-3 text-sm font-medium text-neutral-500 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all flex items-center gap-3"
-                        >
-                           <Settings className="w-4 h-4" />
-                           账号设置
-                        </Link>
                       </nav>
 
                       <div className="px-2">
@@ -238,13 +238,19 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/dashboard" className="flex items-center w-full">
-                    <LayoutDashboard className="w-4 h-4 mr-2" />
+                  <Link href="/profile" className="flex items-center w-full">
+                    <User className="w-4 h-4 mr-2" />
                     个人中心
                   </Link>
                 </DropdownMenuItem>
                 {isAdmin && (
                   <>
+                    <DropdownMenuItem asChild>
+                      <Link href="/dashboard" className="flex items-center w-full">
+                        <LayoutDashboard className="w-4 h-4 mr-2" />
+                        管理面板
+                      </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link href="/admin/posts/new" className="flex items-center w-full">
                         <Plus className="w-4 h-4 mr-2" />
@@ -259,12 +265,6 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
                     </DropdownMenuItem>
                   </>
                 )}
-                <DropdownMenuItem asChild>
-                  <Link href="/profile" className="flex items-center w-full">
-                    <Settings className="w-4 h-4 mr-2" />
-                    账号设置
-                  </Link>
-                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <SignOutButton
