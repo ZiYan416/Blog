@@ -282,7 +282,7 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
             </LoginModal>
           )}
 
-          {user && (
+          {isAdmin && (
             <Button asChild className="hidden sm:flex rounded-full bg-black dark:bg-white text-white dark:text-black hover:opacity-90 transition-opacity px-6">
               <Link href="/admin/posts/new">
                 <Plus className="w-4 h-4 mr-1.5" />
