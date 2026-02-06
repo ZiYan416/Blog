@@ -3,10 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import {
   FileText,
-  BarChart3,
   ArrowRight,
-  MessageSquare,
-  Users,
   UserCircle,
   Plus
 } from 'lucide-react'
@@ -16,6 +13,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
 import { DataReports } from '@/components/dashboard/data-reports'
+import { UserManagementWrapper } from '@/components/dashboard/user-management-wrapper'
+import { AnalyticsTabsWrapper } from '@/components/dashboard/analytics-tabs-wrapper'
+import { StatsCard } from '@/components/dashboard/stats-card'
+import { getAnalyticsData } from '@/lib/analytics-helpers'
 
 export default async function DashboardPage() {
   const supabase = await createServerClient()
@@ -38,12 +39,6 @@ export default async function DashboardPage() {
   if (!isAdmin) {
     redirect('/profile')
   }
-
-  // Common stats
-  // const createdAt = new Date(user.created_at)
-  // const now = new Date()
-  // const diffTime = Math.abs(now.getTime() - createdAt.getTime())
-  // const activeDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
   // --- Admin Data Fetching ---
 
@@ -74,16 +69,79 @@ export default async function DashboardPage() {
     .from('comments')
     .select('*', { count: 'exact', head: true })
 
-  // 5. 获取用户总数
+  // 5. 获取用户总数和详细数据
   const { count: totalUsers } = await supabase
     .from('profiles')
     .select('*', { count: 'exact', head: true })
 
+  // 6. 获取所有用户详细信息（用于用户管理）
+  const { data: allUsers, error: usersError } = await supabase
+    .from('profiles')
+    .select('id, email, display_name, avatar_url, bio, is_admin, created_at, updated_at')
+    .order('created_at', { ascending: false })
+
+  console.log('[Dashboard] Fetched users:', allUsers?.length || 0, 'Error:', usersError)
+  if (allUsers && allUsers.length > 0) {
+    console.log('[Dashboard] First user sample:', JSON.stringify(allUsers[0]))
+  }
+
+  // 获取每个用户的评论数
+  const usersWithComments = await Promise.all(
+    (allUsers || []).map(async (userProfile) => {
+      const { count } = await supabase
+        .from('comments')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userProfile.id)
+
+      return {
+        ...userProfile,
+        last_sign_in_at: userProfile.updated_at, // 使用 updated_at 作为最后活跃时间
+        comment_count: count || 0,
+      }
+    })
+  )
+
+  console.log('[Dashboard] Users with comments:', usersWithComments.length)
+
+  // 7. 获取 Analytics 数据（支持多时间范围：7天/30天/全部）
+  const [data7d, data30d, dataAll] = await Promise.all([
+    getAnalyticsData(supabase, 7),
+    getAnalyticsData(supabase, 30),
+    getAnalyticsData(supabase, 'all'),
+  ])
+
+  // 默认使用 7 天数据用于顶部统计卡片
+  const analyticsData = data7d
+
   const stats = [
-    { label: '总文章', value: totalPosts || 0, icon: FileText, color: 'text-blue-500' },
-    { label: '总阅读', value: totalViews, icon: BarChart3, color: 'text-purple-500' },
-    { label: '总评论', value: totalComments || 0, icon: MessageSquare, color: 'text-green-500' },
-    { label: '注册用户', value: totalUsers || 0, icon: Users, color: 'text-orange-500' },
+    {
+      label: '总文章',
+      value: totalPosts || 0,
+      color: 'text-blue-500',
+      trend: analyticsData?.trends?.posts || { value: 0, isPositive: true },
+      sparklineData: analyticsData?.sparklineData?.posts,
+    },
+    {
+      label: '总阅读',
+      value: totalViews,
+      color: 'text-purple-500',
+      trend: analyticsData?.trends?.views || { value: 0, isPositive: true },
+      sparklineData: analyticsData?.sparklineData?.views,
+    },
+    {
+      label: '总评论',
+      value: totalComments || 0,
+      color: 'text-green-500',
+      trend: analyticsData?.trends?.comments || { value: 0, isPositive: true },
+      sparklineData: analyticsData?.sparklineData?.comments,
+    },
+    {
+      label: '注册用户',
+      value: totalUsers || 0,
+      color: 'text-orange-500',
+      trend: analyticsData?.trends?.users || { value: 0, isPositive: true },
+      sparklineData: analyticsData?.sparklineData?.users,
+    },
   ]
 
   return (
@@ -95,24 +153,58 @@ export default async function DashboardPage() {
         {/* Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-8 md:mb-12">
           {stats.map((stat) => (
-            <Card key={stat.label} className="border-none shadow-sm bg-white dark:bg-neutral-900 rounded-3xl overflow-hidden group">
-              <CardContent className="p-4 md:p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`p-2 rounded-xl bg-black/[0.03] dark:bg-white/[0.03] ${stat.color}`}>
-                    <stat.icon className="w-5 h-5" />
-                  </div>
-                  <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Live</span>
-                </div>
-                <div className="text-2xl font-bold mb-1">{stat.value}</div>
-                <div className="text-xs text-neutral-500 font-medium">{stat.label}</div>
-              </CardContent>
-            </Card>
+            <StatsCard
+              key={stat.label}
+              label={stat.label}
+              value={stat.value}
+              color={stat.color}
+              trend={stat.trend}
+              sparklineData={stat.sparklineData}
+            />
           ))}
         </div>
 
-        {/* Data Reports Section */}
-        <div className="mb-8">
-            <DataReports topPosts={topPosts} />
+        {/* Analytics Section with Time Range Selector */}
+        <AnalyticsTabsWrapper
+          data7d={{
+            stats: {
+              totalPosts: totalPosts || 0,
+              totalViews,
+              totalComments: totalComments || 0,
+              totalUsers: totalUsers || 0,
+            },
+            topPosts,
+            ...data7d,
+          }}
+          data30d={{
+            stats: {
+              totalPosts: totalPosts || 0,
+              totalViews,
+              totalComments: totalComments || 0,
+              totalUsers: totalUsers || 0,
+            },
+            topPosts,
+            ...data30d,
+          }}
+          dataAll={{
+            stats: {
+              totalPosts: totalPosts || 0,
+              totalViews,
+              totalComments: totalComments || 0,
+              totalUsers: totalUsers || 0,
+            },
+            topPosts,
+            ...dataAll,
+          }}
+        />
+
+        {/* User Management Section */}
+        <div className="mt-12 mb-8">
+          <h2 className="text-xl font-semibold mb-6">用户管理</h2>
+          <UserManagementWrapper
+            initialUsers={usersWithComments}
+            currentUserId={user.id}
+          />
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
