@@ -7,6 +7,7 @@ export async function DELETE(
 ) {
   const params = await props.params
   try {
+    const { id } = await params
     const supabase = await createServerClient()
 
     // 验证管理员权限
@@ -26,7 +27,7 @@ export async function DELETE(
     }
 
     // 防止删除自己
-    if (params.id === user.id) {
+    if (id === user.id) {
       return NextResponse.json(
         { error: '无法删除自己的账户' },
         { status: 400 }
@@ -37,7 +38,7 @@ export async function DELETE(
     const { error: profileError } = await supabase
       .from('profiles')
       .delete()
-      .eq('id', params.id)
+      .eq('id', id)
 
     if (profileError) throw profileError
 

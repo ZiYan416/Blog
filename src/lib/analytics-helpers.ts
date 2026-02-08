@@ -63,7 +63,7 @@ export async function getAnalyticsData(
     `)
     .order('created_at', { ascending: false })
 
-  if (days !== 'all') {
+  if (days !== 'all' && startDate) {
     commentQuery = commentQuery.gte('created_at', startDate.toISOString())
   }
 
