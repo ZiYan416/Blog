@@ -151,7 +151,7 @@ export function EngagementTab({
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {topCommenters.map((commenter, index) => (
+            {topCommentersData.map((commenter, index) => (
               <div
                 key={index}
                 className="flex items-center gap-4 p-4 rounded-2xl bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
