@@ -4,11 +4,10 @@ import Link from 'next/link'
 import { CheckCircle2, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-export default async function AuthCallbackPage({
-  searchParams,
-}: {
-  searchParams: { code?: string; error?: string; type?: string }
+export default async function AuthCallbackPage(props: {
+  searchParams: Promise<{ code?: string; error?: string; type?: string; next?: string }>
 }) {
+  const searchParams = await props.searchParams
   const supabase = await createClient()
   let userEmail = ''
 
@@ -20,6 +19,8 @@ export default async function AuthCallbackPage({
     }
     userEmail = data.user?.email || ''
   }
+
+  const next = searchParams.next || '/dashboard'
 
   // Handle error display
   if (searchParams.error) {
@@ -51,13 +52,13 @@ export default async function AuthCallbackPage({
           验证成功
         </h1>
         <p className="text-neutral-500 text-sm mb-10 leading-relaxed">
-          您的账号已成功激活。现在您可以返回登录页面并开始创作。
+          您的账号已成功激活。
         </p>
 
         <div className="space-y-3">
           <Button asChild className="w-full h-12 rounded-full bg-black dark:bg-white text-white dark:text-black hover:opacity-90 transition-all font-medium">
-            <Link href={`/login?email=${encodeURIComponent(userEmail)}`}>
-              返回登录页面
+            <Link href={next}>
+              返回
               <ArrowRight className="w-4 h-4 ml-2" />
             </Link>
           </Button>
