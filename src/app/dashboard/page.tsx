@@ -16,6 +16,7 @@ import { DataReports } from '@/components/dashboard/data-reports'
 import { UserManagementWrapper } from '@/components/dashboard/user-management-wrapper'
 import { AnalyticsTabsWrapper } from '@/components/dashboard/analytics-tabs-wrapper'
 import { StatsCard } from '@/components/dashboard/stats-card'
+import { TodoAlerts } from '@/components/dashboard/todo-alerts'
 import { getAnalyticsData } from '@/lib/analytics-helpers'
 
 export default async function DashboardPage() {
@@ -103,7 +104,22 @@ export default async function DashboardPage() {
 
   console.log('[Dashboard] Users with comments:', usersWithComments.length)
 
-  // 7. 获取 Analytics 数据（支持多时间范围：7天/30天/全部）
+  // 7. 获取待审核评论数量
+  const { count: pendingCommentsCount } = await supabase
+    .from('comments')
+    .select('*', { count: 'exact', head: true })
+    .eq('approved', false)
+
+  // 8. 获取超过 7 天未发布的草稿数量
+  const sevenDaysAgo = new Date()
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+  const { count: oldDraftsCount } = await supabase
+    .from('posts')
+    .select('*', { count: 'exact', head: true })
+    .eq('published', false)
+    .lt('created_at', sevenDaysAgo.toISOString())
+
+  // 9. 获取 Analytics 数据（支持多时间范围：7天/30天/全部）
   const [data7d, data30d, dataAll] = await Promise.all([
     getAnalyticsData(supabase, 7),
     getAnalyticsData(supabase, 30),
@@ -316,6 +332,12 @@ export default async function DashboardPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* 待办事项卡片 */}
+            <TodoAlerts
+              pendingCommentsCount={pendingCommentsCount || 0}
+              oldDraftsCount={oldDraftsCount || 0}
+            />
 
             <Card className="border-none bg-white dark:bg-neutral-900 rounded-3xl overflow-hidden shadow-sm">
               <CardHeader>
