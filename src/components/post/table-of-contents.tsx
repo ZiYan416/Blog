@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
+import GithubSlugger from 'github-slugger'
 
 interface TOCProps {
   content: string
@@ -19,20 +20,53 @@ export function TableOfContents({ content, className, showTitle = true }: TOCPro
   const [headers, setHeaders] = useState<Header[]>([])
   const [activeId, setActiveId] = useState<string>('')
 
+  // Custom smooth scroll function with easing
+  const smoothScrollTo = (targetPosition: number, duration: number = 800) => {
+    const startPosition = window.scrollY
+    const distance = targetPosition - startPosition
+    let startTime: number | null = null
+
+    const easeInOutCubic = (t: number): number => {
+      return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+    }
+
+    const animation = (currentTime: number) => {
+      if (startTime === null) startTime = currentTime
+      const timeElapsed = currentTime - startTime
+      const progress = Math.min(timeElapsed / duration, 1)
+      const ease = easeInOutCubic(progress)
+
+      window.scrollTo(0, startPosition + distance * ease)
+
+      if (timeElapsed < duration) {
+        requestAnimationFrame(animation)
+      }
+    }
+
+    requestAnimationFrame(animation)
+  }
+
   useEffect(() => {
-    // Regex to extract headers (matches # Header, ## Header, etc.)
+    // First, remove all code blocks (both fenced and indented) to avoid extracting headers from code
+    // Remove fenced code blocks (```...```)
+    let cleanContent = content.replace(/```[\s\S]*?```/g, '')
+
+    // Remove inline code (`...`)
+    cleanContent = cleanContent.replace(/`[^`\n]+`/g, '')
+
+    // Now extract headers from the cleaned content
     const regex = /^(#{1,4})\s+(.+)$/gm
     const found: Header[] = []
     let match
 
-    while ((match = regex.exec(content)) !== null) {
+    // Use GithubSlugger to generate IDs identical to rehype-slug
+    const slugger = new GithubSlugger()
+
+    while ((match = regex.exec(cleanContent)) !== null) {
       const level = match[1].length
       const text = match[2].trim()
-      // Generate ID compatible with rehype-slug (lowercase, remove special chars, replace spaces with dashes)
-      const id = text
-        .toLowerCase()
-        .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-') // Support Chinese characters
-        .replace(/^-+|-+$/g, '')
+      // Use github-slugger for consistent ID generation with rehype-slug
+      const id = slugger.slug(text)
 
       found.push({ id, text, level })
     }
@@ -94,10 +128,8 @@ export function TableOfContents({ content, className, showTitle = true }: TOCPro
                     const elementPosition = element.getBoundingClientRect().top + window.scrollY
                     const offsetPosition = elementPosition - offset
 
-                    window.scrollTo({
-                      top: offsetPosition,
-                      behavior: 'smooth'
-                    })
+                    // Use custom smooth scroll with easing animation
+                    smoothScrollTo(offsetPosition, 800)
                     setActiveId(header.id)
                   }
                 }}
