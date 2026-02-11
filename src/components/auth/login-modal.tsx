@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -45,8 +45,21 @@ export function LoginModal({ children, redirectTo = '/dashboard' }: LoginModalPr
       setMode('login')
       setEmail('')
       setPassword('')
+      setLoading(false) // Reset loading state
     }
   }
+
+  // Reset loading state when component visibility changes (handles browser back)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        setLoading(false)
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [])
 
   const toggleMode = () => {
     setMode(mode === 'login' ? 'register' : 'login')
