@@ -38,7 +38,7 @@ interface User {
   bio: string | null;
   is_admin: boolean;
   created_at: string;
-  last_sign_in_at: string | null;
+  updated_at: string | null;
   comment_count?: number;
 }
 
@@ -58,7 +58,7 @@ export function UserManagement({
   onDeleteUser,
 }: UserManagementProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState<"created_at" | "last_sign_in_at">("created_at");
+  const [sortBy, setSortBy] = useState<"created_at" | "updated_at">("created_at");
 
   // 过滤和排序用户
   const filteredUsers = users
@@ -79,8 +79,8 @@ export function UserManagement({
   const adminCount = users.filter((u) => u.is_admin).length;
   const activeUsers = users.filter(
     (u) =>
-      u.last_sign_in_at &&
-      new Date(u.last_sign_in_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      u.updated_at &&
+      new Date(u.updated_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
   ).length;
 
   return (
@@ -128,12 +128,12 @@ export function UserManagement({
             按加入时间
           </Button>
           <Button
-            variant={sortBy === "last_sign_in_at" ? "default" : "outline"}
-            onClick={() => setSortBy("last_sign_in_at")}
+            variant={sortBy === "updated_at" ? "default" : "outline"}
+            onClick={() => setSortBy("updated_at")}
             className="rounded-full"
             size="sm"
           >
-            按活跃时间
+            按最后活跃时间
           </Button>
         </div>
       </div>
@@ -205,8 +205,8 @@ export function UserManagement({
 
                   {/* 最后活跃 */}
                   <TableCell className="text-sm text-neutral-600 dark:text-neutral-400">
-                    {user.last_sign_in_at
-                      ? formatDistanceToNow(new Date(user.last_sign_in_at), {
+                    {user.updated_at
+                      ? formatDistanceToNow(new Date(user.updated_at), {
                           addSuffix: true,
                           locale: zhCN,
                         })
