@@ -5,15 +5,54 @@ import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import rehypeRaw from 'rehype-raw'
 import rehypeSlug from 'rehype-slug'
-import 'highlight.js/styles/github-dark.css'
 import { Check, Copy } from 'lucide-react'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 interface MarkdownRendererProps {
   content: string
 }
 
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
+  // Load appropriate highlight.js theme based on system theme
+  useEffect(() => {
+    const loadTheme = () => {
+      const isDark = document.documentElement.classList.contains('dark')
+      const themeLink = document.getElementById('highlight-theme') as HTMLLinkElement
+
+      if (themeLink) {
+        themeLink.href = isDark
+          ? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css'
+          : 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-light.min.css'
+      } else {
+        const link = document.createElement('link')
+        link.id = 'highlight-theme'
+        link.rel = 'stylesheet'
+        link.href = isDark
+          ? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css'
+          : 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-light.min.css'
+        document.head.appendChild(link)
+      }
+    }
+
+    loadTheme()
+
+    // Watch for theme changes
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          loadTheme()
+        }
+      })
+    })
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    })
+
+    return () => observer.disconnect()
+  }, [])
+
   return (
     <article className="prose prose-neutral dark:prose-invert max-w-none break-words prose-headings:font-bold prose-headings:tracking-tight prose-headings:leading-tight prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg md:prose-h1:text-3xl md:prose-h2:text-2xl md:prose-h3:text-xl prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-img:rounded-2xl prose-pre:bg-transparent prose-pre:p-0 prose-pre:border-none">
       <ReactMarkdown
@@ -53,22 +92,22 @@ function PreBlock({ children, ...props }: any) {
   }
 
   return (
-    <div className="rounded-xl overflow-hidden my-4 md:my-6 border border-black/5 dark:border-white/5 shadow-sm bg-[#0d1117] group">
+    <div className="rounded-xl overflow-hidden my-4 md:my-6 border border-black/10 dark:border-white/10 shadow-lg bg-white dark:bg-[#0d1117] group transition-colors">
       {/* Mac-style Window Header */}
-      <div className="flex items-center justify-between px-3 md:px-4 py-2 md:py-3 bg-[#161b22] border-b border-white/5">
+      <div className="flex items-center justify-between px-3 md:px-4 py-2 md:py-3 bg-neutral-100 dark:bg-[#161b22] border-b border-black/10 dark:border-white/5 transition-colors">
         <div className="flex items-center gap-2">
           <div className="flex gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-[#ff5f56] border border-[#e0443e] opacity-80 group-hover:opacity-100 transition-opacity" />
-            <div className="w-3 h-3 rounded-full bg-[#ffbd2e] border border-[#dea123] opacity-80 group-hover:opacity-100 transition-opacity" />
-            <div className="w-3 h-3 rounded-full bg-[#27c93f] border border-[#1aab29] opacity-80 group-hover:opacity-100 transition-opacity" />
+            <div className="w-3 h-3 rounded-full bg-[#ff5f56] dark:bg-[#ff5f56] border border-[#e0443e] dark:border-[#e0443e] opacity-80 group-hover:opacity-100 transition-opacity" />
+            <div className="w-3 h-3 rounded-full bg-[#ffbd2e] dark:bg-[#ffbd2e] border border-[#dea123] dark:border-[#dea123] opacity-80 group-hover:opacity-100 transition-opacity" />
+            <div className="w-3 h-3 rounded-full bg-[#27c93f] dark:bg-[#27c93f] border border-[#1aab29] dark:border-[#1aab29] opacity-80 group-hover:opacity-100 transition-opacity" />
           </div>
-          <span className="text-xs font-medium text-white/50 lowercase ml-2 font-mono">
+          <span className="text-xs font-medium text-neutral-500 dark:text-white/50 lowercase ml-2 font-mono transition-colors">
             {language}
           </span>
         </div>
         <button
           onClick={copyToClipboard}
-          className="text-white/40 hover:text-white transition-colors p-1 rounded-md hover:bg-white/10"
+          className="text-neutral-400 dark:text-white/40 hover:text-neutral-700 dark:hover:text-white transition-colors p-1 rounded-md hover:bg-neutral-200 dark:hover:bg-white/10"
           title="Copy code"
         >
           {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
@@ -76,7 +115,7 @@ function PreBlock({ children, ...props }: any) {
       </div>
 
       {/* Code Content Container */}
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto bg-neutral-50 dark:bg-transparent transition-colors">
         <pre
           {...props}
           ref={preRef}
