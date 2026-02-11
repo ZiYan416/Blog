@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import CodeEditor from 'react-simple-code-editor'
 import { highlight, languages } from 'prismjs'
 import 'prismjs/components/prism-markdown'
@@ -8,7 +8,7 @@ import 'prismjs/themes/prism.css'
 import { Toolbar, ViewMode, MarkdownAction } from './toolbar'
 import { cn } from '@/lib/utils'
 import { RichEditor } from './rich-editor'
-import { Editor as TiptapEditor } from '@tiptap/react'
+import type { Editor as TiptapEditor } from '@tiptap/react'
 import { createClient } from '@/lib/supabase/client'
 import { v4 as uuidv4 } from 'uuid'
 import { useToast } from '@/hooks/use-toast'
@@ -44,6 +44,11 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
     import('prismjs/components/prism-bash')
   }, [])
 
+  // Memoize highlight function to prevent cursor jumping
+  const highlightCode = useCallback((code: string) => {
+    return highlight(code, languages.markdown, 'markdown')
+  }, [])
+
   const handleImageUpload = async (file: File): Promise<string | null> => {
     try {
       setIsUploading(true)
@@ -76,7 +81,7 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
     }
   }
 
-  const handleSourcePaste = async (e: React.ClipboardEvent) => {
+  const handleSourcePaste = useCallback(async (e: React.ClipboardEvent) => {
     const items = Array.from(e.clipboardData.items)
     const imageItem = items.find(item => item.type.startsWith('image'))
 
@@ -84,31 +89,70 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
       e.preventDefault()
       const file = imageItem.getAsFile()
       if (file) {
-        const textarea = e.currentTarget as HTMLTextAreaElement
+        // Get current cursor position
+        const textarea = containerRef.current?.querySelector('textarea')
+        if (!textarea) return
+
         const start = textarea.selectionStart
         const end = textarea.selectionEnd
 
         // Insert placeholder
         const placeholder = `![Uploading ${file.name}...]()`
-        const newText = content.substring(0, start) + placeholder + content.substring(end)
+        const beforeCursor = content.substring(0, start)
+        const afterCursor = content.substring(end)
+        const newText = beforeCursor + placeholder + afterCursor
+
+        // Calculate new cursor position (after placeholder)
+        const newCursorPos = start + placeholder.length
+
         onChange(newText)
 
-        // Upload
+        // Restore cursor position after render
+        setTimeout(() => {
+          const textarea = containerRef.current?.querySelector('textarea')
+          if (textarea) {
+            textarea.focus()
+            textarea.setSelectionRange(newCursorPos, newCursorPos)
+          }
+        }, 0)
+
+        // Upload image
         const url = await handleImageUpload(file)
 
         if (url) {
           // Replace placeholder with actual markdown
           const imageMarkdown = `![image](${url})`
           const finalText = newText.replace(placeholder, imageMarkdown)
+
+          // Calculate final cursor position
+          const finalCursorPos = start + imageMarkdown.length
+
           onChange(finalText)
+
+          // Restore cursor position after final update
+          setTimeout(() => {
+            const textarea = containerRef.current?.querySelector('textarea')
+            if (textarea) {
+              textarea.focus()
+              textarea.setSelectionRange(finalCursorPos, finalCursorPos)
+            }
+          }, 0)
         } else {
-            // Restore original text on failure (or keep placeholder? better to revert)
-           const revertText = content // simplified revert
-           onChange(revertText)
+          // Restore original text on failure
+          onChange(content)
+
+          // Restore original cursor position
+          setTimeout(() => {
+            const textarea = containerRef.current?.querySelector('textarea')
+            if (textarea) {
+              textarea.focus()
+              textarea.setSelectionRange(start, end)
+            }
+          }, 0)
         }
       }
     }
-  }
+  }, [content, onChange, containerRef])
 
   // Scroll Synchronization
   const handleScroll = (source: 'source' | 'rich', e: React.UIEvent<HTMLDivElement>) => {
@@ -261,12 +305,12 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
   }
 
   return (
-    <div className="w-full border border-black/5 dark:border-white/5 bg-white dark:bg-neutral-900 rounded-2xl md:rounded-[2rem] transition-all focus-within:ring-1 ring-black/10 dark:ring-white/10 shadow-sm flex flex-col min-h-[calc(100vh-12rem)] relative">
-      <div className="sticky top-0 z-40 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm border-b border-black/5 dark:border-white/5 rounded-t-2xl md:rounded-t-[2rem]">
+    <div className="w-full border border-black/5 dark:border-white/5 bg-white dark:bg-neutral-900 rounded-2xl md:rounded-[2rem] transition-all focus-within:ring-1 ring-black/10 dark:ring-white/10 shadow-sm flex flex-col relative">
+      <div className="sticky top-16 z-40 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-black/5 dark:border-white/5 rounded-t-2xl md:rounded-t-[2rem]">
          <Toolbar viewMode={viewMode} onViewModeChange={setViewMode} onAction={handleAction} />
       </div>
 
-      <div className="flex-1 relative flex">
+      <div className="flex-1 relative flex min-h-[calc(100vh-14rem)]">
 
         {/* Source Mode Editor (Left in Split, or Visible in Source Mode) */}
         <div className={cn(
@@ -282,7 +326,7 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
                 ref={sourceEditorRef}
                 value={content}
                 onValueChange={onChange}
-                highlight={code => highlight(code, languages.markdown, 'markdown')}
+                highlight={highlightCode}
                 padding={10}
                 placeholder="Source Mode..."
                 className="font-mono text-base leading-relaxed bg-transparent min-h-full focus:outline-none text-neutral-600 dark:text-neutral-400"
