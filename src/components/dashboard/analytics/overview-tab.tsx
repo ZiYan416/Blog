@@ -68,26 +68,26 @@ export function OverviewTab({ data, rangeText = { period: '7天', label: '7日' 
   return (
     <div className="space-y-6">
       {/* 关键指标卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3 md:gap-4">
         {metrics.map((metric) => (
           <Card
             key={metric.label}
             className="border-none shadow-sm bg-white dark:bg-neutral-900 rounded-3xl overflow-hidden"
           >
-            <CardContent className="p-6">
-              <div className="flex items-center justify-center mb-4">
-                <div className={`p-3 rounded-2xl ${metric.bgColor}`}>
-                  <TrendingUp className={`w-6 h-6 ${metric.color}`} />
+            <CardContent className="p-4 md:p-6">
+              <div className="flex items-center justify-center mb-3 md:mb-4">
+                <div className={`p-2 md:p-3 rounded-2xl ${metric.bgColor}`}>
+                  <TrendingUp className={`w-4 h-4 md:w-6 md:h-6 ${metric.color}`} />
                 </div>
               </div>
               <div className="space-y-1 text-center">
-                <div className="text-2xl font-bold">
+                <div className="text-xl md:text-2xl font-bold">
                   {metric.value}
-                  <span className="text-sm text-neutral-500 ml-1 font-normal">
+                  <span className="text-xs md:text-sm text-neutral-500 ml-1 font-normal">
                     {metric.unit}
                   </span>
                 </div>
-                <div className="text-xs text-neutral-500">{metric.label}</div>
+                <div className="text-[10px] md:text-xs text-neutral-500">{metric.label}</div>
               </div>
             </CardContent>
           </Card>

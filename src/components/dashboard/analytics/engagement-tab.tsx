@@ -56,44 +56,44 @@ export function EngagementTab({
   return (
     <div className="space-y-6">
       {/* 关键指标卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-3 md:gap-4">
         <Card className="border-none shadow-sm bg-white dark:bg-neutral-900 rounded-3xl">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-2xl bg-green-500/10">
-                <MessageSquare className="w-6 h-6 text-green-500" />
+          <CardContent className="p-4 md:p-6">
+            <div className="flex flex-col items-center text-center gap-2 md:gap-3">
+              <div className="p-2 md:p-3 rounded-2xl bg-green-500/10">
+                <MessageSquare className="w-4 h-4 md:w-6 md:h-6 text-green-500" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{totalComments}</div>
-                <div className="text-xs text-neutral-500">总评论数</div>
+                <div className="text-xl md:text-2xl font-bold">{totalComments}</div>
+                <div className="text-[10px] md:text-xs text-neutral-500">总评论数</div>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-none shadow-sm bg-white dark:bg-neutral-900 rounded-3xl">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-2xl bg-purple-500/10">
-                <TrendingUp className="w-6 h-6 text-purple-500" />
+          <CardContent className="p-4 md:p-6">
+            <div className="flex flex-col items-center text-center gap-2 md:gap-3">
+              <div className="p-2 md:p-3 rounded-2xl bg-purple-500/10">
+                <TrendingUp className="w-4 h-4 md:w-6 md:h-6 text-purple-500" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{engagementRate}%</div>
-                <div className="text-xs text-neutral-500">互动率</div>
+                <div className="text-xl md:text-2xl font-bold">{engagementRate}%</div>
+                <div className="text-[10px] md:text-xs text-neutral-500">互动率</div>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-none shadow-sm bg-white dark:bg-neutral-900 rounded-3xl">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-2xl bg-blue-500/10">
-                <Clock className="w-6 h-6 text-blue-500" />
+          <CardContent className="p-4 md:p-6">
+            <div className="flex flex-col items-center text-center gap-2 md:gap-3">
+              <div className="p-2 md:p-3 rounded-2xl bg-blue-500/10">
+                <Clock className="w-4 h-4 md:w-6 md:h-6 text-blue-500" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{avgCommentsPerDay}</div>
-                <div className="text-xs text-neutral-500">日均评论</div>
+                <div className="text-xl md:text-2xl font-bold">{avgCommentsPerDay}</div>
+                <div className="text-[10px] md:text-xs text-neutral-500">日均评论</div>
               </div>
             </div>
           </CardContent>

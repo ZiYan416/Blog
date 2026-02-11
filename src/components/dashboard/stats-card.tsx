@@ -49,18 +49,30 @@ export function StatsCard({
   return (
     <Card className="border-none shadow-sm bg-white dark:bg-neutral-900 rounded-3xl overflow-hidden group hover:shadow-md transition-shadow">
       <CardContent className="p-4 md:p-6">
-        {/* 顶部：图标 + Live 标签 */}
-        <div className="flex items-center justify-between mb-4">
+        {/* 顶部：图标 + 迷你折线图 */}
+        <div className="flex items-start justify-between mb-4">
           <div className={`p-2 rounded-xl bg-black/[0.03] dark:bg-white/[0.03] ${color}`}>
             <Icon className="w-5 h-5" />
           </div>
-          <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
-            Live
-          </span>
+          {/* 迷你折线图 - 移到右上角 */}
+          <div className="h-10 w-20 opacity-60 group-hover:opacity-100 transition-opacity">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData}>
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke={getColorFromClass(color)}
+                  strokeWidth={1.5}
+                  dot={false}
+                  isAnimationActive={false}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
         {/* 数值 + 趋势 */}
-        <div className="flex items-end justify-between mb-3">
+        <div className="flex items-end justify-between">
           <div>
             <div className="text-2xl font-bold mb-1">{value.toLocaleString()}</div>
             <div className="text-xs text-neutral-500 font-medium">{label}</div>
@@ -83,22 +95,6 @@ export function StatsCard({
               <span>{Math.abs(trend.value)}%</span>
             </div>
           )}
-        </div>
-
-        {/* 迷你折线图 */}
-        <div className="h-12 -mx-2 opacity-60 group-hover:opacity-100 transition-opacity">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData}>
-              <Line
-                type="monotone"
-                dataKey="value"
-                stroke={getColorFromClass(color)}
-                strokeWidth={2}
-                dot={false}
-                isAnimationActive={false}
-              />
-            </LineChart>
-          </ResponsiveContainer>
         </div>
       </CardContent>
     </Card>

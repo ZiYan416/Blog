@@ -32,51 +32,51 @@ export function ContentAnalyticsTab({ topPosts, totalPosts, tagData = [] }: Cont
   return (
     <div className="space-y-6">
       {/* 内容概览卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-3 md:gap-4">
         <Card className="border-none shadow-sm bg-white dark:bg-neutral-900 rounded-3xl">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-2xl bg-blue-500/10">
-                <FileText className="w-6 h-6 text-blue-500" />
+          <CardContent className="p-4 md:p-6">
+            <div className="flex flex-col items-center text-center gap-2 md:gap-3">
+              <div className="p-2 md:p-3 rounded-2xl bg-blue-500/10">
+                <FileText className="w-4 h-4 md:w-6 md:h-6 text-blue-500" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{totalPosts}</div>
-                <div className="text-xs text-neutral-500">总发布文章</div>
+                <div className="text-xl md:text-2xl font-bold">{totalPosts}</div>
+                <div className="text-[10px] md:text-xs text-neutral-500">总发布文章</div>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-none shadow-sm bg-white dark:bg-neutral-900 rounded-3xl">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-2xl bg-purple-500/10">
-                <Eye className="w-6 h-6 text-purple-500" />
+          <CardContent className="p-4 md:p-6">
+            <div className="flex flex-col items-center text-center gap-2 md:gap-3">
+              <div className="p-2 md:p-3 rounded-2xl bg-purple-500/10">
+                <Eye className="w-4 h-4 md:w-6 md:h-6 text-purple-500" />
               </div>
               <div>
-                <div className="text-2xl font-bold">
+                <div className="text-xl md:text-2xl font-bold">
                   {topPosts[0]?.view_count || 0}
                 </div>
-                <div className="text-xs text-neutral-500">最高阅读量</div>
+                <div className="text-[10px] md:text-xs text-neutral-500">最高阅读量</div>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-none shadow-sm bg-white dark:bg-neutral-900 rounded-3xl">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-2xl bg-green-500/10">
-                <MessageSquare className="w-6 h-6 text-green-500" />
+          <CardContent className="p-4 md:p-6">
+            <div className="flex flex-col items-center text-center gap-2 md:gap-3">
+              <div className="p-2 md:p-3 rounded-2xl bg-green-500/10">
+                <MessageSquare className="w-4 h-4 md:w-6 md:h-6 text-green-500" />
               </div>
               <div>
-                <div className="text-2xl font-bold">
+                <div className="text-xl md:text-2xl font-bold">
                   {Math.round(
                     topPosts.reduce((sum, p) => sum + (p.view_count || 0), 0) /
                       (topPosts.length || 1)
                   )}
                 </div>
-                <div className="text-xs text-neutral-500">平均阅读量</div>
+                <div className="text-[10px] md:text-xs text-neutral-500">平均阅读量</div>
               </div>
             </div>
           </CardContent>
