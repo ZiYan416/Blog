@@ -38,7 +38,7 @@ interface User {
   bio: string | null;
   is_admin: boolean;
   created_at: string;
-  last_sign_in_at: string | null;
+  updated_at: string | null;
   comment_count?: number;
 }
 
@@ -58,7 +58,7 @@ export function UserManagement({
   onDeleteUser,
 }: UserManagementProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState<"created_at" | "last_sign_in_at">("created_at");
+  const [sortBy, setSortBy] = useState<"created_at" | "updated_at">("created_at");
 
   // 过滤和排序用户
   const filteredUsers = users
@@ -79,8 +79,8 @@ export function UserManagement({
   const adminCount = users.filter((u) => u.is_admin).length;
   const activeUsers = users.filter(
     (u) =>
-      u.last_sign_in_at &&
-      new Date(u.last_sign_in_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      u.updated_at &&
+      new Date(u.updated_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
   ).length;
 
   return (
@@ -128,29 +128,30 @@ export function UserManagement({
             按加入时间
           </Button>
           <Button
-            variant={sortBy === "last_sign_in_at" ? "default" : "outline"}
-            onClick={() => setSortBy("last_sign_in_at")}
+            variant={sortBy === "updated_at" ? "default" : "outline"}
+            onClick={() => setSortBy("updated_at")}
             className="rounded-full"
             size="sm"
           >
-            按活跃时间
+            按最后活跃时间
           </Button>
         </div>
       </div>
 
       {/* 用户列表表格 */}
       <div className="rounded-3xl bg-white dark:bg-neutral-900 border border-black/[0.03] dark:border-white/[0.03] overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-transparent border-black/[0.03] dark:border-white/[0.03]">
-              <TableHead className="w-[300px]">用户</TableHead>
-              <TableHead>角色</TableHead>
-              <TableHead>加入时间</TableHead>
-              <TableHead>最后活跃</TableHead>
-              <TableHead className="text-center">评论数</TableHead>
-              <TableHead className="text-right">操作</TableHead>
-            </TableRow>
-          </TableHeader>
+        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 scrollbar-track-transparent">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent border-black/[0.03] dark:border-white/[0.03]">
+                <TableHead className="w-[300px] min-w-[250px]">用户</TableHead>
+                <TableHead className="min-w-[120px]">角色</TableHead>
+                <TableHead className="min-w-[120px]">加入时间</TableHead>
+                <TableHead className="min-w-[100px]">最后活跃</TableHead>
+                <TableHead className="text-center min-w-[80px]">评论数</TableHead>
+                <TableHead className="text-right min-w-[80px]">操作</TableHead>
+              </TableRow>
+            </TableHeader>
           <TableBody>
             {filteredUsers.length > 0 ? (
               filteredUsers.map((user) => (
@@ -204,8 +205,8 @@ export function UserManagement({
 
                   {/* 最后活跃 */}
                   <TableCell className="text-sm text-neutral-600 dark:text-neutral-400">
-                    {user.last_sign_in_at
-                      ? formatDistanceToNow(new Date(user.last_sign_in_at), {
+                    {user.updated_at
+                      ? formatDistanceToNow(new Date(user.updated_at), {
                           addSuffix: true,
                           locale: zhCN,
                         })
@@ -274,6 +275,7 @@ export function UserManagement({
             )}
           </TableBody>
         </Table>
+        </div>
       </div>
     </div>
   );

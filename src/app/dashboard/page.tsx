@@ -167,7 +167,7 @@ export default async function DashboardPage() {
         <DashboardHeader displayName={displayName} isAdmin={isAdmin} />
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-8 md:mb-12">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
           {stats.map((stat) => (
             <StatsCard
               key={stat.label}
@@ -178,6 +178,14 @@ export default async function DashboardPage() {
               sparklineData={stat.sparklineData}
             />
           ))}
+        </div>
+
+        {/* 待办事项提醒区 - 放在顶部更显眼的位置 */}
+        <div className="mb-8 md:mb-12">
+          <TodoAlerts
+            pendingCommentsCount={pendingCommentsCount || 0}
+            oldDraftsCount={oldDraftsCount || 0}
+          />
         </div>
 
         {/* Analytics Section with Time Range Selector */}
@@ -332,12 +340,6 @@ export default async function DashboardPage() {
                 </div>
               </CardContent>
             </Card>
-
-            {/* 待办事项卡片 */}
-            <TodoAlerts
-              pendingCommentsCount={pendingCommentsCount || 0}
-              oldDraftsCount={oldDraftsCount || 0}
-            />
 
             <Card className="border-none bg-white dark:bg-neutral-900 rounded-3xl overflow-hidden shadow-sm">
               <CardHeader>

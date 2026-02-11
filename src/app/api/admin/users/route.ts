@@ -32,7 +32,7 @@ export async function GET() {
         bio,
         is_admin,
         created_at,
-        last_sign_in_at
+        updated_at
       `)
       .order('created_at', { ascending: false })
 
