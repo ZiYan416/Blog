@@ -140,17 +140,18 @@ export function UserManagement({
 
       {/* 用户列表表格 */}
       <div className="rounded-3xl bg-white dark:bg-neutral-900 border border-black/[0.03] dark:border-white/[0.03] overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-transparent border-black/[0.03] dark:border-white/[0.03]">
-              <TableHead className="w-[300px]">用户</TableHead>
-              <TableHead>角色</TableHead>
-              <TableHead>加入时间</TableHead>
-              <TableHead>最后活跃</TableHead>
-              <TableHead className="text-center">评论数</TableHead>
-              <TableHead className="text-right">操作</TableHead>
-            </TableRow>
-          </TableHeader>
+        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 scrollbar-track-transparent">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent border-black/[0.03] dark:border-white/[0.03]">
+                <TableHead className="w-[300px] min-w-[250px]">用户</TableHead>
+                <TableHead className="min-w-[120px]">角色</TableHead>
+                <TableHead className="min-w-[120px]">加入时间</TableHead>
+                <TableHead className="min-w-[100px]">最后活跃</TableHead>
+                <TableHead className="text-center min-w-[80px]">评论数</TableHead>
+                <TableHead className="text-right min-w-[80px]">操作</TableHead>
+              </TableRow>
+            </TableHeader>
           <TableBody>
             {filteredUsers.length > 0 ? (
               filteredUsers.map((user) => (
@@ -274,6 +275,7 @@ export function UserManagement({
             )}
           </TableBody>
         </Table>
+        </div>
       </div>
     </div>
   );

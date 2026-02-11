@@ -29,6 +29,35 @@ export function ContentAnalyticsTab({ topPosts, totalPosts, tagData = [] }: Cont
   const hasTagData = tagData && tagData.length > 0;
   const totalArticles = hasTagData ? tagData.reduce((sum, item) => sum + item.value, 0) : 0;
 
+  // 根据标签数量决定样式策略
+  const tagCount = tagData.length;
+  const shouldScroll = tagCount > 10;
+  const legendTextSize = tagCount <= 5 ? 'text-sm' : tagCount <= 8 ? 'text-xs' : 'text-[11px]';
+  const legendSubTextSize = tagCount <= 5 ? 'text-xs' : tagCount <= 8 ? 'text-[11px]' : 'text-[10px]';
+  const legendGap = tagCount <= 6 ? 'space-y-3' : tagCount <= 10 ? 'space-y-2' : 'space-y-1.5';
+
+  // 自定义 Tooltip 内容
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0];
+      return (
+        <div
+          style={{
+            backgroundColor: "rgba(255, 255, 255, 0.95)",
+            border: "1px solid #e5e5e5",
+            borderRadius: "12px",
+            padding: "8px 12px",
+            fontSize: "12px",
+          }}
+        >
+          <div className="font-medium">{data.name}</div>
+          <div className="text-neutral-500">{data.value} 篇</div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="space-y-6">
       {/* 内容概览卡片 */}
@@ -135,46 +164,52 @@ export function ContentAnalyticsTab({ topPosts, totalPosts, tagData = [] }: Cont
           </CardHeader>
           <CardContent>
             {hasTagData ? (
-              <div className="flex flex-col items-center justify-around gap-6">
+              <div className="flex flex-col md:flex-row items-center justify-around gap-6">
                 {/* 饼图 */}
-                <div className="w-48 h-48">
+                <div className="w-72 h-72">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={tagData}
                         cx="50%"
                         cy="50%"
-                        innerRadius={50}
-                        outerRadius={80}
+                        innerRadius={80}
+                        outerRadius={120}
                         paddingAngle={5}
                         dataKey="value"
                       >
                         {tagData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={entry.color}
+                            className="transition-all duration-200 hover:opacity-80"
+                            style={{ cursor: 'pointer' }}
+                          />
                         ))}
                       </Pie>
-                      <Tooltip />
+                      <Tooltip content={<CustomTooltip />} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
 
                 {/* 图例 */}
                 <div className="space-y-3">
-                  {tagData.map((tag) => (
-                    <div key={tag.name} className="flex items-center gap-3">
-                      <div
-                        className="w-4 h-4 rounded-full"
-                        style={{ backgroundColor: tag.color }}
-                      />
-                      <div className="flex-1">
-                        <div className="text-sm font-medium">{tag.name}</div>
-                        <div className="text-xs text-neutral-500">
-                          {tag.value} 篇 (
-                          {((tag.value / totalArticles) * 100).toFixed(1)}%)
+                  <div className={`${shouldScroll ? 'max-h-64 overflow-y-auto pr-2' : ''} ${legendGap} scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 scrollbar-track-transparent`}>
+                    {tagData.map((tag) => (
+                      <div key={tag.name} className="flex items-center gap-3 py-0.5">
+                        <div
+                          className="w-4 h-4 rounded-full shrink-0"
+                          style={{ backgroundColor: tag.color }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className={`${legendTextSize} font-medium truncate`}>{tag.name}</div>
+                          <div className={`${legendSubTextSize} text-neutral-500`}>
+                            {tag.value} 篇 ({((tag.value / totalArticles) * 100).toFixed(1)}%)
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
             ) : (
