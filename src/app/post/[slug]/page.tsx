@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
 import Link from 'next/link'
-import { ArrowLeft, Calendar, Tag, Eye, Clock, User } from 'lucide-react'
+import { ArrowLeft, Calendar, Tag, Eye, Clock, User, MessageSquare } from 'lucide-react'
 import { extractTags, calculateReadingTime, formatDateString, generatePostSlug } from '@/lib/markdown'
 import { Button } from '@/components/ui/button'
 import { ViewCounter } from '@/components/post/view-counter'
@@ -13,6 +13,7 @@ import { getTagStyles } from '@/lib/tag-color'
 import { TableOfContents } from '@/components/post/table-of-contents'
 
 import { BackToTop } from '@/components/ui/back-to-top'
+import { GoToComments } from '@/components/ui/go-to-comments'
 
 // Force dynamic rendering since we use searchParams or cookies implicitly via headers in layout
 export const dynamic = 'force-dynamic'
@@ -249,6 +250,7 @@ export default async function PostPage({
         </div>
       </div>
       <BackToTop targetId="mobile-toc" />
+      <GoToComments />
     </div>
   )
 }

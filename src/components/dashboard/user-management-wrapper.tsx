@@ -24,7 +24,7 @@ interface User {
   bio: string | null;
   is_admin: boolean;
   created_at: string;
-  last_sign_in_at: string | null;
+  updated_at: string | null;
   comment_count?: number;
 }
 
@@ -63,19 +63,24 @@ export function UserManagementWrapper({
 
   const handleToggleAdmin = async (userId: string, isAdmin: boolean) => {
     try {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("profiles")
-        .update({ is_admin: isAdmin })
-        .eq("id", userId);
+      const response = await fetch(`/api/admin/users/${userId}/toggle-admin`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ is_admin: isAdmin }),
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "更新权限失败");
+      }
 
       toast.success(isAdmin ? "已设为管理员" : "已取消管理员权限");
       refreshUsers();
     } catch (error) {
       console.error("更新权限失败:", error);
-      toast.error("操作失败，请重试");
+      toast.error(error instanceof Error ? error.message : "操作失败，请重试");
     }
   };
 

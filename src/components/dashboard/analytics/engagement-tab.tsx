@@ -56,44 +56,44 @@ export function EngagementTab({
   return (
     <div className="space-y-6">
       {/* 关键指标卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-3 md:gap-4">
         <Card className="border-none shadow-sm bg-white dark:bg-neutral-900 rounded-3xl">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-2xl bg-green-500/10">
-                <MessageSquare className="w-6 h-6 text-green-500" />
+          <CardContent className="p-4 md:p-6">
+            <div className="flex flex-col items-center text-center gap-2 md:gap-3">
+              <div className="p-2 md:p-3 rounded-2xl bg-green-500/10">
+                <MessageSquare className="w-4 h-4 md:w-6 md:h-6 text-green-500" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{totalComments}</div>
-                <div className="text-xs text-neutral-500">总评论数</div>
+                <div className="text-xl md:text-2xl font-bold">{totalComments}</div>
+                <div className="text-[10px] md:text-xs text-neutral-500">总评论数</div>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-none shadow-sm bg-white dark:bg-neutral-900 rounded-3xl">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-2xl bg-purple-500/10">
-                <TrendingUp className="w-6 h-6 text-purple-500" />
+          <CardContent className="p-4 md:p-6">
+            <div className="flex flex-col items-center text-center gap-2 md:gap-3">
+              <div className="p-2 md:p-3 rounded-2xl bg-purple-500/10">
+                <TrendingUp className="w-4 h-4 md:w-6 md:h-6 text-purple-500" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{engagementRate}%</div>
-                <div className="text-xs text-neutral-500">互动率</div>
+                <div className="text-xl md:text-2xl font-bold">{engagementRate}%</div>
+                <div className="text-[10px] md:text-xs text-neutral-500">互动率</div>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-none shadow-sm bg-white dark:bg-neutral-900 rounded-3xl">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-2xl bg-blue-500/10">
-                <Clock className="w-6 h-6 text-blue-500" />
+          <CardContent className="p-4 md:p-6">
+            <div className="flex flex-col items-center text-center gap-2 md:gap-3">
+              <div className="p-2 md:p-3 rounded-2xl bg-blue-500/10">
+                <Clock className="w-4 h-4 md:w-6 md:h-6 text-blue-500" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{avgCommentsPerDay}</div>
-                <div className="text-xs text-neutral-500">日均评论</div>
+                <div className="text-xl md:text-2xl font-bold">{avgCommentsPerDay}</div>
+                <div className="text-[10px] md:text-xs text-neutral-500">日均评论</div>
               </div>
             </div>
           </CardContent>
@@ -105,22 +105,27 @@ export function EngagementTab({
         <CardHeader>
           <CardTitle className="text-lg">评论趋势</CardTitle>
         </CardHeader>
-        <CardContent className="px-2 pb-6">
+        <CardContent className="px-2 md:px-6 pb-6">
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={commentTrendData}>
+            <LineChart data={commentTrendData} margin={{ top: 5, right: 15, left: -15, bottom: -30 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" opacity={0.3} />
               <XAxis
                 dataKey="date"
                 stroke="#a3a3a3"
-                fontSize={12}
+                fontSize={11}
                 tickLine={false}
                 axisLine={false}
+                angle={-45}
+                textAnchor="end"
+                height={70}
+                dy={10}
               />
               <YAxis
                 stroke="#a3a3a3"
-                fontSize={12}
+                fontSize={11}
                 tickLine={false}
                 axisLine={false}
+                width={40}
               />
               <Tooltip
                 contentStyle={{
@@ -128,6 +133,7 @@ export function EngagementTab({
                   border: "1px solid #e5e5e5",
                   borderRadius: "12px",
                   padding: "8px 12px",
+                  fontSize: "12px",
                 }}
               />
               <Line
