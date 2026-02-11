@@ -99,7 +99,7 @@ export function OverviewTab({ data, rangeText = { period: '7天', label: '7日' 
         <CardHeader>
           <CardTitle className="text-lg">过去 {rangeText.period} 趋势</CardTitle>
         </CardHeader>
-        <CardContent className="px-2 pb-6">
+        <CardContent className="px-2 md:px-6 pb-6">
           <div className="relative">
             {!hasData && (
               <div className="absolute inset-0 flex items-center justify-center z-10 bg-white/80 dark:bg-neutral-900/80 rounded-lg">
@@ -110,20 +110,26 @@ export function OverviewTab({ data, rangeText = { period: '7天', label: '7日' 
               </div>
             )}
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={chartData}>
+              <LineChart data={chartData} margin={{ top: 5, right: 15, left: -15, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" opacity={0.3} />
                 <XAxis
                   dataKey="date"
                   stroke="#a3a3a3"
-                  fontSize={12}
+                  fontSize={11}
                   tickLine={false}
                   axisLine={false}
+                  angle={-45}
+                  textAnchor="end"
+                  height={70}
+                  dy={10}
+                  interval="preserveStartEnd"
                 />
                 <YAxis
                   stroke="#a3a3a3"
-                  fontSize={12}
+                  fontSize={11}
                   tickLine={false}
                   axisLine={false}
+                  width={40}
                 />
                 <Tooltip
                   contentStyle={{
@@ -131,13 +137,17 @@ export function OverviewTab({ data, rangeText = { period: '7天', label: '7日' 
                     border: "1px solid #e5e5e5",
                     borderRadius: "12px",
                     padding: "8px 12px",
+                    fontSize: "12px",
                   }}
                 />
                 <Legend
                   wrapperStyle={{
                     paddingTop: "20px",
+                    fontSize: "12px",
                   }}
+                  iconSize={12}
                 />
+
                 <Line
                   type="monotone"
                   dataKey="views"

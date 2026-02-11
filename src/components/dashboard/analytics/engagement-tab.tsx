@@ -105,22 +105,27 @@ export function EngagementTab({
         <CardHeader>
           <CardTitle className="text-lg">评论趋势</CardTitle>
         </CardHeader>
-        <CardContent className="px-2 pb-6">
+        <CardContent className="px-2 md:px-6 pb-6">
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={commentTrendData}>
+            <LineChart data={commentTrendData} margin={{ top: 5, right: 15, left: -15, bottom: -30 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" opacity={0.3} />
               <XAxis
                 dataKey="date"
                 stroke="#a3a3a3"
-                fontSize={12}
+                fontSize={11}
                 tickLine={false}
                 axisLine={false}
+                angle={-45}
+                textAnchor="end"
+                height={70}
+                dy={10}
               />
               <YAxis
                 stroke="#a3a3a3"
-                fontSize={12}
+                fontSize={11}
                 tickLine={false}
                 axisLine={false}
+                width={40}
               />
               <Tooltip
                 contentStyle={{
@@ -128,6 +133,7 @@ export function EngagementTab({
                   border: "1px solid #e5e5e5",
                   borderRadius: "12px",
                   padding: "8px 12px",
+                  fontSize: "12px",
                 }}
               />
               <Line
@@ -151,7 +157,7 @@ export function EngagementTab({
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {topCommenters.map((commenter, index) => (
+            {topCommentersData.map((commenter, index) => (
               <div
                 key={index}
                 className="flex items-center gap-4 p-4 rounded-2xl bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"

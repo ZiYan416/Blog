@@ -89,17 +89,29 @@ export function ContentAnalyticsTab({ topPosts, totalPosts, tagData = [] }: Cont
           <CardHeader>
             <CardTitle className="text-lg">热门文章 Top 5</CardTitle>
           </CardHeader>
-          <CardContent className="px-2 pb-6">
+          <CardContent className="px-2 md:px-6 pb-6">
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={chartData} layout="vertical">
+              <BarChart
+                data={chartData}
+                layout="vertical"
+                margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" opacity={0.3} />
-                <XAxis type="number" stroke="#a3a3a3" fontSize={12} />
+                <XAxis
+                  type="number"
+                  stroke="#a3a3a3"
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                />
                 <YAxis
                   type="category"
                   dataKey="name"
                   stroke="#a3a3a3"
-                  fontSize={11}
-                  width={120}
+                  fontSize={10}
+                  width={100}
+                  tickLine={false}
+                  axisLine={false}
                 />
                 <Tooltip
                   contentStyle={{
@@ -107,6 +119,7 @@ export function ContentAnalyticsTab({ topPosts, totalPosts, tagData = [] }: Cont
                     border: "1px solid #e5e5e5",
                     borderRadius: "12px",
                     padding: "8px 12px",
+                    fontSize: "12px",
                   }}
                 />
                 <Bar dataKey="views" fill="#8b5cf6" radius={[0, 8, 8, 0]} />
@@ -122,7 +135,7 @@ export function ContentAnalyticsTab({ topPosts, totalPosts, tagData = [] }: Cont
           </CardHeader>
           <CardContent>
             {hasTagData ? (
-              <div className="flex flex-col md:flex-row items-center justify-around gap-6">
+              <div className="flex flex-col items-center justify-around gap-6">
                 {/* 饼图 */}
                 <div className="w-48 h-48">
                   <ResponsiveContainer width="100%" height="100%">
