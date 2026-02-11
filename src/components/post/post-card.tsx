@@ -212,10 +212,10 @@ export default function PostCard({ post }: PostCardProps) {
             </span>
           </div>
 
-          <Link href={`/post/${post.slug || post.id}`} className="group/title inline-block w-full">
-            <h3 className="text-base md:text-2xl font-bold leading-snug md:leading-tight mb-2 md:mb-4 group-hover/title:text-neutral-600 dark:group-hover/title:text-neutral-400 transition-colors flex items-start gap-2 line-clamp-1 md:line-clamp-none md:flex">
+          <Link href={`/post/${post.slug || post.id}`} className="group/title inline-block w-full" title={post.title}>
+            <h3 className="text-base md:text-2xl font-bold leading-snug md:leading-tight mb-2 md:mb-4 group-hover/title:text-neutral-600 dark:group-hover/title:text-neutral-400 transition-colors line-clamp-1 md:line-clamp-2">
               {post.title}
-              <ArrowUpRight className="hidden md:block w-5 h-5 opacity-0 -translate-y-1 translate-x-1 group-hover/title:opacity-100 group-hover/title:translate-y-0 group-hover/title:translate-x-0 transition-all duration-300 shrink-0 mt-1" />
+              <ArrowUpRight className="hidden md:inline-block w-5 h-5 opacity-0 -translate-y-1 translate-x-1 group-hover/title:opacity-100 group-hover/title:translate-y-0 group-hover/title:translate-x-0 transition-all duration-300 ml-1 align-text-top" />
             </h3>
           </Link>
 
