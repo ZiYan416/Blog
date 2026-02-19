@@ -6,10 +6,25 @@ import { Markdown } from 'tiptap-markdown'
 import Image from '@tiptap/extension-image'
 import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
+import { Table } from '@tiptap/extension-table'
+import { TableRow } from '@tiptap/extension-table-row'
+import { TableCell } from '@tiptap/extension-table-cell'
+import { TableHeader } from '@tiptap/extension-table-header'
+import { TaskList } from '@tiptap/extension-task-list'
+import { TaskItem } from '@tiptap/extension-task-item'
+import { Highlight } from '@tiptap/extension-highlight'
+import { Underline } from '@tiptap/extension-underline'
+import { TextAlign } from '@tiptap/extension-text-align'
+import { CodeBlockLowlight } from '@tiptap/extension-code-block-lowlight'
+import { Typography } from '@tiptap/extension-typography'
+import { common, createLowlight } from 'lowlight'
 import { useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { v4 as uuidv4 } from 'uuid'
 import { useToast } from '@/hooks/use-toast'
+
+// Create lowlight instance with common languages
+const lowlight = createLowlight(common)
 
 interface RichEditorProps {
   content: string
@@ -56,32 +71,80 @@ export function RichEditor({ content, onChange, onEditorReady, placeholder, clas
     extensions: [
       StarterKit.configure({
         heading: {
-          levels: [1, 2, 3]
+          levels: [1, 2, 3, 4]
         },
-        codeBlock: {
-            HTMLAttributes: {
-                class: 'bg-neutral-100 dark:bg-neutral-800 p-4 rounded-lg font-mono text-sm'
-            }
-        }
+        // Disable the default codeBlock since we use CodeBlockLowlight
+        codeBlock: false,
       }),
+      // Markdown bidirectional conversion
       Markdown.configure({
-          html: false, // Force markdown output
-          transformPastedText: true,
-          transformCopiedText: true
+        html: false,
+        transformPastedText: true,
+        transformCopiedText: true,
       }),
-      Image,
+      // Code block with syntax highlighting
+      CodeBlockLowlight.configure({
+        lowlight,
+        defaultLanguage: 'javascript',
+        HTMLAttributes: {
+          class: 'hljs',
+        },
+      }),
+      // Typography: smart punctuation auto-replacement
+      Typography,
+      // Image support
+      Image.configure({
+        HTMLAttributes: {
+          class: 'editor-image',
+        },
+      }),
+      // Link support
       Link.configure({
-        openOnClick: false
+        openOnClick: false,
+        HTMLAttributes: {
+          class: 'editor-link',
+        },
       }),
+      // Placeholder
       Placeholder.configure({
-        placeholder: placeholder || '写点什么...'
-      })
+        placeholder: placeholder || '写点什么...',
+      }),
+      // Table support
+      Table.configure({
+        resizable: true,
+        HTMLAttributes: {
+          class: 'editor-table',
+        },
+      }),
+      TableRow,
+      TableCell,
+      TableHeader,
+      // Task list (checkbox)
+      TaskList.configure({
+        HTMLAttributes: {
+          class: 'editor-task-list',
+        },
+      }),
+      TaskItem.configure({
+        nested: true,
+      }),
+      // Highlight
+      Highlight.configure({
+        multicolor: false,
+      }),
+      // Underline
+      Underline,
+      // Text alignment
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+      }),
     ],
     editorProps: {
       attributes: {
-        class: className || 'prose prose-neutral dark:prose-invert max-w-none focus:outline-none min-h-[150px]'
+        class: className || 'prose prose-neutral dark:prose-invert max-w-none focus:outline-none min-h-[150px]',
+        spellcheck: 'false',
       },
-      handlePaste: (view, event, slice) => {
+      handlePaste: (view, event, _slice) => {
         const items = Array.from(event.clipboardData?.items || [])
         const imageItem = items.find(item => item.type.startsWith('image'))
 
@@ -101,7 +164,7 @@ export function RichEditor({ content, onChange, onEditorReady, placeholder, clas
         }
         return false
       },
-      handleDrop: (view, event, slice, moved) => {
+      handleDrop: (view, event, _slice, moved) => {
         if (!moved && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0]) {
           const file = event.dataTransfer.files[0]
           if (file.type.startsWith('image')) {
@@ -111,7 +174,7 @@ export function RichEditor({ content, onChange, onEditorReady, placeholder, clas
                 const { schema } = view.state
                 const coordinates = view.posAtCoords({ left: event.clientX, top: event.clientY })
                 if (coordinates) {
-                   view.dispatch(view.state.tr.insert(coordinates.pos, schema.nodes.image.create({ src: url })))
+                  view.dispatch(view.state.tr.insert(coordinates.pos, schema.nodes.image.create({ src: url })))
                 }
               }
             })
@@ -119,7 +182,7 @@ export function RichEditor({ content, onChange, onEditorReady, placeholder, clas
           }
         }
         return false
-      }
+      },
     },
     onUpdate: ({ editor }) => {
       isInternalUpdate.current = true
@@ -127,34 +190,26 @@ export function RichEditor({ content, onChange, onEditorReady, placeholder, clas
       onChange(markdown)
       // Reset flag after render cycle
       setTimeout(() => {
-          isInternalUpdate.current = false
+        isInternalUpdate.current = false
       }, 0)
     },
     onCreate: ({ editor }) => {
-        onEditorReady(editor)
-        if (content) {
-             editor.commands.setContent(content)
-        }
+      onEditorReady(editor)
+      if (content) {
+        editor.commands.setContent(content)
+      }
     },
-    immediatelyRender: false // Fix hydration mismatch
+    immediatelyRender: false, // Fix hydration mismatch
   })
 
   // Sync external content changes (e.g. from Source mode)
   useEffect(() => {
     if (!editor) return
-
-    // If the editor is focused, we assume the user is typing here,
-    // so we don't need to sync back (unless we want to support collaborative editing later).
-    // However, if we are in Split mode and typing in Source, we need to sync.
-    // So check if the update originated internally.
     if (isInternalUpdate.current) return
 
     const currentContent = (editor.storage as any).markdown.getMarkdown()
     if (content !== currentContent) {
-       // Save cursor position? Tiptap might handle setContent gracefully if keys match?
-       // Unfortunately setContent usually resets selection.
-       // If we are not focused, it doesn't matter much.
-       editor.commands.setContent(content)
+      editor.commands.setContent(content)
     }
   }, [content, editor])
 
