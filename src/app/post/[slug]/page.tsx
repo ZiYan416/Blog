@@ -125,7 +125,7 @@ export default async function PostPage({
                 </Link>
               </Button>
             </div>
-            <h1 className="text-3xl md:text-5xl font-bold text-white leading-tight tracking-tight drop-shadow-sm">
+            <h1 className="text-2xl sm:text-3xl md:text-5xl font-bold text-white leading-tight tracking-tight drop-shadow-sm break-words" style={{ overflowWrap: 'anywhere' }}>
               {post.title}
             </h1>
 
@@ -183,7 +183,7 @@ export default async function PostPage({
             {/* Mobile TOC - Card Style */}
             <div className="lg:hidden mb-8 p-5 bg-neutral-50 dark:bg-neutral-800/50 rounded-2xl border border-black/5 dark:border-white/5" id="mobile-toc">
               <h3 className="font-bold text-base mb-4 flex items-center gap-2 text-neutral-900 dark:text-neutral-100">
-                <div className="w-1 h-4 bg-amber-500 rounded-full"/>
+                <div className="w-1 h-4 bg-amber-500 rounded-full" />
                 目录
               </h3>
               <div className="max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
@@ -193,11 +193,11 @@ export default async function PostPage({
 
             <MarkdownRenderer content={post.content} />
 
-             {/* Mobile Author Card */}
+            {/* Mobile Author Card */}
             <div className="lg:hidden mt-8 md:mt-12 mb-0 pt-8 border-t border-dashed border-black/10 dark:border-white/10">
               <div className="bg-neutral-50 dark:bg-neutral-800/30 rounded-2xl p-6 flex flex-col items-center text-center border border-black/5 dark:border-white/5">
                 <h3 className="font-bold mb-6 text-sm uppercase tracking-widest text-neutral-700">About Author</h3>
-                 <div className="w-16 h-16 rounded-full bg-neutral-100 dark:bg-neutral-800 mb-4 overflow-hidden ring-4 ring-white dark:ring-neutral-900 shadow-sm">
+                <div className="w-16 h-16 rounded-full bg-neutral-100 dark:bg-neutral-800 mb-4 overflow-hidden ring-4 ring-white dark:ring-neutral-900 shadow-sm">
                   {author?.avatar_url ? (
                     <img src={author.avatar_url} alt={author.display_name} className="w-full h-full object-cover" />
                   ) : (
