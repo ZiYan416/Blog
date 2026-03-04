@@ -2,61 +2,66 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 export default function AboutLoading() {
   return (
-    <div className="flex-1 flex items-center justify-center p-4 md:p-8 pt-8 md:pt-12 mb-12">
-      <div className="w-full max-w-5xl h-auto md:h-[550px]">
-        <div className="grid grid-cols-1 md:grid-cols-3 md:grid-rows-3 gap-4 md:gap-6 h-full">
-
-          {/* Card 1: Avatar Skeleton */}
-          <div className="md:col-span-1 md:row-span-3 rounded-[2rem] bg-white dark:bg-neutral-900 border border-black/5 dark:border-white/5 p-8 flex flex-col items-center justify-center min-h-[300px]">
-            <Skeleton className="w-32 h-32 md:w-48 md:h-48 rounded-full mb-6" />
-            <div className="space-y-3 flex flex-col items-center w-full">
-              <Skeleton className="h-8 w-32" />
-              <Skeleton className="h-8 w-24" />
-              <Skeleton className="h-4 w-20 mt-2" />
-            </div>
-          </div>
-
-          {/* Card 2: Intro Skeleton */}
-          <div className="md:col-span-2 md:row-span-2 rounded-[2rem] bg-neutral-900 dark:bg-white p-8 py-10 md:py-8 flex flex-col justify-center min-h-[250px] space-y-4">
-            <Skeleton className="h-4 w-32 bg-white/20 dark:bg-black/10" />
-            <div className="space-y-2">
-              <Skeleton className="h-8 w-3/4 bg-white/20 dark:bg-black/10" />
-              <Skeleton className="h-8 w-1/2 bg-white/20 dark:bg-black/10" />
-            </div>
-            <div className="space-y-2 pt-2">
-              <Skeleton className="h-4 w-full bg-white/20 dark:bg-black/10" />
-              <Skeleton className="h-4 w-11/12 bg-white/20 dark:bg-black/10" />
-            </div>
-            <Skeleton className="h-6 w-24 pt-4 bg-white/20 dark:bg-black/10" />
-            <Skeleton className="h-4 w-2/3 bg-white/20 dark:bg-black/10" />
-          </div>
-
-          {/* Card 3: GitHub Skeleton */}
-          <div className="md:col-span-1 md:row-span-1 rounded-[2rem] bg-[#181717] dark:bg-white p-6 flex flex-col justify-between min-h-[160px]">
-            <div className="flex justify-between items-start">
-              <Skeleton className="w-8 h-8 rounded-full bg-white/20 dark:bg-black/10" />
-              <Skeleton className="w-5 h-5 rounded-md bg-white/20 dark:bg-black/10" />
-            </div>
-            <div className="space-y-2">
-              <Skeleton className="h-6 w-20 bg-white/20 dark:bg-black/10" />
-              <Skeleton className="h-3 w-16 bg-white/20 dark:bg-black/10" />
-            </div>
-          </div>
-
-          {/* Card 4: Contact Skeleton */}
-          <div className="md:col-span-1 md:row-span-1 rounded-[2rem] bg-blue-300 dark:bg-purple-300 p-6 flex flex-col justify-between min-h-[160px]">
-             <div className="flex justify-between items-start">
-              <Skeleton className="w-8 h-8 rounded-full bg-white/30" />
-              <Skeleton className="w-5 h-5 rounded-md bg-white/30" />
-            </div>
-            <div className="space-y-2">
-              <Skeleton className="h-6 w-20 bg-white/30" />
-              <Skeleton className="h-3 w-16 bg-white/30" />
-            </div>
-          </div>
-
-        </div>
+    <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-neutral-50 dark:bg-neutral-950">
+      
+      {/* ─────────────────────────────────────────────
+         Technical Background (Matching About Page)
+         ───────────────────────────────────────────── */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        {/* Grid Pattern */}
+        <div
+          className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]"
+          style={{
+            backgroundImage: `linear-gradient(to right, #808080 1px, transparent 1px),
+                              linear-gradient(to bottom, #808080 1px, transparent 1px)`,
+            backgroundSize: '24px 24px',
+            maskImage: 'radial-gradient(circle at center, black 40%, transparent 80%)',
+            WebkitMaskImage: 'radial-gradient(circle at center, black 40%, transparent 80%)',
+          }}
+        />
+        
+        {/* Noise Texture */}
+        <div
+          className="absolute inset-0 opacity-[0.03] dark:opacity-[0.04]"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+          }}
+        />
       </div>
+
+      {/* ─────────────────────────────────────────────
+         Cinematic Centerpiece
+         ───────────────────────────────────────────── */}
+      <div className="relative z-10 flex flex-col items-center space-y-8">
+        
+        {/* Amber-themed Preloader / Orb */}
+        <div className="relative w-16 h-16 md:w-20 md:h-20 flex items-center justify-center">
+          {/* Pulsing core */}
+          <div className="absolute inset-0 bg-amber-500/20 rounded-full animate-ping" />
+          <div className="relative w-8 h-8 bg-gradient-to-tr from-amber-400 to-orange-500 rounded-full shadow-[0_0_30px_rgba(251,191,36,0.4)] animate-pulse" />
+          
+          {/* Rotating ring */}
+          <div className="absolute inset-0 border border-amber-500/30 rounded-full animate-[spin_3s_linear_infinite] border-t-transparent" />
+        </div>
+
+        {/* High-end Text Skeletons */}
+        <div className="flex flex-col items-center space-y-4">
+          {/* Title Skeleton */}
+          <div className="h-12 w-48 sm:h-16 sm:w-64 md:h-24 md:w-96 rounded-lg bg-neutral-200/50 dark:bg-neutral-800/50 animate-pulse" />
+          
+          {/* Subtitle Skeleton */}
+          <div className="h-4 w-32 sm:h-5 sm:w-40 bg-neutral-200/50 dark:bg-neutral-800/50 rounded animate-pulse delay-75" />
+          
+          {/* Divider Skeleton */}
+          <div className="h-px w-16 bg-neutral-300 dark:bg-neutral-700 mt-6" />
+        </div>
+
+      </div>
+
+      {/* Decorative Rings (Faint Outline) */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] md:w-[600px] md:h-[600px] rounded-full border border-neutral-200/10 dark:border-white/[0.02] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200px] h-[200px] md:w-[400px] md:h-[400px] rounded-full border border-neutral-200/10 dark:border-white/[0.03] pointer-events-none" />
+
     </div>
   )
 }

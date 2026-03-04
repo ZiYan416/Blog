@@ -1,0 +1,32 @@
+
+> blog-temp@0.1.0 dev
+> next dev
+
+⚠ Port 3000 is in use by process 2149245, using available port 3002 instead.
+▲ Next.js 16.1.4 (Turbopack)
+- Local:         http://localhost:3002
+- Network:       http://10.7.0.9:3002
+- Environments: .env.local
+
+✓ Starting...
+✓ Ready in 1059ms
+ GET /about 200 in 2.1s (compile: 355ms, proxy.ts: 177ms, render: 1551ms)
+ HEAD /about 200 in 96ms (compile: 6ms, proxy.ts: 5ms, render: 85ms)
+✓ Compiled in 1584ms
+✓ Compiled in 167ms
+✓ Compiled in 115ms
+✓ Compiled in 106ms
+✓ Compiled in 395ms
+✓ Compiled in 373ms
+✓ Compiled in 402ms
+✓ Compiled in 176ms
+✓ Compiled in 86ms
+✓ Compiled in 72ms
+✓ Compiled in 891ms
+ GET / 200 in 1133ms (compile: 23ms, proxy.ts: 5ms, render: 1105ms)
+ GET /about 200 in 221ms (compile: 102ms, proxy.ts: 7ms, render: 112ms)
+✓ Compiled in 1288ms
+ GET /about 200 in 275ms (compile: 95ms, proxy.ts: 8ms, render: 172ms)
+✓ Compiled in 1282ms
+ GET /about 200 in 227ms (compile: 106ms, proxy.ts: 6ms, render: 115ms)
+ GET /about 200 in 446ms (compile: 203ms, proxy.ts: 18ms, render: 225ms)
