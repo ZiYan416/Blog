@@ -61,6 +61,9 @@ export default async function proxy(request: NextRequest) {
       url.pathname = '/dashboard'
       return NextResponse.redirect(url)
     }
+  } else {
+    // 非保护路由也刷新 session，确保 auth token 持续有效
+    await supabase.auth.getUser()
   }
 
   return response
@@ -69,11 +72,11 @@ export default async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public (public folder)
+     * 匹配所有路由，除了:
+     * - _next/static (静态文件)
+     * - _next/image (图片优化)
+     * - favicon.ico (浏览器图标)
+     * - 静态资源文件
      */
     '/((?!_next/static|_next/image|favicon.ico|public|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],

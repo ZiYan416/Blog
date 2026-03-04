@@ -8,9 +8,11 @@ import { Button } from '@/components/ui/button'
 interface BackToTopProps {
   targetId?: string
   threshold?: number
+  hideOnDesktop?: boolean
+  positionClassName?: string
 }
 
-export function BackToTop({ targetId, threshold = 400 }: BackToTopProps) {
+export function BackToTop({ targetId, threshold = 400, hideOnDesktop = true, positionClassName }: BackToTopProps) {
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
@@ -62,7 +64,9 @@ export function BackToTop({ targetId, threshold = 400 }: BackToTopProps) {
 
   return (
     <div className={cn(
-      "fixed bottom-6 right-6 z-50 transition-all duration-500 lg:hidden",
+      "fixed bottom-6 right-6 z-50 transition-all duration-500",
+      hideOnDesktop && "lg:hidden",
+      positionClassName,
       visible ? "translate-y-0 opacity-100 scale-100" : "translate-y-20 opacity-0 scale-95 pointer-events-none"
     )}>
       <Button

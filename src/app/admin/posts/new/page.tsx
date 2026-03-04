@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -16,6 +16,7 @@ import { autoClassifyTags, generatePostSlug, getPostExcerpt } from '@/lib/markdo
 import { ensureTagsExist, getTagNames } from '@/app/actions/tags'
 import { v4 as uuidv4 } from 'uuid'
 import { useEffect } from 'react'
+import { BackToTop } from '@/components/ui/back-to-top'
 
 export default function NewPostPage() {
   const router = useRouter()
@@ -110,7 +111,7 @@ export default function NewPostPage() {
     }
   }
 
-  const handleSave = async (published: boolean) => {
+  const handleSave = useCallback(async (published: boolean) => {
     if (!title) {
       toast({
         title: "标题不能为空",
@@ -168,7 +169,14 @@ export default function NewPostPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [title, tags, content, availableTags, slug, coverImage, toast, router])
+
+  // 监听导航栏发布按钮事件
+  useEffect(() => {
+    const handleNavbarPublish = () => handleSave(true)
+    window.addEventListener('navbar-publish', handleNavbarPublish)
+    return () => window.removeEventListener('navbar-publish', handleNavbarPublish)
+  }, [handleSave])
 
   return (
     <div className="min-h-screen bg-[#fafafa] dark:bg-[#050505] pb-16 md:pb-20">
@@ -208,7 +216,7 @@ export default function NewPostPage() {
               </Button>
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 lg:hidden">
                <Button
                 variant="outline"
                 className="flex-1 sm:flex-none rounded-full border-black/10 dark:border-white/10 h-9 md:h-10"
@@ -220,6 +228,30 @@ export default function NewPostPage() {
               </Button>
               <Button
                 className="flex-1 sm:flex-none rounded-full bg-black dark:bg-white text-white dark:text-black hover:opacity-90 px-4 sm:px-6 h-9 md:h-10"
+                onClick={() => handleSave(true)}
+                disabled={loading}
+              >
+                <Send className="w-4 h-4 mr-2" />
+                发布
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div className="hidden lg:block fixed left-0 right-0 top-26 z-40 pointer-events-none">
+          <div className="container max-w-6xl mx-auto px-4 sm:px-6 flex justify-end">
+            <div className="pointer-events-auto flex items-center gap-2 sm:gap-3 rounded-2xl bg-[#fafafa]/90 dark:bg-[#050505]/90 backdrop-blur-sm px-2 py-2 border border-black/5 dark:border-white/10 shadow-sm">
+              <Button
+                variant="outline"
+                className="rounded-full border-black/10 dark:border-white/10 h-10"
+                onClick={() => handleSave(false)}
+                disabled={loading}
+              >
+                <Save className="w-4 h-4 mr-2" />
+                存草稿
+              </Button>
+              <Button
+                className="rounded-full bg-black dark:bg-white text-white dark:text-black hover:opacity-90 h-10 px-6"
                 onClick={() => handleSave(true)}
                 disabled={loading}
               >
@@ -264,7 +296,7 @@ export default function NewPostPage() {
           </div>
 
           {/* Sidebar Settings */}
-          <div className="lg:sticky lg:top-8 space-y-4 md:space-y-6">
+          <div className="lg:sticky lg:top-46 space-y-4 md:space-y-6">
             <Card className="border-none shadow-sm bg-white dark:bg-neutral-900 rounded-2xl md:rounded-3xl overflow-hidden">
               <CardContent className="p-4 md:p-6">
                 <TagSelector
@@ -357,6 +389,8 @@ export default function NewPostPage() {
           created_at: new Date().toISOString()
         }}
       />
+
+      <BackToTop hideOnDesktop={false} positionClassName="lg:right-[24rem] xl:right-[calc((100vw-72rem)/2+23rem)]" />
     </div>
   )
 }
