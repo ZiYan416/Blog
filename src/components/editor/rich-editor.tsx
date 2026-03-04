@@ -36,6 +36,7 @@ interface RichEditorProps {
 
 export function RichEditor({ content, onChange, onEditorReady, placeholder, className }: RichEditorProps) {
   const isInternalUpdate = useRef(false)
+  const lastInternalContent = useRef('')
   const { toast } = useToast()
 
   const handleImageUpload = async (file: File): Promise<string | null> => {
@@ -187,11 +188,12 @@ export function RichEditor({ content, onChange, onEditorReady, placeholder, clas
     onUpdate: ({ editor }) => {
       isInternalUpdate.current = true
       const markdown = (editor.storage as any).markdown.getMarkdown()
+      lastInternalContent.current = markdown
       onChange(markdown)
-      // Reset flag after render cycle
-      setTimeout(() => {
+      // Reset flag after render cycle using queueMicrotask for more reliable timing
+      queueMicrotask(() => {
         isInternalUpdate.current = false
-      }, 0)
+      })
     },
     onCreate: ({ editor }) => {
       onEditorReady(editor)
@@ -206,10 +208,23 @@ export function RichEditor({ content, onChange, onEditorReady, placeholder, clas
   useEffect(() => {
     if (!editor) return
     if (isInternalUpdate.current) return
+    // Skip if this content was just produced internally by the editor
+    if (content === lastInternalContent.current) return
 
     const currentContent = (editor.storage as any).markdown.getMarkdown()
     if (content !== currentContent) {
-      editor.commands.setContent(content)
+      // Save cursor position before resetting content
+      const { from, to } = editor.state.selection
+      editor.commands.setContent(content, false)
+      // Restore cursor position (clamped to new doc length)
+      try {
+        const maxPos = editor.state.doc.content.size
+        const safeFrom = Math.min(from, maxPos)
+        const safeTo = Math.min(to, maxPos)
+        editor.commands.setTextSelection({ from: safeFrom, to: safeTo })
+      } catch {
+        // If restoration fails, leave cursor where setContent placed it
+      }
     }
   }, [content, editor])
 

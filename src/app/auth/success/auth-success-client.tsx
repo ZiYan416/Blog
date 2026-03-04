@@ -5,12 +5,12 @@ import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import { CheckCircle2 } from 'lucide-react'
 
-interface AuthCallbackClientProps {
+interface AuthSuccessClientProps {
   displayName: string
   redirectTo: string
 }
 
-export default function AuthCallbackClient({ displayName, redirectTo }: AuthCallbackClientProps) {
+export default function AuthSuccessClient({ displayName, redirectTo }: AuthSuccessClientProps) {
   const router = useRouter()
   const { toast } = useToast()
 
