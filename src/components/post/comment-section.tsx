@@ -10,6 +10,7 @@ import { formatDateString } from '@/lib/markdown'
 import { useRouter } from 'next/navigation'
 import { getCardStyle } from '@/lib/card-styles'
 import { cn } from '@/lib/utils'
+import { LoginModal } from '@/components/auth/login-modal'
 
 interface CommentSectionProps {
   postId: string
@@ -58,9 +59,9 @@ function CommentForm({
         title: "请先登录",
         description: "登录后即可发表精彩评论",
         action: (
-          <Button variant="outline" size="sm" onClick={() => router.push('/auth/login')}>
-            去登录
-          </Button>
+          <LoginModal>
+            <Button variant="outline" size="sm">去登录</Button>
+          </LoginModal>
         ),
       })
       return
@@ -137,9 +138,16 @@ function CommentForm({
       )}
 
       {!currentUser && (
-        <div className="flex items-center gap-3 mb-4 text-sm text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-950/30 px-4 py-2 rounded-xl border border-amber-200 dark:border-amber-900/50">
-          <User className="w-4 h-4" />
-          登录后即可发表评论
+        <div className="flex items-center justify-between gap-3 mb-4 text-sm text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-950/30 px-4 py-2 rounded-xl border border-amber-200 dark:border-amber-900/50">
+          <div className="flex items-center gap-2 min-w-0">
+            <User className="w-4 h-4 shrink-0" />
+            <span>登录后即可发表评论</span>
+          </div>
+          <LoginModal>
+            <Button type="button" variant="outline" size="sm" className="h-8 shrink-0">
+              登录
+            </Button>
+          </LoginModal>
         </div>
       )}
 

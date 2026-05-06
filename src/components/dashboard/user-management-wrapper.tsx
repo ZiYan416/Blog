@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { UserManagement } from "./user-management";
 import { UserDetailDialog } from "./user-detail-dialog";
-import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -44,6 +43,7 @@ export function UserManagementWrapper({
     open: boolean;
     userId: string | null;
   }>({ open: false, userId: null });
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const refreshUsers = async () => {
     try {
@@ -91,21 +91,30 @@ export function UserManagementWrapper({
   const confirmDelete = async () => {
     if (!deleteDialog.userId) return;
 
+    setIsDeleting(true);
+
     try {
       const response = await fetch(`/api/admin/users/${deleteDialog.userId}`, {
         method: "DELETE",
       });
 
-      if (!response.ok) throw new Error("删除用户失败");
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error || "删除用户失败");
+      }
 
       toast.success("用户已删除");
       refreshUsers();
       setDeleteDialog({ open: false, userId: null });
     } catch (error) {
       console.error("删除用户失败:", error);
-      toast.error("删除失败，请重试");
+      toast.error(error instanceof Error ? error.message : "删除失败，请重试");
+    } finally {
+      setIsDeleting(false);
     }
   };
+
+  const userToDelete = users.find((user) => user.id === deleteDialog.userId);
 
   return (
     <>
@@ -135,16 +144,21 @@ export function UserManagementWrapper({
           <AlertDialogHeader>
             <AlertDialogTitle>确认删除用户？</AlertDialogTitle>
             <AlertDialogDescription>
-              此操作无法撤销。该用户的所有数据将被永久删除。
+              此操作会删除 Supabase Auth 账户，并通过数据库外键清理该用户的资料和评论，无法撤销。
+              {userToDelete?.email ? ` 即将删除：${userToDelete.email}` : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="rounded-full">取消</AlertDialogCancel>
             <AlertDialogAction
-              onClick={confirmDelete}
+              onClick={(event) => {
+                event.preventDefault();
+                confirmDelete();
+              }}
+              disabled={isDeleting}
               className="rounded-full bg-red-500 hover:bg-red-600"
             >
-              确认删除
+              {isDeleting ? "删除中..." : "确认删除"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
