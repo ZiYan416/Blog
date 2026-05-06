@@ -96,6 +96,10 @@ export async function GET(request: NextRequest) {
       ? await syncOAuthProfile(supabase, data.user)
       : '用户'
 
+    if (next.startsWith('/auth/reset-password')) {
+      return NextResponse.redirect(new URL(next, origin))
+    }
+
     // Redirect to the success page with display params
     const successUrl = new URL('/auth/success', origin)
     successUrl.searchParams.set('name', displayName)

@@ -1,4 +1,5 @@
 import { createClient as createServerClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { NextResponse } from 'next/server'
 
 export async function DELETE(
@@ -34,16 +35,25 @@ export async function DELETE(
       )
     }
 
-    // 删除用户的 profile
-    const { error: profileError } = await supabase
+    const { data: targetProfile } = await supabase
       .from('profiles')
-      .delete()
+      .select('id, email')
       .eq('id', id)
+      .maybeSingle()
 
-    if (profileError) throw profileError
+    if (!targetProfile) {
+      return NextResponse.json({ error: '用户不存在' }, { status: 404 })
+    }
 
-    // 注意：这里只删除 profile，实际的 auth.users 需要通过 Supabase Admin API 删除
-    // 如果需要完全删除用户，需要使用 Supabase Admin SDK
+    const adminSupabase = createAdminClient()
+    const { error: authDeleteError } = await adminSupabase.auth.admin.deleteUser(id)
+
+    if (authDeleteError) {
+      return NextResponse.json(
+        { error: authDeleteError.message },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {
