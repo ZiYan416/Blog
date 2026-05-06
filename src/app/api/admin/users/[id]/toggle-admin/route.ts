@@ -1,4 +1,5 @@
 import { createClient as createServerClient } from '@/lib/supabase/server'
+import { apiError, getErrorMessage } from '@/lib/api-response'
 import { NextResponse } from 'next/server'
 
 export async function PATCH(
@@ -12,7 +13,7 @@ export async function PATCH(
     // 验证管理员权限
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
-      return NextResponse.json({ error: '未授权' }, { status: 401 })
+      return apiError('未授权', 401, 'UNAUTHORIZED')
     }
 
     const { data: profile } = await supabase
@@ -22,15 +23,12 @@ export async function PATCH(
       .single()
 
     if (!profile?.is_admin) {
-      return NextResponse.json({ error: '需要管理员权限' }, { status: 403 })
+      return apiError('需要管理员权限', 403, 'FORBIDDEN')
     }
 
     // 防止修改自己的管理员状态
     if (params.id === user.id) {
-      return NextResponse.json(
-        { error: '无法修改自己的管理员状态' },
-        { status: 400 }
-      )
+      return apiError('无法修改自己的管理员状态', 400, 'SELF_ROLE_CHANGE_NOT_ALLOWED')
     }
 
     // 获取请求体
@@ -38,10 +36,7 @@ export async function PATCH(
     const { is_admin } = body
 
     if (typeof is_admin !== 'boolean') {
-      return NextResponse.json(
-        { error: '无效的参数' },
-        { status: 400 }
-      )
+      return apiError('无效的参数', 400, 'INVALID_ARGUMENT')
     }
 
     // 更新用户的管理员状态
@@ -58,9 +53,6 @@ export async function PATCH(
     })
   } catch (error) {
     console.error('更新管理员状态失败:', error)
-    return NextResponse.json(
-      { error: '服务器错误，请稍后重试' },
-      { status: 500 }
-    )
+    return apiError(getErrorMessage(error), 500, 'ROLE_UPDATE_FAILED')
   }
 }

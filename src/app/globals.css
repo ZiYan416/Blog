@@ -3,6 +3,8 @@
 
 @layer base {
   :root {
+    --font-sans: "Inter", "Segoe UI", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+    --font-serif: "Noto Serif SC", "Songti SC", SimSun, Georgia, serif;
     --background: 0 0% 100%;
     --foreground: 0 0% 10%;
     --card: 0 0% 100%;
