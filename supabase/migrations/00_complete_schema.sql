@@ -210,9 +210,18 @@ BEGIN
   VALUES (
     new.id,
     new.email,
-    split_part(new.email, '@', 1),
+    COALESCE(
+      NULLIF(new.raw_user_meta_data->>'full_name', ''),
+      NULLIF(new.raw_user_meta_data->>'name', ''),
+      NULLIF(new.raw_user_meta_data->>'user_name', ''),
+      NULLIF(new.raw_user_meta_data->>'preferred_username', ''),
+      split_part(new.email, '@', 1)
+    ),
     'default',
-    new.raw_user_meta_data->>'avatar_url',
+    COALESCE(
+      NULLIF(new.raw_user_meta_data->>'avatar_url', ''),
+      NULLIF(new.raw_user_meta_data->>'picture', '')
+    ),
     NOW()
   );
   RETURN new;

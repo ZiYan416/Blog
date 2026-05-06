@@ -76,15 +76,10 @@ export default async function DashboardPage() {
     .select('*', { count: 'exact', head: true })
 
   // 6. 获取所有用户详细信息（用于用户管理）
-  const { data: allUsers, error: usersError } = await supabase
+  const { data: allUsers } = await supabase
     .from('profiles')
     .select('id, email, display_name, avatar_url, bio, is_admin, created_at, updated_at')
     .order('created_at', { ascending: false })
-
-  console.log('[Dashboard] Fetched users:', allUsers?.length || 0, 'Error:', usersError)
-  if (allUsers && allUsers.length > 0) {
-    console.log('[Dashboard] First user sample:', JSON.stringify(allUsers[0]))
-  }
 
   // 获取每个用户的评论数
   const usersWithComments = await Promise.all(
@@ -101,8 +96,6 @@ export default async function DashboardPage() {
       }
     })
   )
-
-  console.log('[Dashboard] Users with comments:', usersWithComments.length)
 
   // 7. 获取待审核评论数量
   const { count: pendingCommentsCount } = await supabase

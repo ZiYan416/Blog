@@ -57,8 +57,6 @@ export function AuthProvider({
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth State Change:", event);
-
       if (event === "SIGNED_OUT") {
         setState({
           user: null,

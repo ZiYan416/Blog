@@ -27,7 +27,7 @@ export default async function CommentsManagementPage() {
   }
 
   // 获取所有评论（包括待审核和已审核）
-  const { data: comments, error } = await supabase
+  const { data: comments } = await supabase
     .from('comments')
     .select(`
       *,
@@ -35,8 +35,6 @@ export default async function CommentsManagementPage() {
       user:profiles(id, display_name, avatar_url, email)
     `)
     .order('created_at', { ascending: false })
-
-  console.log('[Comments Management] Fetched comments:', comments?.length || 0, 'Error:', error)
 
   return (
     <div className="min-h-screen bg-[#fafafa] dark:bg-[#050505] pb-20">

@@ -7,6 +7,8 @@ import { useToast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { buildAuthCallbackUrl, getAuthDisplayName, getSafeRedirectPath, getTimeGreeting } from '@/lib/auth'
+import { cn } from "@/lib/utils"
 import {
   Dialog,
   DialogContent,
@@ -24,8 +26,9 @@ interface LoginModalProps {
 }
 
 type AuthMode = 'login' | 'register'
+type AuthIntent = 'email' | 'github'
 
-export function LoginModal({ children, redirectTo = '/dashboard' }: LoginModalProps) {
+export function LoginModal({ children, redirectTo }: LoginModalProps) {
   const supabase = createClient()
   const router = useRouter()
   const { toast } = useToast()
@@ -33,9 +36,10 @@ export function LoginModal({ children, redirectTo = '/dashboard' }: LoginModalPr
   const [mode, setMode] = useState<AuthMode>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [pendingIntent, setPendingIntent] = useState<AuthIntent | null>(null)
   const [isOpen, setIsOpen] = useState(false)
   const [error, setError] = useState('')
+  const loading = pendingIntent !== null
 
   // Reset state when modal closes or opens
   const handleOpenChange = (open: boolean) => {
@@ -45,7 +49,7 @@ export function LoginModal({ children, redirectTo = '/dashboard' }: LoginModalPr
       setMode('login')
       setEmail('')
       setPassword('')
-      setLoading(false) // Reset loading state
+      setPendingIntent(null)
     }
   }
 
@@ -53,7 +57,7 @@ export function LoginModal({ children, redirectTo = '/dashboard' }: LoginModalPr
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        setLoading(false)
+        setPendingIntent(null)
       }
     }
 
@@ -66,10 +70,17 @@ export function LoginModal({ children, redirectTo = '/dashboard' }: LoginModalPr
     setError('')
   }
 
+  const getRedirectTarget = () => {
+    const currentUrl = new URL(window.location.href)
+    const requestedNext = currentUrl.searchParams.get('next')
+    const currentPath = `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`
+    return getSafeRedirectPath(redirectTo || requestedNext || currentPath)
+  }
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    setLoading(true)
+    setPendingIntent('email')
 
     try {
       if (mode === 'login') {
@@ -82,8 +93,7 @@ export function LoginModal({ children, redirectTo = '/dashboard' }: LoginModalPr
 
         const { data: { user } } = await supabase.auth.getUser()
 
-        // Get user display name (fallback to email part)
-        let displayName = user?.email?.split('@')[0] || '用户'
+        let displayName = getAuthDisplayName(user)
 
         // Try to get profile display_name if available
         if (user) {
@@ -98,11 +108,7 @@ export function LoginModal({ children, redirectTo = '/dashboard' }: LoginModalPr
         }
 
         // Calculate time of day greeting
-        const hour = new Date().getHours()
-        let greeting = '你好'
-        if (hour >= 5 && hour < 12) greeting = '上午好'
-        else if (hour >= 12 && hour < 18) greeting = '下午好'
-        else if (hour >= 18 || hour < 5) greeting = '晚上好'
+        const greeting = getTimeGreeting()
 
         toast({
           title: "登录成功",
@@ -110,8 +116,10 @@ export function LoginModal({ children, redirectTo = '/dashboard' }: LoginModalPr
         })
         setIsOpen(false)
 
-        // Refresh the current route instead of hard redirect
-        // allowing for "seamless" login feeling
+        const destination = getRedirectTarget()
+        if (destination !== `${window.location.pathname}${window.location.search}${window.location.hash}`) {
+          router.replace(destination)
+        }
         router.refresh()
       } else {
         // Registration logic
@@ -123,7 +131,7 @@ export function LoginModal({ children, redirectTo = '/dashboard' }: LoginModalPr
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
+            emailRedirectTo: buildAuthCallbackUrl(window.location.origin, getRedirectTarget()),
           },
         })
 
@@ -140,22 +148,31 @@ export function LoginModal({ children, redirectTo = '/dashboard' }: LoginModalPr
     } catch (err: any) {
       setError(err.message || "发生意外错误")
     } finally {
-      setLoading(false)
+      setPendingIntent(null)
     }
   }
 
   const handleGithubSignIn = async () => {
-    setLoading(true)
+    if (loading) return
+
+    setError('')
+    setPendingIntent('github')
+
+    const destination = getRedirectTarget()
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'github',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=${redirectTo}`,
+        redirectTo: buildAuthCallbackUrl(window.location.origin, destination),
+        scopes: 'read:user user:email',
+        queryParams: {
+          allow_signup: 'true',
+        },
       },
     })
 
     if (error) {
       setError(error.message)
-      setLoading(false)
+      setPendingIntent(null)
     }
   }
 
@@ -197,9 +214,10 @@ export function LoginModal({ children, redirectTo = '/dashboard' }: LoginModalPr
                 className="w-full h-11 rounded-xl bg-black dark:bg-white text-white dark:text-black font-medium hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-black/10 dark:shadow-white/10"
                 onClick={handleGithubSignIn}
                 disabled={loading}
+                aria-busy={pendingIntent === 'github'}
               >
                 <Github className="w-5 h-5 mr-2.5" />
-                使用 GitHub 继续
+                {pendingIntent === 'github' ? '正在跳转 GitHub...' : '使用 GitHub 继续'}
               </Button>
             </div>
 
@@ -259,8 +277,9 @@ export function LoginModal({ children, redirectTo = '/dashboard' }: LoginModalPr
                 variant="outline"
                 className="w-full h-11 rounded-xl border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 hover:border-black/20 dark:hover:border-white/20 font-medium transition-all"
                 disabled={loading}
+                aria-busy={pendingIntent === 'email'}
               >
-                {loading
+                {pendingIntent === 'email'
                   ? (mode === 'login' ? '登录中...' : '注册中...')
                   : (mode === 'login' ? '登录' : '创建账号')}
               </Button>
@@ -284,6 +303,3 @@ export function LoginModal({ children, redirectTo = '/dashboard' }: LoginModalPr
     </Dialog>
   )
 }
-
-// Helper to use cn in this file if needed, though we imported it properly now
-import { cn } from "@/lib/utils"

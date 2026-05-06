@@ -30,7 +30,7 @@ export default function AuthSuccessClient({ displayName, redirectTo }: AuthSucce
 
     // Auto redirect after showing success state briefly
     const timer = setTimeout(() => {
-      router.push(redirectTo)
+      router.replace(redirectTo)
       router.refresh()
     }, 1500)
 

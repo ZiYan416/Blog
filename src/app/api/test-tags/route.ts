@@ -18,7 +18,7 @@ export async function GET() {
   })
 
   if (!user) {
-    return NextResponse.json(diagnostics)
+    return NextResponse.json({ error: '未授权' }, { status: 401 })
   }
 
   // Check 2: Is admin
@@ -32,6 +32,10 @@ export async function GET() {
     name: 'Admin Status',
     isAdmin: profile?.is_admin || false
   })
+
+  if (!profile?.is_admin) {
+    return NextResponse.json({ error: '需要管理员权限' }, { status: 403 })
+  }
 
   // Check 3: Can read tags
   const { data: tags, error: tagsError } = await supabase

@@ -54,7 +54,6 @@ export async function POST(request: NextRequest) {
 
   // Handle tags relationship
   if (tags && Array.isArray(tags)) {
-    console.log(`[CREATE] Processing ${tags.length} tags for post ${post.id}:`, tags)
     for (const tagName of tags) {
       // Check if tag exists
       const { data: existingTag } = await supabase
@@ -107,7 +106,6 @@ export async function POST(request: NextRequest) {
 
       if (tagId) {
         // Insert relationship
-        console.log(`[CREATE] Inserting post_tags: post_id=${post.id}, tag_id=${tagId}, tag_name=${tagName}`)
         const { error: insertError } = await supabase
           .from('post_tags')
           .upsert({
@@ -117,8 +115,6 @@ export async function POST(request: NextRequest) {
 
         if (insertError) {
           console.error(`[CREATE] Failed to insert post_tags for tag "${tagName}":`, insertError)
-        } else {
-          console.log(`[CREATE] Successfully inserted post_tags for tag "${tagName}"`)
         }
       } else {
         console.warn(`[CREATE] Skipping tag "${tagName}" - no tagId available`)

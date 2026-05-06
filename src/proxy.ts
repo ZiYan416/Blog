@@ -51,7 +51,10 @@ export default async function proxy(request: NextRequest) {
     // 1. 未登录用户访问受保护页面 -> 重定向到首页
     if (!user && (isDashboard || isProfile || isAdmin)) {
       const url = request.nextUrl.clone()
+      const next = `${request.nextUrl.pathname}${request.nextUrl.search}`
       url.pathname = '/'
+      url.search = ''
+      url.searchParams.set('next', next)
       return NextResponse.redirect(url)
     }
 

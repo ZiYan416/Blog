@@ -1,11 +1,60 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse, type NextRequest } from 'next/server'
+import type { SupabaseClient, User } from '@supabase/supabase-js'
+import { getAuthAvatarUrl, getAuthDisplayName, getSafeRedirectPath } from '@/lib/auth'
+
+async function syncOAuthProfile(supabase: SupabaseClient, user: User) {
+  const displayName = getAuthDisplayName(user)
+  const avatarUrl = getAuthAvatarUrl(user)
+  const lastSignInAt = new Date().toISOString()
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('email, display_name, avatar_url')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  if (!profile) {
+    await supabase.from('profiles').insert({
+      id: user.id,
+      email: user.email,
+      display_name: displayName,
+      avatar_url: avatarUrl,
+      card_bg: 'default',
+      last_sign_in_at: lastSignInAt,
+    })
+    return displayName
+  }
+
+  const updates: Record<string, string | null> = {
+    last_sign_in_at: lastSignInAt,
+  }
+
+  if (user.email && profile.email !== user.email) {
+    updates.email = user.email
+  }
+
+  if (!profile.display_name && displayName) {
+    updates.display_name = displayName
+  }
+
+  if (!profile.avatar_url && avatarUrl) {
+    updates.avatar_url = avatarUrl
+  }
+
+  await supabase
+    .from('profiles')
+    .update(updates)
+    .eq('id', user.id)
+
+  return profile.display_name || displayName
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/dashboard'
+  const next = getSafeRedirectPath(searchParams.get('next'))
   const error = searchParams.get('error')
 
   // Handle OAuth error
@@ -43,19 +92,9 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Get display name for greeting
-    let displayName = data.user?.email?.split('@')[0] || '用户'
-    if (data.user) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('display_name')
-        .eq('id', data.user.id)
-        .single()
-
-      if (profile?.display_name) {
-        displayName = profile.display_name
-      }
-    }
+    const displayName = data.user
+      ? await syncOAuthProfile(supabase, data.user)
+      : '用户'
 
     // Redirect to the success page with display params
     const successUrl = new URL('/auth/success', origin)
