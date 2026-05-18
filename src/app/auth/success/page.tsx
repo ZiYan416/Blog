@@ -1,4 +1,5 @@
 import AuthSuccessClient from './auth-success-client'
+import { getSafeRedirectPath } from '@/lib/auth'
 
 interface SuccessPageProps {
   searchParams: Promise<{ name?: string; next?: string; error?: string }>
@@ -20,7 +21,7 @@ export default async function AuthSuccessPage({ searchParams }: SuccessPageProps
   }
 
   const displayName = params.name || '用户'
-  const redirectTo = params.next || '/dashboard'
+  const redirectTo = getSafeRedirectPath(params.next)
 
   return <AuthSuccessClient displayName={displayName} redirectTo={redirectTo} />
 }

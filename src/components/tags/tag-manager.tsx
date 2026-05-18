@@ -12,7 +12,17 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog"
-import { Trash2, Edit2, Plus, Tag, Search, MoreHorizontal } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Trash2, Edit2, Plus, Tag, Search } from "lucide-react"
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
@@ -36,12 +46,13 @@ export function TagManager({ initialTags }: TagManagerProps) {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [currentTag, setCurrentTag] = useState<TagItem | null>(null)
+  const [tagToDelete, setTagToDelete] = useState<TagItem | null>(null)
   const [newTagName, setNewTagName] = useState("")
   const { toast } = useToast()
 
   const fetchTags = async () => {
     const data = await getAllTags()
-    setTags(data as any || [])
+    setTags(data || [])
   }
 
   const filteredTags = tags.filter(tag =>
@@ -96,22 +107,23 @@ export function TagManager({ initialTags }: TagManagerProps) {
     setLoading(false)
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this tag? This cannot be undone.")) return
+  const handleDelete = async () => {
+    if (!tagToDelete) return
     setLoading(true)
 
-    const result = await deleteTag(id)
+    const result = await deleteTag(tagToDelete.id)
     if (result.error) {
       toast({
-        title: "Error",
-        description: "Failed to delete tag",
+        title: "删除失败",
+        description: result.error,
         variant: "destructive",
       })
     } else {
       toast({
-        title: "Success",
-        description: "Tag deleted successfully",
+        title: "已删除标签",
+        description: `“${tagToDelete.name}” 已删除。`,
       })
+      setTagToDelete(null)
       await fetchTags()
     }
     setLoading(false)
@@ -188,7 +200,7 @@ export function TagManager({ initialTags }: TagManagerProps) {
         </div>
       ) : (
         <div className="flex flex-wrap content-start gap-4 p-4 min-h-[300px]">
-          {filteredTags.map((tag, index) => {
+          {filteredTags.map((tag) => {
             const rotation = getRotation(tag.id)
             const styles = getTagStyles(tag.name)
 
@@ -247,7 +259,7 @@ export function TagManager({ initialTags }: TagManagerProps) {
                     className="h-8 w-8 rounded-full shadow-lg bg-white dark:bg-neutral-800 border border-black/5 hover:bg-red-50 hover:text-red-600"
                     onClick={(e) => {
                       e.stopPropagation()
-                      handleDelete(tag.id)
+                      setTagToDelete(tag)
                     }}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -293,6 +305,31 @@ export function TagManager({ initialTags }: TagManagerProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!tagToDelete} onOpenChange={(open) => !open && setTagToDelete(null)}>
+        <AlertDialogContent className="rounded-3xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>确认删除标签？</AlertDialogTitle>
+            <AlertDialogDescription>
+              删除后不可恢复。已有文章会移除该标签关联，标签页也将不再显示。
+              {tagToDelete ? ` 即将删除：${tagToDelete.name}` : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-full">取消</AlertDialogCancel>
+            <AlertDialogAction
+              className="rounded-full bg-red-500 hover:bg-red-600"
+              disabled={loading}
+              onClick={(event) => {
+                event.preventDefault()
+                handleDelete()
+              }}
+            >
+              {loading ? "删除中..." : "确认删除"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

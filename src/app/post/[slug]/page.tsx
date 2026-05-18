@@ -41,6 +41,20 @@ export async function generateMetadata({
   return {
     title: `${post.title} | My Blog`,
     description: post.excerpt || post.title,
+    authors: [{ name: 'My Blog' }],
+    openGraph: {
+      title: post.title,
+      description: post.excerpt || post.title,
+      url: `/post/${encodeURIComponent(post.slug)}`,
+      type: 'article',
+      images: post.cover_image ? [post.cover_image] : undefined,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.title,
+      description: post.excerpt || post.title,
+      images: post.cover_image ? [post.cover_image] : undefined,
+    },
   }
 }
 
@@ -101,6 +115,23 @@ export default async function PostPage({
 
   const readingTime = calculateReadingTime(post.content)
   const formattedDate = formatDateString(post.created_at)
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.title,
+    description: post.excerpt || post.title,
+    author: {
+      '@type': 'Person',
+      name: author?.display_name || 'Anonymous',
+    },
+    datePublished: post.created_at,
+    image: post.cover_image || undefined,
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `/post/${encodeURIComponent(post.slug)}`,
+    },
+  }
 
   return (
     <div className="min-h-screen bg-[#fafafa] dark:bg-[#050505] pb-8 md:pb-24">
@@ -177,6 +208,7 @@ export default async function PostPage({
       </div>
 
       <div className="container max-w-6xl mx-auto px-0 md:px-6 -mt-4 md:-mt-16 relative z-20">
+        <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8">
           {/* Main Content */}
           <div className="bg-white dark:bg-neutral-900 rounded-none md:rounded-3xl p-5 md:p-10 shadow-none md:shadow-xl border-none md:border border-black/5 dark:border-white/5 min-h-[50vh]">

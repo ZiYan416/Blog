@@ -75,7 +75,10 @@ cp .env.local.example .env.local
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 ```
+
+`SUPABASE_SERVICE_ROLE_KEY` 仅用于服务端管理员操作，请不要暴露到客户端或提交真实值。
 
 ### 4. 数据库初始化
 

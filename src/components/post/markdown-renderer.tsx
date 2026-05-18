@@ -4,12 +4,37 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import rehypeRaw from 'rehype-raw'
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'
 import rehypeSlug from 'rehype-slug'
 import { Check, Copy } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 
 interface MarkdownRendererProps {
   content: string
+}
+
+const markdownSchema: any = {
+  ...defaultSchema,
+  tagNames: [
+    ...(defaultSchema.tagNames || []),
+    't',
+  ],
+  attributes: {
+    ...defaultSchema.attributes,
+    a: [
+      ...(defaultSchema.attributes?.a || []),
+      'target',
+      'rel',
+    ],
+    code: [
+      ...(defaultSchema.attributes?.code || []),
+      ['className', /^language-/, /^hljs/],
+    ],
+    span: [
+      ...(defaultSchema.attributes?.span || []),
+      ['className', /^hljs-/],
+    ],
+  },
 }
 
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
@@ -58,7 +83,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
       <article className="markdown-article prose prose-neutral dark:prose-invert max-w-none break-words prose-headings:font-bold prose-headings:tracking-tight prose-headings:leading-tight prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg md:prose-h1:text-3xl md:prose-h2:text-2xl md:prose-h3:text-xl prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-img:rounded-2xl prose-pre:bg-transparent prose-pre:p-0 prose-pre:border-none">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
-          rehypePlugins={[rehypeSlug, rehypeHighlight, rehypeRaw]}
+          rehypePlugins={[rehypeRaw, [rehypeSanitize, markdownSchema], rehypeSlug, rehypeHighlight]}
           components={{
             pre: PreBlock,
             // Handle <t> tags (often unescaped generics like <T>)

@@ -135,7 +135,6 @@ export async function PUT(
       }
 
       if (tagId) {
-        console.log(`[UPDATE] Inserting post_tags: post_id=${post.id}, tag_id=${tagId}, tag_name=${tagName}`)
         const { error: insertError } = await supabase
           .from('post_tags')
           .insert({
@@ -145,8 +144,6 @@ export async function PUT(
 
         if (insertError) {
           console.error(`[UPDATE] Failed to insert post_tags for tag "${tagName}":`, insertError)
-        } else {
-          console.log(`[UPDATE] Successfully inserted post_tags for tag "${tagName}"`)
         }
       } else {
         console.warn(`[UPDATE] Skipping tag "${tagName}" - no tagId available`)

@@ -18,14 +18,9 @@ export async function getAnalyticsData(
   // 如果不是"全部"，则添加日期过滤
   if (days !== 'all' && startDate) {
     statsQuery = statsQuery.gte('date', startDate.toISOString().split('T')[0])
-    console.log(`[Analytics] Fetching data for ${days} days, startDate: ${startDate.toISOString().split('T')[0]}`)
-  } else {
-    console.log(`[Analytics] Fetching ALL historical data`)
   }
 
-  const { data: statsData, error: statsError } = await statsQuery
-
-  console.log(`[Analytics] statsData count: ${statsData?.length || 0}`, statsError)
+  const { data: statsData } = await statsQuery
 
   // 2. 格式化为图表数据 - 添加索引以确保顺序
   const recentActivity = (statsData || []).map((snapshot, index) => ({
@@ -180,17 +175,6 @@ export async function getAnalyticsData(
     comments: last7Days.map(s => s.new_comments_today || 0),
     users: last7Days.map(s => s.new_users_today || 0),
   }
-
-  // Debug: 检查实际数据值
-  const dataSummary = {
-    recentActivityLength: recentActivity.length,
-    postsSum: recentActivity.reduce((sum, d) => sum + d.posts, 0),
-    viewsSum: recentActivity.reduce((sum, d) => sum + d.views, 0),
-    commentsSum: recentActivity.reduce((sum, d) => sum + d.comments, 0),
-    sampleDates: recentActivity.slice(0, 3).map(d => d.date),
-  }
-  console.log(`[Analytics] Data summary for ${days} days:`, JSON.stringify(dataSummary))
-  console.log(`[Analytics] First 3 recentActivity items:`, JSON.stringify(recentActivity.slice(0, 3)))
 
   return {
     recentActivity,

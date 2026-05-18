@@ -215,7 +215,7 @@ export function RichEditor({ content, onChange, onEditorReady, placeholder, clas
     if (content !== currentContent) {
       // Save cursor position before resetting content
       const { from, to } = editor.state.selection
-      editor.commands.setContent(content, false)
+      editor.commands.setContent(content, { emitUpdate: false })
       // Restore cursor position (clamped to new doc length)
       try {
         const maxPos = editor.state.doc.content.size

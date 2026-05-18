@@ -1,4 +1,6 @@
 import { createClient as createServerClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { apiError, getErrorMessage } from '@/lib/api-response'
 import { NextResponse } from 'next/server'
 
 export async function DELETE(
@@ -13,7 +15,7 @@ export async function DELETE(
     // 验证管理员权限
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return apiError('未授权', 401, 'UNAUTHORIZED')
     }
 
     const { data: profile } = await supabase
@@ -23,34 +25,34 @@ export async function DELETE(
       .single()
 
     if (!profile?.is_admin) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      return apiError('需要管理员权限', 403, 'FORBIDDEN')
     }
 
     // 防止删除自己
     if (id === user.id) {
-      return NextResponse.json(
-        { error: '无法删除自己的账户' },
-        { status: 400 }
-      )
+      return apiError('无法删除自己的账户', 400, 'SELF_DELETE_NOT_ALLOWED')
     }
 
-    // 删除用户的 profile
-    const { error: profileError } = await supabase
+    const { data: targetProfile } = await supabase
       .from('profiles')
-      .delete()
+      .select('id, email')
       .eq('id', id)
+      .maybeSingle()
 
-    if (profileError) throw profileError
+    if (!targetProfile) {
+      return apiError('用户不存在', 404, 'USER_NOT_FOUND')
+    }
 
-    // 注意：这里只删除 profile，实际的 auth.users 需要通过 Supabase Admin API 删除
-    // 如果需要完全删除用户，需要使用 Supabase Admin SDK
+    const adminSupabase = createAdminClient()
+    const { error: authDeleteError } = await adminSupabase.auth.admin.deleteUser(id)
+
+    if (authDeleteError) {
+      return apiError(authDeleteError.message, 500, 'AUTH_USER_DELETE_FAILED')
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('删除用户失败:', error)
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 }
-    )
+    return apiError(getErrorMessage(error), 500, 'USER_DELETE_FAILED')
   }
 }

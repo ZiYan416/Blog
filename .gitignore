@@ -43,3 +43,4 @@ next-env.d.ts
 .claude/*
 
 PROJECT_STATUS.md
+capacitor.config.ts

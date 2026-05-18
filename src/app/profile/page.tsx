@@ -1,15 +1,14 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
 import { ProfileTabs } from "@/components/profile/profile-tabs"
+import { getLoginRedirect } from '@/lib/admin-data'
 
 export default async function ProfilePage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect('/?login=true')
+    redirect(getLoginRedirect('/profile'))
   }
 
   // 1. Get Profile

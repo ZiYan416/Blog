@@ -1,13 +1,22 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
   CheckCircle,
-  XCircle,
   Trash2,
   ExternalLink,
   MessageSquare,
@@ -44,6 +53,7 @@ export function CommentManagement({ initialComments }: CommentManagementProps) {
   const router = useRouter()
   const [comments, setComments] = useState(initialComments)
   const [loading, setLoading] = useState<string | null>(null)
+  const [commentToDelete, setCommentToDelete] = useState<Comment | null>(null)
 
   const pendingComments = comments.filter(c => !c.approved)
   const approvedComments = comments.filter(c => c.approved)
@@ -70,19 +80,20 @@ export function CommentManagement({ initialComments }: CommentManagementProps) {
     }
   }
 
-  const handleDelete = async (commentId: string) => {
-    if (!confirm('确定要删除这条评论吗？此操作无法撤销。')) return
+  const handleDelete = async () => {
+    if (!commentToDelete) return
 
-    setLoading(commentId)
+    setLoading(commentToDelete.id)
     try {
-      const res = await fetch(`/api/admin/comments/${commentId}`, {
+      const res = await fetch(`/api/admin/comments/${commentToDelete.id}`, {
         method: 'DELETE',
       })
 
       if (!res.ok) throw new Error('Failed to delete comment')
 
-      setComments(prev => prev.filter(c => c.id !== commentId))
+      setComments(prev => prev.filter(c => c.id !== commentToDelete.id))
       toast.success('评论已删除')
+      setCommentToDelete(null)
       router.refresh()
     } catch (error) {
       console.error('Delete error:', error)
@@ -169,7 +180,7 @@ export function CommentManagement({ initialComments }: CommentManagementProps) {
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => handleDelete(comment.id)}
+                onClick={() => setCommentToDelete(comment)}
                 disabled={loading === comment.id}
                 className="rounded-full border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-900/20"
               >
@@ -184,6 +195,7 @@ export function CommentManagement({ initialComments }: CommentManagementProps) {
   )
 
   return (
+    <>
     <Tabs defaultValue="pending" className="w-full">
       <TabsList className="mb-6 bg-white dark:bg-neutral-900 border border-black/[0.03] dark:border-white/[0.03] p-1 rounded-2xl">
         <TabsTrigger value="pending" className="rounded-xl">
@@ -245,5 +257,30 @@ export function CommentManagement({ initialComments }: CommentManagementProps) {
         )}
       </TabsContent>
     </Tabs>
+
+    <AlertDialog open={!!commentToDelete} onOpenChange={(open) => !open && setCommentToDelete(null)}>
+      <AlertDialogContent className="rounded-3xl">
+        <AlertDialogHeader>
+          <AlertDialogTitle>确认删除评论？</AlertDialogTitle>
+          <AlertDialogDescription>
+            此操作无法撤销。评论删除后，文章页和后台统计会同步更新。
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel className="rounded-full">取消</AlertDialogCancel>
+          <AlertDialogAction
+            className="rounded-full bg-red-500 hover:bg-red-600"
+            disabled={loading === commentToDelete?.id}
+            onClick={(event) => {
+              event.preventDefault()
+              handleDelete()
+            }}
+          >
+            {loading === commentToDelete?.id ? '删除中...' : '确认删除'}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   )
 }
