@@ -6,7 +6,8 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Save, User as UserIcon, Globe, Info, Loader2, Camera, Palette, ChevronDown, ChevronUp } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Save, User as UserIcon, Globe, Info, Loader2, Camera, Palette, ChevronDown, ChevronUp, Upload, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { CARD_STYLES, getCardStyle } from "@/lib/card-styles";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,9 @@ interface ProfileSettingsFormProps {
     website: string;
     avatar_url: string;
     card_bg: string;
+    alipay_qr?: string;
+    wechat_qr?: string;
+    enable_tipping?: boolean;
   };
   onSaveSuccess?: () => void;
 }
@@ -32,6 +36,7 @@ export function ProfileSettingsForm({ user, initialProfile, onSaveSuccess }: Pro
 
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [qrUploading, setQrUploading] = useState<'alipay' | 'wechat' | null>(null);
   const [profile, setProfile] = useState(initialProfile);
   const [showAllStyles, setShowAllStyles] = useState(false);
 
@@ -100,6 +105,69 @@ export function ProfileSettingsForm({ user, initialProfile, onSaveSuccess }: Pro
     }
   };
 
+  const handleQrUpload = async (type: 'alipay' | 'wechat', e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast({ variant: "destructive", title: "上传失败", description: "请选择图片文件" });
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast({ variant: "destructive", title: "上传失败", description: "图片大小不能超过 2MB" });
+      return;
+    }
+
+    setQrUploading(type);
+    try {
+      const currentUrl = type === 'alipay' ? profile.alipay_qr : profile.wechat_qr;
+      if (currentUrl && currentUrl.includes('/avatars/')) {
+        try {
+          const oldPath = currentUrl.split('/avatars/')[1];
+          if (oldPath) {
+             await supabase.storage.from('avatars').remove([oldPath]);
+          }
+        } catch (e) {
+          console.error("Failed to delete old QR code:", e);
+        }
+      }
+
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${user.id}/${type}_qr_${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      const fieldName = type === 'alipay' ? 'alipay_qr' : 'wechat_qr';
+      
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ [fieldName]: publicUrl })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      setProfile(prev => ({ ...prev, [fieldName]: publicUrl }));
+      toast({ title: "二维码已上传", description: `您的${type === 'alipay' ? '支付宝' : '微信'}赞赏码已成功保存。` });
+      router.refresh();
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "上传失败",
+        description: error.message || "请检查网络或存储权限",
+      });
+    } finally {
+      setQrUploading(null);
+    }
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -111,6 +179,9 @@ export function ProfileSettingsForm({ user, initialProfile, onSaveSuccess }: Pro
         bio: profile.bio,
         website: profile.website,
         card_bg: profile.card_bg,
+        alipay_qr: profile.alipay_qr,
+        wechat_qr: profile.wechat_qr,
+        enable_tipping: profile.enable_tipping,
         updated_at: new Date().toISOString(),
       })
       .eq("id", user?.id);
@@ -138,7 +209,7 @@ export function ProfileSettingsForm({ user, initialProfile, onSaveSuccess }: Pro
     <div className="grid md:grid-cols-3 gap-8">
       {/* Left Side: Avatar Preview */}
       <div className="md:col-span-1">
-        <Card className="border-none shadow-sm bg-white dark:bg-neutral-900 rounded-3xl p-0 overflow-hidden text-center sticky top-24">
+        <Card className="border-none shadow-sm bg-white dark:bg-neutral-900 rounded-3xl p-0 overflow-hidden text-center sticky top-6">
           <div className={cn("h-32 w-full relative transition-all duration-500", getCardStyle(profile.card_bg).class)}>
             <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-24 h-24 group/avatar">
               <div className="w-full h-full bg-neutral-100 dark:bg-neutral-800 rounded-full flex items-center justify-center overflow-hidden border-4 border-white dark:border-neutral-900">
@@ -177,6 +248,68 @@ export function ProfileSettingsForm({ user, initialProfile, onSaveSuccess }: Pro
                 "{profile.bio || "还没写简介..."}"
               </p>
             </div>
+          </div>
+
+          {/* Style selection integrated into the left column card */}
+          <div className="border-t border-black/5 dark:border-white/5 p-6 bg-neutral-50/50 dark:bg-neutral-800/10 hidden md:block">
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 flex items-center justify-center gap-2">
+                <Palette className="w-4 h-4 text-neutral-500" />
+                名片背景风格
+              </h3>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <AnimatePresence initial={false} mode="popLayout">
+                    {visibleStyles.map(([key, style]) => (
+                      <motion.div
+                        key={key}
+                        layout
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        transition={{ duration: 0.2 }}
+                        onClick={() => setProfile({ ...profile, card_bg: key })}
+                        className={cn(
+                          "cursor-pointer rounded-xl border-2 p-1 transition-all hover:scale-[1.02]",
+                          profile.card_bg === key
+                            ? "border-black dark:border-white bg-neutral-50 dark:bg-neutral-800"
+                            : "border-transparent hover:border-black/10 dark:hover:border-white/10 bg-neutral-50/50 dark:bg-neutral-800/50"
+                        )}
+                      >
+                        <div className={cn("h-10 w-full rounded-lg mb-2 shadow-sm", style.preview)} />
+                        <p className="text-[12px] text-center font-medium text-neutral-600 dark:text-neutral-400 truncate px-1">
+                          {style.label}
+                        </p>
+                      </motion.div>
+                    ))}
+                </AnimatePresence>
+              </div>
+
+              {stylesList.length > 6 && (
+                <div className="flex justify-center mt-2">
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowAllStyles(!showAllStyles)}
+                        className="text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 text-xs w-full"
+                    >
+                        {showAllStyles ? (
+                            <>
+                                <ChevronUp className="w-3 h-3 mr-1" />
+                                收起
+                            </>
+                        ) : (
+                            <>
+                                <ChevronDown className="w-3 h-3 mr-1" />
+                                更多 ({stylesList.length - 6})
+                            </>
+                        )}
+                    </Button>
+                </div>
+              )}
+            </div>
+          </div>
           </div>
         </Card>
       </div>
@@ -230,9 +363,96 @@ export function ProfileSettingsForm({ user, initialProfile, onSaveSuccess }: Pro
                     className="rounded-xl border-black/5 dark:border-white/5 bg-neutral-50 dark:bg-neutral-800/50"
                   />
                 </div>
+
+                <div className="pt-2">
+                  <div className="flex items-center justify-between pb-2 border-b border-black/5 dark:border-white/5">
+                    <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">打赏设置 (赞赏码)</h3>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-neutral-500 font-medium">启用打赏展示</span>
+                      <Switch
+                        checked={profile.enable_tipping}
+                        onCheckedChange={(checked) => setProfile({ ...profile, enable_tipping: checked })}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div className="space-y-4">
+                      <label className="text-sm font-medium flex items-center gap-2 text-neutral-500">
+                        支付宝赞赏码
+                      </label>
+                      <div className="flex items-start gap-4">
+                        <div className="w-24 h-24 bg-neutral-100 dark:bg-neutral-800 rounded-xl overflow-hidden shadow-inner border border-black/5 dark:border-white/5 relative group/qr">
+                          {profile.alipay_qr ? (
+                            <img src={profile.alipay_qr} alt="Alipay QR" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-neutral-400">
+                              <Camera className="w-6 h-6" />
+                            </div>
+                          )}
+                          <label className="absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 group-hover/qr:opacity-100 cursor-pointer transition-opacity">
+                            <input
+                              type="file"
+                              className="hidden"
+                              accept="image/*"
+                              onChange={(e) => handleQrUpload('alipay', e)}
+                              disabled={qrUploading !== null}
+                            />
+                            {qrUploading === 'alipay' ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
+                          </label>
+                        </div>
+                        <div className="flex-1 space-y-2">
+                          <Input
+                            value={profile.alipay_qr || ""}
+                            onChange={(e) => setProfile({ ...profile, alipay_qr: e.target.value })}
+                            placeholder="或填入图片链接..."
+                            className="rounded-xl border-black/5 dark:border-white/5 bg-neutral-50 dark:bg-neutral-800/50 text-xs text-neutral-500"
+                          />
+                          <p className="text-[11px] text-neutral-400">可点击左图上传，或直接输入直链地址。</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <label className="text-sm font-medium flex items-center gap-2 text-neutral-500">
+                        微信赞赏码
+                      </label>
+                      <div className="flex items-start gap-4">
+                        <div className="w-24 h-24 bg-neutral-100 dark:bg-neutral-800 rounded-xl overflow-hidden shadow-inner border border-black/5 dark:border-white/5 relative group/qr">
+                          {profile.wechat_qr ? (
+                            <img src={profile.wechat_qr} alt="Wechat QR" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-neutral-400">
+                              <Camera className="w-6 h-6" />
+                            </div>
+                          )}
+                          <label className="absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 group-hover/qr:opacity-100 cursor-pointer transition-opacity">
+                            <input
+                              type="file"
+                              className="hidden"
+                              accept="image/*"
+                              onChange={(e) => handleQrUpload('wechat', e)}
+                              disabled={qrUploading !== null}
+                            />
+                            {qrUploading === 'wechat' ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
+                          </label>
+                        </div>
+                        <div className="flex-1 space-y-2">
+                          <Input
+                            value={profile.wechat_qr || ""}
+                            onChange={(e) => setProfile({ ...profile, wechat_qr: e.target.value })}
+                            placeholder="或填入图片链接..."
+                            className="rounded-xl border-black/5 dark:border-white/5 bg-neutral-50 dark:bg-neutral-800/50 text-xs text-neutral-500"
+                          />
+                          <p className="text-[11px] text-neutral-400">可点击左图上传，或直接输入直链地址。</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-4">
+              {/* Mobile style selection (hidden on desktop since it's on the left) */}
+              <div className="space-y-4 md:hidden">
                 <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 pb-2 border-b border-black/5 dark:border-white/5">个性化</h3>
                 <div className="space-y-3">
                   <label className="text-sm font-medium flex items-center gap-2 text-neutral-500">

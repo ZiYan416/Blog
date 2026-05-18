@@ -24,6 +24,9 @@ export default async function ProfilePage() {
     website: profile?.website || "",
     avatar_url: profile?.avatar_url || "",
     card_bg: profile?.card_bg || "default",
+    alipay_qr: profile?.alipay_qr || "",
+    wechat_qr: profile?.wechat_qr || "",
+    enable_tipping: profile?.enable_tipping || false,
   }
 
   // 2. Get Stats
