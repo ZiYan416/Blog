@@ -1,4 +1,4 @@
-# Next.js Minimalist Blog
+# Blog
 
 <div align="center">
   <h3 align="center">A Modern, Minimalist Digital Garden</h3>
