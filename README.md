@@ -59,8 +59,8 @@
 ### 1. 克隆项目
 
 ```bash
-git clone https://github.com/your-username/your-repo-name.git
-cd your-repo-name
+git clone https://github.com/ZiYan416/Blog
+cd blog
 ```
 
 ### 2. 安装依赖
