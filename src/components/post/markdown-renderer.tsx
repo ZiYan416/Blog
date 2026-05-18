@@ -7,7 +7,7 @@ import rehypeRaw from 'rehype-raw'
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'
 import rehypeSlug from 'rehype-slug'
 import { Check, Copy } from 'lucide-react'
-import { useState, useRef, useEffect } from 'react'
+import { useEffect, useState, useRef } from 'react'
 
 interface MarkdownRendererProps {
   content: string
@@ -38,44 +38,19 @@ const markdownSchema: any = {
 }
 
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
-  // Load appropriate highlight.js theme based on system theme
   useEffect(() => {
-    const loadTheme = () => {
-      const isDark = document.documentElement.classList.contains('dark')
-      const themeLink = document.getElementById('highlight-theme') as HTMLLinkElement
-
-      if (themeLink) {
-        themeLink.href = isDark
-          ? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css'
-          : 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-light.min.css'
-      } else {
-        const link = document.createElement('link')
-        link.id = 'highlight-theme'
-        link.rel = 'stylesheet'
-        link.href = isDark
-          ? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css'
-          : 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-light.min.css'
-        document.head.appendChild(link)
-      }
+    const legacyThemeLink = document.getElementById('highlight-theme')
+    if (legacyThemeLink) {
+      legacyThemeLink.remove()
     }
 
-    loadTheme()
-
-    // Watch for theme changes
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.attributeName === 'class') {
-          loadTheme()
+    document
+      .querySelectorAll('link[rel="stylesheet"]')
+      .forEach((link) => {
+        if (link instanceof HTMLLinkElement && link.href.includes('highlight.js')) {
+          link.remove()
         }
       })
-    })
-
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class']
-    })
-
-    return () => observer.disconnect()
   }, [])
 
   return (
@@ -96,6 +71,40 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
 
       {/* Enhanced Typography Styles for Article Detail */}
       <style jsx global>{`
+        .markdown-article {
+          --code-bg: #f5f7fb;
+          --code-panel: #f5f7fb;
+          --code-border: rgba(15, 23, 42, 0.08);
+          --code-header-bg: rgba(148, 163, 184, 0.12);
+          --code-fg: #253041;
+          --code-muted: #607089;
+          --code-keyword: #9a3412;
+          --code-string: #0f766e;
+          --code-number: #b45309;
+          --code-comment: #7c8798;
+          --code-function: #1d4ed8;
+          --code-variable: #c2410c;
+          --code-type: #7c3aed;
+          --code-meta: #0369a1;
+        }
+
+        .dark .markdown-article {
+          --code-bg: #0f1722;
+          --code-panel: #0f1722;
+          --code-border: rgba(148, 163, 184, 0.16);
+          --code-header-bg: rgba(148, 163, 184, 0.1);
+          --code-fg: #d6deeb;
+          --code-muted: #8fa0b8;
+          --code-keyword: #f38ba8;
+          --code-string: #8bd5ca;
+          --code-number: #f6c177;
+          --code-comment: #6b7a90;
+          --code-function: #8cc7ff;
+          --code-variable: #ffb86b;
+          --code-type: #c4b5fd;
+          --code-meta: #7dd3fc;
+        }
+
         /* === Headings === */
         .markdown-article h1 {
           padding-bottom: 0.3em;
@@ -146,6 +155,91 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
         .dark .markdown-article :not(pre) > code {
           background-color: rgba(255, 255, 255, 0.1);
           color: #f0a6ca;
+        }
+
+        /* === Code Blocks === */
+        .markdown-article pre {
+          margin: 0;
+          background-color: var(--code-bg) !important;
+          color: var(--code-fg);
+          box-shadow: none;
+        }
+
+        .markdown-article pre code,
+        .markdown-article pre code.hljs {
+          display: block;
+          margin: 0 !important;
+          padding: 0 !important;
+          background: transparent !important;
+          border: 0 !important;
+          border-radius: 0 !important;
+          box-shadow: none !important;
+        }
+
+        .markdown-article .hljs {
+          display: block;
+          background: transparent;
+          color: var(--code-fg);
+        }
+
+        .markdown-article .hljs-comment,
+        .markdown-article .hljs-quote {
+          color: var(--code-comment);
+          font-style: italic;
+        }
+
+        .markdown-article .hljs-keyword,
+        .markdown-article .hljs-selector-tag,
+        .markdown-article .hljs-built_in,
+        .markdown-article .hljs-name,
+        .markdown-article .hljs-tag {
+          color: var(--code-keyword);
+        }
+
+        .markdown-article .hljs-string,
+        .markdown-article .hljs-attr,
+        .markdown-article .hljs-selector-attr,
+        .markdown-article .hljs-selector-pseudo,
+        .markdown-article .hljs-template-variable {
+          color: var(--code-string);
+        }
+
+        .markdown-article .hljs-number,
+        .markdown-article .hljs-literal,
+        .markdown-article .hljs-symbol,
+        .markdown-article .hljs-bullet {
+          color: var(--code-number);
+        }
+
+        .markdown-article .hljs-title,
+        .markdown-article .hljs-title.function_,
+        .markdown-article .hljs-function,
+        .markdown-article .hljs-section {
+          color: var(--code-function);
+        }
+
+        .markdown-article .hljs-variable,
+        .markdown-article .hljs-property,
+        .markdown-article .hljs-params,
+        .markdown-article .hljs-attribute {
+          color: var(--code-variable);
+        }
+
+        .markdown-article .hljs-type,
+        .markdown-article .hljs-class .hljs-title,
+        .markdown-article .hljs-title.class_ {
+          color: var(--code-type);
+        }
+
+        .markdown-article .hljs-meta,
+        .markdown-article .hljs-doctag,
+        .markdown-article .hljs-regexp,
+        .markdown-article .hljs-link {
+          color: var(--code-meta);
+        }
+
+        .markdown-article .hljs-subst {
+          color: var(--code-fg);
         }
 
         /* === Blockquote === */
@@ -334,22 +428,22 @@ function PreBlock({ children, ...props }: any) {
   }
 
   return (
-    <div className="rounded-xl overflow-hidden my-4 md:my-6 border border-black/10 dark:border-white/10 shadow-lg bg-white dark:bg-[#0d1117] group transition-colors">
+    <div className="rounded-xl overflow-hidden my-4 md:my-6 border border-[var(--code-border)] shadow-lg bg-[var(--code-panel)] group transition-colors">
       {/* Mac-style Window Header */}
-      <div className="flex items-center justify-between px-3 md:px-4 py-2 md:py-3 bg-neutral-100 dark:bg-[#161b22] border-b border-black/10 dark:border-white/5 transition-colors">
+      <div className="flex items-center justify-between px-3 md:px-4 py-2 md:py-3 bg-[var(--code-header-bg)] border-b border-[var(--code-border)] transition-colors">
         <div className="flex items-center gap-2">
           <div className="flex gap-1.5">
             <div className="w-3 h-3 rounded-full bg-[#ff5f56] dark:bg-[#ff5f56] border border-[#e0443e] dark:border-[#e0443e] opacity-80 group-hover:opacity-100 transition-opacity" />
             <div className="w-3 h-3 rounded-full bg-[#ffbd2e] dark:bg-[#ffbd2e] border border-[#dea123] dark:border-[#dea123] opacity-80 group-hover:opacity-100 transition-opacity" />
             <div className="w-3 h-3 rounded-full bg-[#27c93f] dark:bg-[#27c93f] border border-[#1aab29] dark:border-[#1aab29] opacity-80 group-hover:opacity-100 transition-opacity" />
           </div>
-          <span className="text-xs font-medium text-neutral-500 dark:text-white/50 lowercase ml-2 font-mono transition-colors">
+          <span className="ml-2 text-xs font-medium lowercase font-mono text-[var(--code-muted)] transition-colors">
             {language}
           </span>
         </div>
         <button
           onClick={copyToClipboard}
-          className="text-neutral-400 dark:text-white/40 hover:text-neutral-700 dark:hover:text-white transition-colors p-1 rounded-md hover:bg-neutral-200 dark:hover:bg-white/10"
+          className="p-1 rounded-md text-[var(--code-muted)] transition-colors hover:text-[var(--code-fg)] hover:bg-black/5 dark:hover:bg-white/10"
           title="Copy code"
         >
           {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
@@ -357,11 +451,16 @@ function PreBlock({ children, ...props }: any) {
       </div>
 
       {/* Code Content Container */}
-      <div className="overflow-x-auto bg-neutral-50 dark:bg-transparent transition-colors">
+      <div className="overflow-x-auto bg-[var(--code-bg)] transition-colors">
         <pre
           {...props}
           ref={preRef}
-          className="!m-0 !p-3 md:!p-4 !bg-transparent font-mono text-sm leading-relaxed whitespace-pre overflow-x-auto md:whitespace-pre-wrap md:break-words md:overflow-visible"
+          className="!m-0 !p-3 md:!p-4 !bg-[var(--code-bg)] font-mono text-sm leading-relaxed whitespace-pre overflow-x-auto md:whitespace-pre-wrap md:break-words md:overflow-visible"
+          style={{
+            backgroundColor: 'var(--code-bg)',
+            color: 'var(--code-fg)',
+            boxShadow: 'none',
+          }}
         >
           {children}
         </pre>

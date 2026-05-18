@@ -4,7 +4,6 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import CodeEditor from 'react-simple-code-editor'
 import { highlight, languages } from 'prismjs'
 import 'prismjs/components/prism-markdown'
-import 'prismjs/themes/prism.css'
 import { Toolbar, ViewMode, MarkdownAction } from './toolbar'
 import { cn } from '@/lib/utils'
 import { RichEditor } from './rich-editor'
@@ -336,7 +335,7 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
             viewMode === 'split' ? "w-1/2 border-r border-black/5 dark:border-white/5" : "hidden"
         )}>
           <div
-            className="flex-1 min-h-0 p-3 sm:p-4 md:p-6 font-mono text-sm"
+            className="source-markdown-editor flex-1 min-h-0 p-3 sm:p-4 md:p-6 font-mono text-sm"
           >
             <div ref={containerRef} className="min-h-full">
               <CodeEditor
@@ -393,6 +392,17 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
            Typora-like rich text rendering
            ============================================ */
         .ProseMirror {
+          --editor-code-bg: #f5f7fb;
+          --editor-code-fg: #253041;
+          --editor-code-border: rgba(15, 23, 42, 0.08);
+          --editor-code-keyword: #9a3412;
+          --editor-code-string: #0f766e;
+          --editor-code-number: #b45309;
+          --editor-code-comment: #7c8798;
+          --editor-code-function: #1d4ed8;
+          --editor-code-variable: #c2410c;
+          --editor-code-type: #7c3aed;
+          --editor-code-meta: #0369a1;
           outline: none;
           min-height: 100px;
           line-height: 1.75;
@@ -401,7 +411,115 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
         }
 
         .dark .ProseMirror {
+          --editor-code-bg: #0f1722;
+          --editor-code-fg: #d6deeb;
+          --editor-code-border: rgba(148, 163, 184, 0.16);
+          --editor-code-keyword: #f38ba8;
+          --editor-code-string: #8bd5ca;
+          --editor-code-number: #f6c177;
+          --editor-code-comment: #6b7a90;
+          --editor-code-function: #8cc7ff;
+          --editor-code-variable: #ffb86b;
+          --editor-code-type: #c4b5fd;
+          --editor-code-meta: #7dd3fc;
           color: #e5e5e5;
+        }
+
+        .source-markdown-editor {
+          --editor-code-bg: #f5f7fb;
+          --editor-code-fg: #253041;
+          --editor-code-border: rgba(15, 23, 42, 0.08);
+          --editor-code-keyword: #9a3412;
+          --editor-code-string: #0f766e;
+          --editor-code-number: #b45309;
+          --editor-code-comment: #7c8798;
+          --editor-code-function: #1d4ed8;
+          --editor-code-variable: #c2410c;
+          --editor-code-type: #7c3aed;
+          --editor-code-meta: #0369a1;
+        }
+
+        .dark .source-markdown-editor {
+          --editor-code-bg: #0f1722;
+          --editor-code-fg: #d6deeb;
+          --editor-code-border: rgba(148, 163, 184, 0.16);
+          --editor-code-keyword: #f38ba8;
+          --editor-code-string: #8bd5ca;
+          --editor-code-number: #f6c177;
+          --editor-code-comment: #6b7a90;
+          --editor-code-function: #8cc7ff;
+          --editor-code-variable: #ffb86b;
+          --editor-code-type: #c4b5fd;
+          --editor-code-meta: #7dd3fc;
+        }
+
+        .source-markdown-editor textarea,
+        .source-markdown-editor pre,
+        .source-markdown-editor .npm__react-simple-code-editor__textarea {
+          color: var(--editor-code-fg) !important;
+          caret-color: var(--editor-code-fg);
+        }
+
+        .source-markdown-editor pre {
+          margin: 0 !important;
+          background: transparent !important;
+          text-shadow: none !important;
+        }
+
+        .source-markdown-editor .token.comment,
+        .source-markdown-editor .token.prolog,
+        .source-markdown-editor .token.cdata {
+          color: var(--editor-code-comment);
+        }
+
+        .source-markdown-editor .token.punctuation,
+        .source-markdown-editor .token.operator,
+        .source-markdown-editor .token.url {
+          color: var(--editor-code-fg);
+        }
+
+        .source-markdown-editor .token.title,
+        .source-markdown-editor .token.title .token.punctuation,
+        .source-markdown-editor .token.important,
+        .source-markdown-editor .token.bold {
+          color: var(--editor-code-keyword);
+        }
+
+        .source-markdown-editor .token.code,
+        .source-markdown-editor .token.string,
+        .source-markdown-editor .token.attr-value {
+          color: var(--editor-code-string);
+        }
+
+        .source-markdown-editor .token.number,
+        .source-markdown-editor .token.symbol,
+        .source-markdown-editor .token.inserted {
+          color: var(--editor-code-number);
+        }
+
+        .source-markdown-editor .token.keyword,
+        .source-markdown-editor .token.list,
+        .source-markdown-editor .token.hr,
+        .source-markdown-editor .token.url-reference .token.variable {
+          color: var(--editor-code-variable);
+        }
+
+        .source-markdown-editor .token.function,
+        .source-markdown-editor .token.entity,
+        .source-markdown-editor .token.regex {
+          color: var(--editor-code-function);
+        }
+
+        .source-markdown-editor .token.atrule,
+        .source-markdown-editor .token.class-name,
+        .source-markdown-editor .token.tag {
+          color: var(--editor-code-type);
+        }
+
+        .source-markdown-editor .token.blockquote,
+        .source-markdown-editor .token.constant,
+        .source-markdown-editor .token.deleted {
+          color: var(--editor-code-meta);
         }
 
         /* === Placeholder === */
@@ -507,10 +625,9 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
         }
 
         /* === Code Block (with syntax highlighting) === */
-        /* Light mode: atom-one-light style */
         .ProseMirror pre {
-          background-color: #fafafa;
-          color: #383a42;
+          background-color: var(--editor-code-bg);
+          color: var(--editor-code-fg);
           border-radius: 12px;
           padding: 1em 1.25em;
           margin: 1em 0;
@@ -518,60 +635,52 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
           font-size: 0.875em;
           line-height: 1.6;
           overflow-x: auto;
-          border: 1px solid rgba(0, 0, 0, 0.1);
+          border: 1px solid var(--editor-code-border);
+          box-shadow: none;
         }
         .ProseMirror pre code {
+          display: block;
           background: none;
-          padding: 0;
-          border-radius: 0;
+          padding: 0 !important;
+          margin: 0 !important;
+          border: 0 !important;
+          border-radius: 0 !important;
           color: inherit;
           font-size: inherit;
+          box-shadow: none !important;
         }
 
-        /* Light mode syntax tokens (atom-one-light) */
         .ProseMirror pre .hljs-keyword,
         .ProseMirror pre .hljs-selector-tag,
-        .ProseMirror pre .hljs-built_in { color: #a626a4; }
+        .ProseMirror pre .hljs-built_in,
+        .ProseMirror pre .hljs-name,
+        .ProseMirror pre .hljs-tag { color: var(--editor-code-keyword); }
         .ProseMirror pre .hljs-string,
-        .ProseMirror pre .hljs-attr { color: #50a14f; }
+        .ProseMirror pre .hljs-attr,
+        .ProseMirror pre .hljs-selector-attr,
+        .ProseMirror pre .hljs-template-variable { color: var(--editor-code-string); }
         .ProseMirror pre .hljs-number,
-        .ProseMirror pre .hljs-literal { color: #986801; }
-        .ProseMirror pre .hljs-comment { color: #a0a1a7; font-style: italic; }
+        .ProseMirror pre .hljs-literal,
+        .ProseMirror pre .hljs-symbol,
+        .ProseMirror pre .hljs-bullet { color: var(--editor-code-number); }
+        .ProseMirror pre .hljs-comment,
+        .ProseMirror pre .hljs-quote { color: var(--editor-code-comment); font-style: italic; }
         .ProseMirror pre .hljs-function,
-        .ProseMirror pre .hljs-title { color: #4078f2; }
+        .ProseMirror pre .hljs-title,
+        .ProseMirror pre .hljs-title.function_,
+        .ProseMirror pre .hljs-section { color: var(--editor-code-function); }
         .ProseMirror pre .hljs-variable,
-        .ProseMirror pre .hljs-params { color: #e45649; }
+        .ProseMirror pre .hljs-params,
+        .ProseMirror pre .hljs-property,
+        .ProseMirror pre .hljs-attribute { color: var(--editor-code-variable); }
         .ProseMirror pre .hljs-type,
-        .ProseMirror pre .hljs-class { color: #c18401; }
-        .ProseMirror pre .hljs-meta { color: #4078f2; }
-        .ProseMirror pre .hljs-tag { color: #e45649; }
-        .ProseMirror pre .hljs-name { color: #e45649; }
-        .ProseMirror pre .hljs-attribute { color: #986801; }
-
-        /* Dark mode: atom-one-dark style */
-        .dark .ProseMirror pre {
-          background-color: #0d1117;
-          color: #c9d1d9;
-          border-color: rgba(255, 255, 255, 0.08);
-        }
-        .dark .ProseMirror pre .hljs-keyword,
-        .dark .ProseMirror pre .hljs-selector-tag,
-        .dark .ProseMirror pre .hljs-built_in { color: #c678dd; }
-        .dark .ProseMirror pre .hljs-string,
-        .dark .ProseMirror pre .hljs-attr { color: #98c379; }
-        .dark .ProseMirror pre .hljs-number,
-        .dark .ProseMirror pre .hljs-literal { color: #d19a66; }
-        .dark .ProseMirror pre .hljs-comment { color: #5c6370; font-style: italic; }
-        .dark .ProseMirror pre .hljs-function,
-        .dark .ProseMirror pre .hljs-title { color: #61afef; }
-        .dark .ProseMirror pre .hljs-variable,
-        .dark .ProseMirror pre .hljs-params { color: #e06c75; }
-        .dark .ProseMirror pre .hljs-type,
-        .dark .ProseMirror pre .hljs-class { color: #e5c07b; }
-        .dark .ProseMirror pre .hljs-meta { color: #56b6c2; }
-        .dark .ProseMirror pre .hljs-tag { color: #e06c75; }
-        .dark .ProseMirror pre .hljs-name { color: #e06c75; }
-        .dark .ProseMirror pre .hljs-attribute { color: #d19a66; }
+        .ProseMirror pre .hljs-class,
+        .ProseMirror pre .hljs-title.class_ { color: var(--editor-code-type); }
+        .ProseMirror pre .hljs-meta,
+        .ProseMirror pre .hljs-doctag,
+        .ProseMirror pre .hljs-regexp,
+        .ProseMirror pre .hljs-link { color: var(--editor-code-meta); }
+        .ProseMirror pre .hljs-subst { color: var(--editor-code-fg); }
 
         /* === Blockquote === */
         .ProseMirror blockquote {
