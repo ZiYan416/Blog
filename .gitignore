@@ -41,6 +41,9 @@ yarn-error.log*
 next-env.d.ts
 
 .claude/*
+.vscode/*
 
 PROJECT_STATUS.md
 capacitor.config.ts
+
+ads.txt

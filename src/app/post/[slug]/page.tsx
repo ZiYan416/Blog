@@ -11,6 +11,7 @@ import { getComments } from '@/app/actions/comment'
 import { MarkdownRenderer } from '@/components/post/markdown-renderer'
 import { getTagStyles } from '@/lib/tag-color'
 import { TableOfContents } from '@/components/post/table-of-contents'
+import { PostTipButton } from '@/components/post/post-tip-button'
 
 import { BackToTop } from '@/components/ui/back-to-top'
 import { GoToComments } from '@/components/ui/go-to-comments'
@@ -28,7 +29,7 @@ export async function generateMetadata({
   const supabase = await createClient()
   const { data: post } = await supabase
     .from('posts')
-    .select('title, slug, excerpt')
+    .select('title, slug, excerpt, cover_image')
     .eq('slug', decodedSlug)
     .single()
 
@@ -243,6 +244,13 @@ export default async function PostPage({
                 <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed italic max-w-xs mx-auto">
                   "{author?.bio || '暂无个人简介'}"
                 </p>
+                {author?.enable_tipping && (
+                  <PostTipButton 
+                    alipayQr={author?.alipay_qr} 
+                    wechatQr={author?.wechat_qr} 
+                    authorName={author?.display_name || 'Anonymous'} 
+                  />
+                )}
               </div>
             </div>
 
@@ -276,6 +284,13 @@ export default async function PostPage({
                 <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed italic">
                   "{author?.bio || '暂无个人简介'}"
                 </p>
+                {author?.enable_tipping && (
+                  <PostTipButton 
+                    alipayQr={author?.alipay_qr} 
+                    wechatQr={author?.wechat_qr} 
+                    authorName={author?.display_name || 'Anonymous'} 
+                  />
+                )}
               </div>
             </div>
           </div>

@@ -1,6 +1,6 @@
 export const CARD_STYLES = {
   default: {
-    label: "默认 (简约白/黑)",
+    label: "默认",
     class: "bg-neutral-100 dark:bg-neutral-800",
     preview: "bg-neutral-100 dark:bg-neutral-800"
   },
