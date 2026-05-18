@@ -12,19 +12,19 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
-import { DataReports } from '@/components/dashboard/data-reports'
 import { UserManagementWrapper } from '@/components/dashboard/user-management-wrapper'
 import { AnalyticsTabsWrapper } from '@/components/dashboard/analytics-tabs-wrapper'
 import { StatsCard } from '@/components/dashboard/stats-card'
 import { TodoAlerts } from '@/components/dashboard/todo-alerts'
 import { getAnalyticsData } from '@/lib/analytics-helpers'
+import { getLoginRedirect, getManagedUsers } from '@/lib/admin-data'
 
 export default async function DashboardPage() {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect('/?login=true')
+    redirect(getLoginRedirect('/dashboard'))
   }
 
   // Get profile data
@@ -75,27 +75,8 @@ export default async function DashboardPage() {
     .from('profiles')
     .select('*', { count: 'exact', head: true })
 
-  // 6. 获取所有用户详细信息（用于用户管理）
-  const { data: allUsers } = await supabase
-    .from('profiles')
-    .select('id, email, display_name, avatar_url, bio, is_admin, created_at, updated_at')
-    .order('created_at', { ascending: false })
-
-  // 获取每个用户的评论数
-  const usersWithComments = await Promise.all(
-    (allUsers || []).map(async (userProfile) => {
-      const { count } = await supabase
-        .from('comments')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userProfile.id)
-
-      return {
-        ...userProfile,
-        last_sign_in_at: userProfile.updated_at, // 使用 updated_at 作为最后活跃时间
-        comment_count: count || 0,
-      }
-    })
-  )
+  // 6. 获取所有用户详细信息（含评论数）
+  const usersWithComments = await getManagedUsers(supabase)
 
   // 7. 获取待审核评论数量
   const { count: pendingCommentsCount } = await supabase

@@ -1,5 +1,6 @@
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { apiError, getErrorMessage } from '@/lib/api-response'
 import { NextResponse } from 'next/server'
 
 export async function DELETE(
@@ -14,7 +15,7 @@ export async function DELETE(
     // 验证管理员权限
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return apiError('未授权', 401, 'UNAUTHORIZED')
     }
 
     const { data: profile } = await supabase
@@ -24,15 +25,12 @@ export async function DELETE(
       .single()
 
     if (!profile?.is_admin) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      return apiError('需要管理员权限', 403, 'FORBIDDEN')
     }
 
     // 防止删除自己
     if (id === user.id) {
-      return NextResponse.json(
-        { error: '无法删除自己的账户' },
-        { status: 400 }
-      )
+      return apiError('无法删除自己的账户', 400, 'SELF_DELETE_NOT_ALLOWED')
     }
 
     const { data: targetProfile } = await supabase
@@ -42,25 +40,19 @@ export async function DELETE(
       .maybeSingle()
 
     if (!targetProfile) {
-      return NextResponse.json({ error: '用户不存在' }, { status: 404 })
+      return apiError('用户不存在', 404, 'USER_NOT_FOUND')
     }
 
     const adminSupabase = createAdminClient()
     const { error: authDeleteError } = await adminSupabase.auth.admin.deleteUser(id)
 
     if (authDeleteError) {
-      return NextResponse.json(
-        { error: authDeleteError.message },
-        { status: 500 }
-      )
+      return apiError(authDeleteError.message, 500, 'AUTH_USER_DELETE_FAILED')
     }
 
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('删除用户失败:', error)
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 }
-    )
+    return apiError(getErrorMessage(error), 500, 'USER_DELETE_FAILED')
   }
 }

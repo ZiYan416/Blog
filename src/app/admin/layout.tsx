@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { getLoginRedirect } from '@/lib/admin-data';
 import { redirect } from 'next/navigation';
 
 export default async function AdminLayout({
@@ -10,7 +11,7 @@ export default async function AdminLayout({
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/?login=true');
+    redirect(getLoginRedirect('/admin'));
   }
 
   // Check if user is admin in profiles table

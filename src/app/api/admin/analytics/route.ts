@@ -1,6 +1,22 @@
 import { createClient as createServerClient } from '@/lib/supabase/server'
+import { apiError, getErrorMessage } from '@/lib/api-response'
 import { NextResponse } from 'next/server'
 import { subDays, format } from 'date-fns'
+
+interface CommentWithProfile {
+  user_id: string
+  created_at: string
+  profiles?:
+    | {
+    display_name: string | null
+    email: string | null
+      }
+    | {
+        display_name: string | null
+        email: string | null
+      }[]
+    | null
+}
 
 export async function GET() {
   try {
@@ -9,7 +25,7 @@ export async function GET() {
     // 验证管理员权限
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return apiError('未授权', 401, 'UNAUTHORIZED')
     }
 
     const { data: profile } = await supabase
@@ -19,7 +35,7 @@ export async function GET() {
       .single()
 
     if (!profile?.is_admin) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      return apiError('需要管理员权限', 403, 'FORBIDDEN')
     }
 
     // 获取过去 7 天的统计快照
@@ -85,12 +101,16 @@ export async function GET() {
       lastComment: string
     }> = {}
 
-    commentData?.forEach((comment: any) => {
+    ;((commentData || []) as unknown as CommentWithProfile[]).forEach((comment) => {
+      const commentProfile = Array.isArray(comment.profiles)
+        ? comment.profiles[0]
+        : comment.profiles
+
       if (!userCommentCounts[comment.user_id]) {
         userCommentCounts[comment.user_id] = {
           count: 0,
-          name: comment.profiles?.display_name ||
-                comment.profiles?.email?.split('@')[0] ||
+          name: commentProfile?.display_name ||
+                commentProfile?.email?.split('@')[0] ||
                 '匿名用户',
           lastComment: new Date(comment.created_at).toLocaleDateString('zh-CN'),
         }
@@ -172,10 +192,7 @@ export async function GET() {
     })
   } catch (error) {
     console.error('Analytics API error:', error)
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 }
-    )
+    return apiError(getErrorMessage(error), 500, 'ANALYTICS_FAILED')
   }
 }
 

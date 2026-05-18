@@ -1,4 +1,5 @@
 import { createClient as createServerClient } from '@/lib/supabase/server'
+import { apiError, getErrorMessage } from '@/lib/api-response'
 import { NextResponse } from 'next/server'
 
 // 审核评论（批准）
@@ -13,7 +14,7 @@ export async function PATCH(
     // 验证管理员权限
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return apiError('未授权', 401, 'UNAUTHORIZED')
     }
 
     const { data: profile } = await supabase
@@ -23,7 +24,7 @@ export async function PATCH(
       .single()
 
     if (!profile?.is_admin) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      return apiError('需要管理员权限', 403, 'FORBIDDEN')
     }
 
     // 批准评论
@@ -37,10 +38,7 @@ export async function PATCH(
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('批准评论失败:', error)
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 }
-    )
+    return apiError(getErrorMessage(error), 500, 'COMMENT_APPROVE_FAILED')
   }
 }
 
@@ -56,7 +54,7 @@ export async function DELETE(
     // 验证管理员权限
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return apiError('未授权', 401, 'UNAUTHORIZED')
     }
 
     const { data: profile } = await supabase
@@ -66,7 +64,7 @@ export async function DELETE(
       .single()
 
     if (!profile?.is_admin) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      return apiError('需要管理员权限', 403, 'FORBIDDEN')
     }
 
     // 删除评论
@@ -80,9 +78,6 @@ export async function DELETE(
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('删除评论失败:', error)
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 }
-    )
+    return apiError(getErrorMessage(error), 500, 'COMMENT_DELETE_FAILED')
   }
 }

@@ -4,13 +4,14 @@ import { CommentManagement } from '@/components/dashboard/comment-management'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { getLoginRedirect } from '@/lib/admin-data'
 
 export default async function CommentsManagementPage() {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect('/?login=true')
+    redirect(getLoginRedirect('/dashboard/comments'))
   }
 
   // Get profile data
