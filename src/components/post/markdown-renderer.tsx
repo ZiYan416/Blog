@@ -6,8 +6,8 @@ import rehypeHighlight from 'rehype-highlight'
 import rehypeRaw from 'rehype-raw'
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'
 import rehypeSlug from 'rehype-slug'
-import { Check, Copy } from 'lucide-react'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useRef } from 'react'
+import { CodeBlockShell, extractCodeBlockLanguage } from '@/components/post/code-block-shell'
 
 interface MarkdownRendererProps {
   content: string
@@ -408,63 +408,19 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
 }
 
 function PreBlock({ children, ...props }: any) {
-  const [copied, setCopied] = useState(false)
   const preRef = useRef<HTMLPreElement>(null)
-
-  // Extract language from the child <code> element's className if available
-  let language = 'text'
-  if (children && typeof children === 'object' && 'props' in children && children.props.className) {
-    const match = /language-(\w+)/.exec(children.props.className)
-    if (match) language = match[1]
-  }
-
-  const copyToClipboard = () => {
-    if (preRef.current) {
-      const code = preRef.current.innerText
-      navigator.clipboard.writeText(code)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    }
-  }
+  const className =
+    children && typeof children === 'object' && 'props' in children ? children.props.className : undefined
+  const language = extractCodeBlockLanguage(className)
 
   return (
-    <div className="rounded-xl overflow-hidden my-4 md:my-6 border border-[var(--code-border)] shadow-lg bg-[var(--code-panel)] group transition-colors">
-      {/* Mac-style Window Header */}
-      <div className="flex items-center justify-between px-3 md:px-4 py-2 md:py-3 bg-[var(--code-header-bg)] border-b border-[var(--code-border)] transition-colors">
-        <div className="flex items-center gap-2">
-          <div className="flex gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-[#ff5f56] dark:bg-[#ff5f56] border border-[#e0443e] dark:border-[#e0443e] opacity-80 group-hover:opacity-100 transition-opacity" />
-            <div className="w-3 h-3 rounded-full bg-[#ffbd2e] dark:bg-[#ffbd2e] border border-[#dea123] dark:border-[#dea123] opacity-80 group-hover:opacity-100 transition-opacity" />
-            <div className="w-3 h-3 rounded-full bg-[#27c93f] dark:bg-[#27c93f] border border-[#1aab29] dark:border-[#1aab29] opacity-80 group-hover:opacity-100 transition-opacity" />
-          </div>
-          <span className="ml-2 text-xs font-medium lowercase font-mono text-[var(--code-muted)] transition-colors">
-            {language}
-          </span>
-        </div>
-        <button
-          onClick={copyToClipboard}
-          className="p-1 rounded-md text-[var(--code-muted)] transition-colors hover:text-[var(--code-fg)] hover:bg-black/5 dark:hover:bg-white/10"
-          title="Copy code"
-        >
-          {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-        </button>
-      </div>
-
-      {/* Code Content Container */}
-      <div className="overflow-x-auto bg-[var(--code-bg)] transition-colors">
-        <pre
-          {...props}
-          ref={preRef}
-          className="!m-0 !p-3 md:!p-4 !bg-[var(--code-bg)] font-mono text-sm leading-relaxed whitespace-pre overflow-x-auto md:whitespace-pre-wrap md:break-words md:overflow-visible"
-          style={{
-            backgroundColor: 'var(--code-bg)',
-            color: 'var(--code-fg)',
-            boxShadow: 'none',
-          }}
-        >
-          {children}
-        </pre>
-      </div>
-    </div>
+    <CodeBlockShell
+      language={language}
+      onCopy={() => navigator.clipboard.writeText(preRef.current?.innerText || '')}
+    >
+      <pre {...props} ref={preRef} className="article-code-block__pre">
+        {children}
+      </pre>
+    </CodeBlockShell>
   )
 }

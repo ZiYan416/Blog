@@ -3,10 +3,10 @@
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { ArrowLeft, Calendar, Tag, Eye, Clock, User, X } from 'lucide-react'
+import { Calendar, Tag, Clock, User, X } from 'lucide-react'
 import { formatDateString, calculateReadingTime } from '@/lib/markdown'
-import { CommentSection } from '@/components/post/comment-section'
 import { MarkdownRenderer } from '@/components/post/markdown-renderer'
+import { getTagStyles } from '@/lib/tag-color'
 
 interface PostPreviewModalProps {
   open: boolean
@@ -51,7 +51,7 @@ export function PostPreviewModal({ open, onOpenChange, post }: PostPreviewModalP
         <ScrollArea className="h-full w-full">
           <div className="min-h-screen pb-20">
             {/* Hero Header */}
-            <div className="relative w-full h-[35vh] min-h-[300px] bg-neutral-900 dark:bg-black overflow-hidden">
+            <div className="relative w-full min-h-[320px] bg-neutral-900 dark:bg-black overflow-hidden">
               {post.coverImage && (
                 <div className="absolute inset-0 opacity-60">
                   <img src={post.coverImage} alt={post.title} className="w-full h-full object-cover" />
@@ -59,9 +59,10 @@ export function PostPreviewModal({ open, onOpenChange, post }: PostPreviewModalP
                 </div>
               )}
 
-              <div className="container max-w-6xl mx-auto px-6 h-full flex flex-col justify-end pb-24 relative z-10">
-                <div className="space-y-6">
-                  <h1 className="text-4xl md:text-5xl font-bold text-white leading-tight tracking-tight drop-shadow-sm">
+              <div className="container max-w-6xl mx-auto px-6 relative z-10">
+                <div className="flex min-h-[320px] items-end pt-10 pb-16 md:pt-14 md:pb-20">
+                  <div className="w-full max-w-4xl space-y-6">
+                  <h1 className="text-4xl md:text-5xl font-bold text-white leading-tight tracking-tight drop-shadow-sm break-words" style={{ overflowWrap: 'anywhere' }}>
                     {post.title || '无标题文章'}
                   </h1>
 
@@ -80,15 +81,28 @@ export function PostPreviewModal({ open, onOpenChange, post }: PostPreviewModalP
                   </div>
 
                   {post.tags && post.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {post.tags.map((tag) => (
-                        <span key={tag} className="px-3 py-1 rounded-full text-xs font-medium bg-white/10 text-white/90 backdrop-blur-md border border-white/10 flex items-center gap-1.5">
-                          <Tag className="w-3 h-3 opacity-70" />
-                          #{tag}
-                        </span>
-                      ))}
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {post.tags.map((tag) => {
+                        const styles = getTagStyles(tag)
+                        return (
+                          <span
+                            key={tag}
+                            className="group relative overflow-hidden backdrop-blur-md px-3 py-1 rounded-full transition-all flex items-center gap-1.5"
+                            style={{
+                              backgroundColor: styles.backgroundColor,
+                              color: '#ffffff',
+                              border: `1px solid ${styles.borderColor}`,
+                            }}
+                          >
+                            <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent opacity-50" />
+                            <Tag className="relative z-10 w-3 h-3 opacity-70" />
+                            <span className="relative z-10 text-xs font-bold uppercase tracking-wider shadow-sm">{tag}</span>
+                          </span>
+                        )
+                      })}
                     </div>
                   )}
+                  </div>
                 </div>
               </div>
             </div>
