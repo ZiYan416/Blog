@@ -18,7 +18,6 @@ function EditorCodeBlockNode({ node }: NodeViewProps) {
       <CodeBlockShell language={language} onCopy={() => navigator.clipboard.writeText(copyText)}>
         <pre className="article-code-block__pre">
           <NodeViewContent
-            as="code"
             className={language === 'text' ? 'hljs' : `hljs language-${language}`}
           />
         </pre>
@@ -29,6 +28,8 @@ function EditorCodeBlockNode({ node }: NodeViewProps) {
 
 export const ArticleCodeBlock = CodeBlockLowlight.extend({
   addNodeView() {
-    return ReactNodeViewRenderer(EditorCodeBlockNode)
+    return ReactNodeViewRenderer(EditorCodeBlockNode, {
+      contentDOMElementTag: 'code',
+    })
   },
 })
