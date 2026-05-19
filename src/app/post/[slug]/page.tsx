@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
 import Link from 'next/link'
-import { ArrowLeft, Calendar, Tag, Eye, Clock, User, MessageSquare } from 'lucide-react'
+import { ArrowLeft, Calendar, Tag, Eye, Clock, User } from 'lucide-react'
 import { extractTags, calculateReadingTime, formatDateString, generatePostSlug } from '@/lib/markdown'
 import { Button } from '@/components/ui/button'
 import { ViewCounter } from '@/components/post/view-counter'
@@ -107,7 +107,7 @@ export default async function PostPage({
       <ViewCounter slug={post.slug} />
 
       {/* Hero Header */}
-      <div className="relative w-full h-[35vh] min-h-[300px] md:h-[40vh] md:min-h-[350px] bg-neutral-900 dark:bg-black overflow-hidden group">
+      <div className="relative w-full min-h-[320px] md:min-h-[380px] bg-neutral-900 dark:bg-black overflow-hidden group">
         {post.cover_image && (
           <div className="absolute inset-0 opacity-60">
             <img src={post.cover_image} alt={post.title} className="w-full h-full object-cover" />
@@ -115,8 +115,9 @@ export default async function PostPage({
           </div>
         )}
 
-        <div className="container max-w-6xl mx-auto px-6 h-full flex flex-col justify-end md:justify-start md: pb-12 pt-12 relative z-10">
-          <div className="space-y-4 pt-16 md:pt-0">
+        <div className="container max-w-6xl mx-auto px-6 relative z-10">
+          <div className="flex min-h-[320px] md:min-h-[380px] items-end pt-10 pb-16 md:pt-14 md:pb-24">
+            <div className="w-full max-w-4xl space-y-4 pt-16 md:pt-0">
             <div className="absolute top-4 left-6 md:static z-30">
               <Button variant="ghost" asChild className="text-white hover:text-white hover:bg-white/20 rounded-full h-10 w-auto px-4 gap-2 bg-black/50 backdrop-blur-md md:bg-transparent md:backdrop-blur-none">
                 <Link href="/post">
@@ -150,7 +151,7 @@ export default async function PostPage({
             </div>
 
             {tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 pt-1">
                 {tags.map((tag: string) => {
                   const styles = getTagStyles(tag)
                   return (
@@ -172,6 +173,7 @@ export default async function PostPage({
                 })}
               </div>
             )}
+            </div>
           </div>
         </div>
       </div>
@@ -209,7 +211,7 @@ export default async function PostPage({
                 <h4 className="font-bold text-lg mb-1">{author?.display_name || 'Anonymous'}</h4>
                 <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-4 font-medium">{author?.email}</p>
                 <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed italic max-w-xs mx-auto">
-                  "{author?.bio || '暂无个人简介'}"
+                  &ldquo;{author?.bio || '暂无个人简介'}&rdquo;
                 </p>
               </div>
             </div>
@@ -242,7 +244,7 @@ export default async function PostPage({
                 <h4 className="font-bold text-lg mb-1">{author?.display_name || 'Anonymous'}</h4>
                 <p className="text-xs text-neutral-500 mb-4">{author?.email}</p>
                 <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed italic">
-                  "{author?.bio || '暂无个人简介'}"
+                  &ldquo;{author?.bio || '暂无个人简介'}&rdquo;
                 </p>
               </div>
             </div>

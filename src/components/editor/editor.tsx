@@ -625,7 +625,7 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
         }
 
         /* === Code Block (with syntax highlighting) === */
-        .ProseMirror pre {
+        .ProseMirror > pre {
           background-color: var(--editor-code-bg);
           color: var(--editor-code-fg);
           border-radius: 12px;
@@ -638,7 +638,7 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
           border: 1px solid var(--editor-code-border);
           box-shadow: none;
         }
-        .ProseMirror pre code {
+        .ProseMirror > pre code {
           display: block;
           background: none;
           padding: 0 !important;
@@ -650,37 +650,37 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
           box-shadow: none !important;
         }
 
-        .ProseMirror pre .hljs-keyword,
-        .ProseMirror pre .hljs-selector-tag,
-        .ProseMirror pre .hljs-built_in,
-        .ProseMirror pre .hljs-name,
-        .ProseMirror pre .hljs-tag { color: var(--editor-code-keyword); }
-        .ProseMirror pre .hljs-string,
-        .ProseMirror pre .hljs-attr,
-        .ProseMirror pre .hljs-selector-attr,
-        .ProseMirror pre .hljs-template-variable { color: var(--editor-code-string); }
-        .ProseMirror pre .hljs-number,
-        .ProseMirror pre .hljs-literal,
-        .ProseMirror pre .hljs-symbol,
-        .ProseMirror pre .hljs-bullet { color: var(--editor-code-number); }
-        .ProseMirror pre .hljs-comment,
-        .ProseMirror pre .hljs-quote { color: var(--editor-code-comment); font-style: italic; }
-        .ProseMirror pre .hljs-function,
-        .ProseMirror pre .hljs-title,
-        .ProseMirror pre .hljs-title.function_,
-        .ProseMirror pre .hljs-section { color: var(--editor-code-function); }
-        .ProseMirror pre .hljs-variable,
-        .ProseMirror pre .hljs-params,
-        .ProseMirror pre .hljs-property,
-        .ProseMirror pre .hljs-attribute { color: var(--editor-code-variable); }
-        .ProseMirror pre .hljs-type,
-        .ProseMirror pre .hljs-class,
-        .ProseMirror pre .hljs-title.class_ { color: var(--editor-code-type); }
-        .ProseMirror pre .hljs-meta,
-        .ProseMirror pre .hljs-doctag,
-        .ProseMirror pre .hljs-regexp,
-        .ProseMirror pre .hljs-link { color: var(--editor-code-meta); }
-        .ProseMirror pre .hljs-subst { color: var(--editor-code-fg); }
+        .ProseMirror > pre .hljs-keyword,
+        .ProseMirror > pre .hljs-selector-tag,
+        .ProseMirror > pre .hljs-built_in,
+        .ProseMirror > pre .hljs-name,
+        .ProseMirror > pre .hljs-tag { color: var(--editor-code-keyword); }
+        .ProseMirror > pre .hljs-string,
+        .ProseMirror > pre .hljs-attr,
+        .ProseMirror > pre .hljs-selector-attr,
+        .ProseMirror > pre .hljs-template-variable { color: var(--editor-code-string); }
+        .ProseMirror > pre .hljs-number,
+        .ProseMirror > pre .hljs-literal,
+        .ProseMirror > pre .hljs-symbol,
+        .ProseMirror > pre .hljs-bullet { color: var(--editor-code-number); }
+        .ProseMirror > pre .hljs-comment,
+        .ProseMirror > pre .hljs-quote { color: var(--editor-code-comment); font-style: italic; }
+        .ProseMirror > pre .hljs-function,
+        .ProseMirror > pre .hljs-title,
+        .ProseMirror > pre .hljs-title.function_,
+        .ProseMirror > pre .hljs-section { color: var(--editor-code-function); }
+        .ProseMirror > pre .hljs-variable,
+        .ProseMirror > pre .hljs-params,
+        .ProseMirror > pre .hljs-property,
+        .ProseMirror > pre .hljs-attribute { color: var(--editor-code-variable); }
+        .ProseMirror > pre .hljs-type,
+        .ProseMirror > pre .hljs-class,
+        .ProseMirror > pre .hljs-title.class_ { color: var(--editor-code-type); }
+        .ProseMirror > pre .hljs-meta,
+        .ProseMirror > pre .hljs-doctag,
+        .ProseMirror > pre .hljs-regexp,
+        .ProseMirror > pre .hljs-link { color: var(--editor-code-meta); }
+        .ProseMirror > pre .hljs-subst { color: var(--editor-code-fg); }
 
         /* === Blockquote === */
         .ProseMirror blockquote {

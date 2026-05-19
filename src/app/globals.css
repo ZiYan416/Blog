@@ -64,3 +64,252 @@
     @apply bg-background text-foreground antialiased;
   }
 }
+
+@layer components {
+  .article-code-block {
+    background-color: #f5f7fb;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  }
+
+  .dark .article-code-block {
+    background-color: #0f1722;
+    border-color: rgba(148, 163, 184, 0.16);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.28);
+  }
+
+  .article-code-block__header {
+    align-items: center;
+    background-color: rgba(148, 163, 184, 0.12);
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    color: #607089;
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+  }
+
+  .dark .article-code-block__header {
+    background-color: rgba(148, 163, 184, 0.1);
+    border-bottom-color: rgba(148, 163, 184, 0.16);
+    color: #8fa0b8;
+  }
+
+  .article-code-block__dot {
+    border-radius: 9999px;
+    height: 0.75rem;
+    opacity: 0.85;
+    width: 0.75rem;
+  }
+
+  .group:hover .article-code-block__dot {
+    opacity: 1;
+  }
+
+  .article-code-block__dot--red {
+    background-color: #ff5f56;
+    border: 1px solid #e0443e;
+  }
+
+  .article-code-block__dot--yellow {
+    background-color: #ffbd2e;
+    border: 1px solid #dea123;
+  }
+
+  .article-code-block__dot--green {
+    background-color: #27c93f;
+    border: 1px solid #1aab29;
+  }
+
+  .article-code-block__language {
+    font-family: "Fira Code", "JetBrains Mono", Menlo, Monaco, Consolas, monospace;
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-left: 0.5rem;
+    text-transform: lowercase;
+  }
+
+  .article-code-block__copy {
+    align-items: center;
+    border-radius: 0.375rem;
+    color: inherit;
+    display: inline-flex;
+    justify-content: center;
+    padding: 0.25rem;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .article-code-block__copy:hover {
+    background-color: rgba(15, 23, 42, 0.06);
+    color: #253041;
+  }
+
+  .dark .article-code-block__copy:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #d6deeb;
+  }
+
+  .article-code-block__body {
+    background-color: #f5f7fb;
+    color: #253041;
+    overflow-x: auto;
+  }
+
+  .dark .article-code-block__body {
+    background-color: #0f1722;
+    color: #d6deeb;
+  }
+
+  .article-code-block__pre,
+  .article-code-block pre {
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    color: inherit;
+    font-family: "Fira Code", "JetBrains Mono", Menlo, Monaco, Consolas, monospace;
+    font-size: 0.875rem;
+    line-height: 1.7;
+    margin: 0 !important;
+    overflow-x: auto;
+    padding: 0.875rem 1rem !important;
+    white-space: pre;
+  }
+
+  @media (min-width: 768px) {
+    .article-code-block__pre,
+    .article-code-block pre {
+      padding: 1rem !important;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+  }
+
+  .article-code-block pre code,
+  .article-code-block code.hljs {
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    color: inherit;
+    display: block;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .article-code-block .hljs {
+    color: inherit;
+  }
+
+  .article-code-block .hljs-comment,
+  .article-code-block .hljs-quote {
+    color: #7c8798;
+    font-style: italic;
+  }
+
+  .dark .article-code-block .hljs-comment,
+  .dark .article-code-block .hljs-quote {
+    color: #6b7a90;
+  }
+
+  .article-code-block .hljs-keyword,
+  .article-code-block .hljs-selector-tag,
+  .article-code-block .hljs-built_in,
+  .article-code-block .hljs-name,
+  .article-code-block .hljs-tag {
+    color: #9a3412;
+  }
+
+  .dark .article-code-block .hljs-keyword,
+  .dark .article-code-block .hljs-selector-tag,
+  .dark .article-code-block .hljs-built_in,
+  .dark .article-code-block .hljs-name,
+  .dark .article-code-block .hljs-tag {
+    color: #f38ba8;
+  }
+
+  .article-code-block .hljs-string,
+  .article-code-block .hljs-attr,
+  .article-code-block .hljs-selector-attr,
+  .article-code-block .hljs-selector-pseudo,
+  .article-code-block .hljs-template-variable {
+    color: #0f766e;
+  }
+
+  .dark .article-code-block .hljs-string,
+  .dark .article-code-block .hljs-attr,
+  .dark .article-code-block .hljs-selector-attr,
+  .dark .article-code-block .hljs-selector-pseudo,
+  .dark .article-code-block .hljs-template-variable {
+    color: #8bd5ca;
+  }
+
+  .article-code-block .hljs-number,
+  .article-code-block .hljs-literal,
+  .article-code-block .hljs-symbol,
+  .article-code-block .hljs-bullet {
+    color: #b45309;
+  }
+
+  .dark .article-code-block .hljs-number,
+  .dark .article-code-block .hljs-literal,
+  .dark .article-code-block .hljs-symbol,
+  .dark .article-code-block .hljs-bullet {
+    color: #f6c177;
+  }
+
+  .article-code-block .hljs-title,
+  .article-code-block .hljs-title.function_,
+  .article-code-block .hljs-function,
+  .article-code-block .hljs-section {
+    color: #1d4ed8;
+  }
+
+  .dark .article-code-block .hljs-title,
+  .dark .article-code-block .hljs-title.function_,
+  .dark .article-code-block .hljs-function,
+  .dark .article-code-block .hljs-section {
+    color: #8cc7ff;
+  }
+
+  .article-code-block .hljs-variable,
+  .article-code-block .hljs-property,
+  .article-code-block .hljs-params,
+  .article-code-block .hljs-attribute {
+    color: #c2410c;
+  }
+
+  .dark .article-code-block .hljs-variable,
+  .dark .article-code-block .hljs-property,
+  .dark .article-code-block .hljs-params,
+  .dark .article-code-block .hljs-attribute {
+    color: #ffb86b;
+  }
+
+  .article-code-block .hljs-type,
+  .article-code-block .hljs-class .hljs-title,
+  .article-code-block .hljs-title.class_ {
+    color: #7c3aed;
+  }
+
+  .dark .article-code-block .hljs-type,
+  .dark .article-code-block .hljs-class .hljs-title,
+  .dark .article-code-block .hljs-title.class_ {
+    color: #c4b5fd;
+  }
+
+  .article-code-block .hljs-meta,
+  .article-code-block .hljs-doctag,
+  .article-code-block .hljs-regexp,
+  .article-code-block .hljs-link {
+    color: #0369a1;
+  }
+
+  .dark .article-code-block .hljs-meta,
+  .dark .article-code-block .hljs-doctag,
+  .dark .article-code-block .hljs-regexp,
+  .dark .article-code-block .hljs-link {
+    color: #7dd3fc;
+  }
+}

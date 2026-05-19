@@ -15,13 +15,13 @@ import { TaskItem } from '@tiptap/extension-task-item'
 import { Highlight } from '@tiptap/extension-highlight'
 import { Underline } from '@tiptap/extension-underline'
 import { TextAlign } from '@tiptap/extension-text-align'
-import { CodeBlockLowlight } from '@tiptap/extension-code-block-lowlight'
 import { Typography } from '@tiptap/extension-typography'
 import { common, createLowlight } from 'lowlight'
 import { useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { v4 as uuidv4 } from 'uuid'
 import { useToast } from '@/hooks/use-toast'
+import { ArticleCodeBlock } from './article-code-block-extension'
 
 // Create lowlight instance with common languages
 const lowlight = createLowlight(common)
@@ -84,7 +84,7 @@ export function RichEditor({ content, onChange, onEditorReady, placeholder, clas
         transformCopiedText: true,
       }),
       // Code block with syntax highlighting
-      CodeBlockLowlight.configure({
+      ArticleCodeBlock.configure({
         lowlight,
         defaultLanguage: 'javascript',
         HTMLAttributes: {
