@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || ''
 

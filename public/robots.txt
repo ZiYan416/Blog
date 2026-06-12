@@ -1,5 +1,4 @@
 User-agent: *
 Allow: /
 
-# Sitemap — relative path is acceptable; replace with absolute URL if you set NEXT_PUBLIC_SITE_URL
-Sitemap: /sitemap.xml
+Sitemap: https://lunalbl.com/sitemap.xml
