@@ -84,16 +84,20 @@
 
   .article-code-block__header {
     align-items: center;
-    background-color: rgba(148, 163, 184, 0.12);
+    background-color: rgba(245, 247, 251, 0.92);
+    backdrop-filter: blur(12px);
     border-bottom: 1px solid rgba(15, 23, 42, 0.08);
     color: #607089;
     display: flex;
     justify-content: space-between;
+    position: sticky;
     padding: 0.75rem 1rem;
+    top: 0;
+    z-index: 2;
   }
 
   .dark .article-code-block__header {
-    background-color: rgba(148, 163, 184, 0.1);
+    background-color: rgba(15, 23, 34, 0.92);
     border-bottom-color: rgba(148, 163, 184, 0.16);
     color: #8fa0b8;
   }
@@ -136,6 +140,7 @@
     align-items: center;
     border-radius: 0.375rem;
     color: inherit;
+    cursor: pointer;
     display: inline-flex;
     justify-content: center;
     padding: 0.25rem;
@@ -155,7 +160,6 @@
   .article-code-block__body {
     background-color: #f5f7fb;
     color: #253041;
-    overflow-x: auto;
   }
 
   .dark .article-code-block__body {
@@ -163,10 +167,21 @@
     color: #d6deeb;
   }
 
+  .article-code-block__controls {
+    align-items: center;
+    display: inline-flex;
+    gap: 0.5rem;
+  }
+
   .article-code-block__viewport {
     overflow: hidden;
     position: relative;
-    transition: max-height 0.28s ease;
+    transition: max-height 0.32s ease;
+  }
+
+  .article-code-block__viewport--scrollable {
+    overflow-y: auto;
+    scrollbar-gutter: stable;
   }
 
   .article-code-block__viewport--collapsed .article-code-block__body {
@@ -228,41 +243,34 @@
     color: inherit;
   }
 
-  .article-code-block__footer {
-    background-color: rgba(148, 163, 184, 0.08);
-    border-top: 1px solid rgba(15, 23, 42, 0.08);
-    display: flex;
-    justify-content: center;
-    padding: 0.5rem 0.75rem 0.65rem;
-  }
-
-  .dark .article-code-block__footer {
-    background-color: rgba(148, 163, 184, 0.06);
-    border-top-color: rgba(148, 163, 184, 0.16);
-  }
-
   .article-code-block__toggle {
     align-items: center;
+    background-color: rgba(148, 163, 184, 0.12);
+    border-radius: 9999px;
     color: #607089;
+    cursor: pointer;
     display: inline-flex;
     font-family: var(--font-sans);
     font-size: 0.75rem;
     font-weight: 600;
     gap: 0.35rem;
     letter-spacing: 0;
-    padding: 0.15rem 0.35rem;
-    transition: color 0.2s ease, transform 0.2s ease;
+    padding: 0.35rem 0.6rem;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   .article-code-block__toggle:hover {
+    background-color: rgba(15, 23, 42, 0.08);
     color: #253041;
   }
 
   .dark .article-code-block__toggle {
+    background-color: rgba(148, 163, 184, 0.12);
     color: #9fb0c8;
   }
 
   .dark .article-code-block__toggle:hover {
+    background-color: rgba(255, 255, 255, 0.09);
     color: #e4edf8;
   }
 
