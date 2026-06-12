@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from 'react'
-import { Check, Copy } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Check, ChevronDown, ChevronUp, Copy } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface CodeBlockShellProps {
@@ -25,7 +25,34 @@ export function CodeBlockShell({
   className,
   bodyClassName,
 }: CodeBlockShellProps) {
+  const COLLAPSED_HEIGHT = 360
   const [copied, setCopied] = useState(false)
+  const [expanded, setExpanded] = useState(false)
+  const [canCollapse, setCanCollapse] = useState(false)
+  const [contentHeight, setContentHeight] = useState(0)
+  const bodyRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const element = bodyRef.current
+    if (!element) return
+
+    const measure = () => {
+      const nextHeight = element.scrollHeight
+      setContentHeight(nextHeight)
+      const nextCanCollapse = nextHeight > COLLAPSED_HEIGHT + 8
+      setCanCollapse(nextCanCollapse)
+      if (!nextCanCollapse) {
+        setExpanded(false)
+      }
+    }
+
+    measure()
+
+    const observer = new ResizeObserver(measure)
+    observer.observe(element)
+
+    return () => observer.disconnect()
+  }, [children])
 
   const handleCopy = async () => {
     if (!onCopy) return
@@ -55,7 +82,29 @@ export function CodeBlockShell({
         </button>
       </div>
 
-      <div className={cn('article-code-block__body', bodyClassName)}>{children}</div>
+      <div
+        className={cn('article-code-block__viewport', canCollapse && !expanded && 'article-code-block__viewport--collapsed')}
+        style={canCollapse ? { maxHeight: `${expanded ? contentHeight : COLLAPSED_HEIGHT}px` } : undefined}
+      >
+        <div ref={bodyRef} className={cn('article-code-block__body', bodyClassName)}>
+          {children}
+        </div>
+        {canCollapse && !expanded ? <div className="article-code-block__fade" /> : null}
+      </div>
+
+      {canCollapse ? (
+        <div className="article-code-block__footer">
+          <button
+            type="button"
+            onClick={() => setExpanded((value) => !value)}
+            className="article-code-block__toggle"
+            aria-expanded={expanded}
+          >
+            {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+            <span>{expanded ? '收起代码' : '展开代码'}</span>
+          </button>
+        </div>
+      ) : null}
     </div>
   )
 }
