@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -37,20 +37,57 @@ interface GroupVideoLoopProps {
   onVideoReady?: () => void;
 }
 
-// 100% stutter-free hardware-accelerated video crossfade loop
+// Seamless zero-stutter video crossfade triggered by actual video completion
 function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopProps) {
   const [activeIdx, setActiveIdx] = useState(0);
+  const isTransitioningRef = useRef(false);
 
+  const ref0 = useRef<HTMLVideoElement>(null);
+  const ref1 = useRef<HTMLVideoElement>(null);
+  const videoRefs = [ref0, ref1];
+
+  // Keep videos playing in sync at 0.75x speed
   useEffect(() => {
-    if (!isActiveGroup) return;
-
-    // Crossfade between video 0 and video 1 smoothly every 10 seconds
-    const interval = setInterval(() => {
-      setActiveIdx((prev) => (prev === 0 ? 1 : 0));
-    }, 10000);
-
-    return () => clearInterval(interval);
+    videoRefs.forEach((ref) => {
+      const v = ref.current;
+      if (!v) return;
+      v.playbackRate = 0.75;
+      if (isActiveGroup) {
+        v.play().catch(() => {});
+      } else {
+        v.pause();
+      }
+    });
   }, [isActiveGroup]);
+
+  const handleTimeUpdate = (idx: number) => {
+    if (idx !== activeIdx || !isActiveGroup) return;
+    const video = videoRefs[idx]?.current;
+    if (!video || !video.duration || video.duration < 1) return;
+
+    const remainingTime = video.duration - video.currentTime;
+    // Trigger transition when current video is 1.0s before finishing
+    if (remainingTime <= 1.0 && !isTransitioningRef.current) {
+      isTransitioningRef.current = true;
+      const nextIdx = (activeIdx + 1) % videos.length;
+      setActiveIdx(nextIdx);
+
+      setTimeout(() => {
+        isTransitioningRef.current = false;
+      }, 3000);
+    }
+  };
+
+  const handleEnded = (idx: number) => {
+    if (idx !== activeIdx || !isActiveGroup) return;
+    if (!isTransitioningRef.current) {
+      isTransitioningRef.current = true;
+      setActiveIdx((activeIdx + 1) % videos.length);
+      setTimeout(() => {
+        isTransitioningRef.current = false;
+      }, 3000);
+    }
+  };
 
   return (
     <div
@@ -62,13 +99,17 @@ function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopP
       {videos.map((vid, idx) => (
         <video
           key={vid.remote}
+          ref={videoRefs[idx]}
           autoPlay
           muted
           loop
           playsInline
-          onCanPlayThrough={() => {
+          onCanPlayThrough={(e) => {
+            e.currentTarget.playbackRate = 0.75;
             if (idx === 0 && onVideoReady) onVideoReady();
           }}
+          onTimeUpdate={() => handleTimeUpdate(idx)}
+          onEnded={() => handleEnded(idx)}
           className={cn(
             "absolute inset-0 w-full h-full object-cover transition-opacity duration-1500 ease-in-out",
             activeIdx === idx ? "opacity-100" : "opacity-0"
@@ -117,10 +158,10 @@ export function CinematicHero({
 
   return (
     <section className="relative w-full h-[calc(100vh-4rem)] overflow-hidden bg-black flex flex-col justify-between py-8 px-4 sm:px-6 isolate">
-      {/* Container for initial video load fade-in: pure black until video is 100% ready */}
+      {/* Container for initial load: pure black until video is ready, then train cabin + video dissolve in TOGETHER */}
       <div
         className={cn(
-          "absolute inset-0 z-0 transition-opacity duration-1500 ease-in-out",
+          "absolute inset-0 transition-opacity duration-1500 ease-in-out",
           isInitialVideoLoaded ? "opacity-100" : "opacity-0"
         )}
       >
@@ -137,15 +178,15 @@ export function CinematicHero({
           isActiveGroup={isDark}
           onVideoReady={() => setIsInitialVideoLoaded(true)}
         />
-      </div>
 
-      {/* Standard Transparent PNG Overlay (z-index 2) - original clean train cabin without filter tinting */}
-      <div className="absolute inset-0 z-[2] pointer-events-none overflow-hidden">
-        <img
-          src={OVERLAY_IMAGE}
-          alt="Train Window Frame"
-          className="w-full h-full object-fill pointer-events-none animate-train-bob"
-        />
+        {/* Standard Transparent PNG Overlay (z-index 2) - train cabin overlay dissolves in TOGETHER with video */}
+        <div className="absolute inset-0 z-[2] pointer-events-none overflow-hidden">
+          <img
+            src={OVERLAY_IMAGE}
+            alt="Train Window Frame"
+            className="w-full h-full object-fill pointer-events-none animate-train-bob"
+          />
+        </div>
       </div>
 
       {/* Hero Main Content (z-index 3) */}
