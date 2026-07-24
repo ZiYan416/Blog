@@ -176,7 +176,7 @@ export function CinematicHero({
         className={cn(
           "absolute inset-0 z-[1] pointer-events-none transition-all duration-1000 ease-in-out",
           !isDark
-            ? "bg-gradient-to-b from-sky-950/20 via-slate-900/10 to-indigo-950/30 opacity-70"
+            ? "bg-gradient-to-b from-slate-200/10 via-slate-400/5 to-slate-800/25 opacity-60"
             : "bg-gradient-to-b from-amber-500/15 via-orange-600/10 to-amber-950/35 opacity-90"
         )}
       />
@@ -186,7 +186,7 @@ export function CinematicHero({
         className={cn(
           "absolute inset-0 z-[2] pointer-events-none overflow-hidden transition-all duration-1000 ease-in-out",
           !isDark
-            ? "contrast-[1.04] brightness-[1.02] sepia-[0.15] hue-rotate-[170deg]"
+            ? "contrast-[1.12] brightness-[1.06] saturate-[0.65] grayscale-[0.2]"
             : "contrast-[1.08] brightness-[0.96] sepia-[0.35] hue-rotate-[-15deg] saturate-[1.25]"
         )}
       >
