@@ -194,8 +194,8 @@ export function CinematicHero({
           onVideoReady={() => setIsInitialVideoLoaded(true)}
         />
 
-        {/* Standard Transparent PNG Overlay (z-index 2) - train cabin overlay framed nicely inside black container */}
-        <div className="absolute inset-1 sm:inset-2 z-[2] pointer-events-none overflow-hidden">
+        {/* Standard Transparent PNG Overlay (z-index 2) - full inset-0 flush under navbar */}
+        <div className="absolute inset-0 z-[2] pointer-events-none overflow-hidden">
           <img
             src={OVERLAY_IMAGE}
             alt="Train Window Frame"
