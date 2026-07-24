@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 import { useInView } from "react-intersection-observer";
-import { Github, Mail } from "lucide-react";
+import { Github, Mail, ArrowUpRight } from "lucide-react";
 import { CinematicHero } from "@/components/home/cinematic-hero";
 
 /* ─────────────────────────────────────────────

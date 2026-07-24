@@ -29,7 +29,9 @@ const NIGHT_VIDEOS = [
   },
 ];
 
-const OVERLAY_IMAGE = "/images/hero-overlay.png";
+// Dual cabin overlay images: Python processed bright silver-iron steel for Day, original warm amber for Night
+const OVERLAY_IMAGE_DARK = "/images/hero-overlay.png";
+const OVERLAY_IMAGE_SILVER = "/images/hero-overlay-silver.png";
 
 interface GroupVideoLoopProps {
   videos: { local: string; remote: string }[];
@@ -74,7 +76,6 @@ function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopP
 
     setActiveIdx(nextIdx);
 
-    // Unlock transition state and pause inactive video after crossfade finishes
     setTimeout(() => {
       if (currV) {
         currV.pause();
@@ -89,7 +90,6 @@ function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopP
     if (!video || !video.duration || video.duration < 1) return;
 
     const remainingTime = video.duration - video.currentTime;
-    // Trigger transition when current video is 0.8 seconds from the end
     if (remainingTime <= 0.8) {
       triggerNext(idx);
     }
@@ -199,19 +199,31 @@ export function CinematicHero({
         )}
       />
 
-      {/* Transparent PNG Overlay (z-index 2) with train-bob animation and day/night train cabin interior lighting filter */}
+      {/* Light Mode Silver-Iron Metallic Train Cabin Overlay (z-index 2) */}
       <div
         className={cn(
-          "absolute inset-0 z-[2] pointer-events-none overflow-hidden transition-all duration-1000 ease-in-out",
-          !isDark
-            ? "contrast-[1.08] brightness-[1.28] saturate-[0.8] grayscale-[0.1]"
-            : "contrast-[1.08] brightness-[0.96] sepia-[0.35] hue-rotate-[-15deg] saturate-[1.25]"
+          "absolute inset-0 z-[2] pointer-events-none overflow-hidden transition-opacity duration-1000 ease-in-out",
+          !isDark ? "opacity-100" : "opacity-0"
         )}
       >
         <img
-          src={OVERLAY_IMAGE}
-          alt="Train Window Frame"
+          src={OVERLAY_IMAGE_SILVER}
+          alt="Train Window Frame (Silver Metallic)"
           className="w-full h-full object-fill pointer-events-none animate-train-bob"
+        />
+      </div>
+
+      {/* Dark Mode Warm Sunset Amber Train Cabin Overlay (z-index 2) */}
+      <div
+        className={cn(
+          "absolute inset-0 z-[2] pointer-events-none overflow-hidden transition-opacity duration-1000 ease-in-out",
+          isDark ? "opacity-100" : "opacity-0"
+        )}
+      >
+        <img
+          src={OVERLAY_IMAGE_DARK}
+          alt="Train Window Frame (Sunset Amber)"
+          className="w-full h-full object-fill pointer-events-none animate-train-bob contrast-[1.08] brightness-[0.96] sepia-[0.35] hue-rotate-[-15deg] saturate-[1.25]"
         />
       </div>
 
