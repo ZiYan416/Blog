@@ -139,7 +139,7 @@ export default async function PostPage({
       <ViewCounter slug={post.slug} />
 
       {/* Hero Header */}
-      <div className="relative w-full min-h-[320px] md:min-h-[380px] bg-neutral-900 dark:bg-black overflow-hidden group">
+      <div className="relative w-full min-h-[360px] md:min-h-[440px] bg-neutral-900 dark:bg-black overflow-hidden group -mt-16 pt-16">
         {post.cover_image && (
           <div className="absolute inset-0 opacity-60">
             <img src={post.cover_image} alt={post.title} className="w-full h-full object-cover" />
@@ -150,7 +150,7 @@ export default async function PostPage({
         <div className="container max-w-6xl mx-auto px-6 relative z-10">
           <div className="flex min-h-[320px] md:min-h-[380px] items-end pt-10 pb-16 md:pt-14 md:pb-24">
             <div className="w-full max-w-4xl space-y-4 pt-16 md:pt-0">
-            <div className="absolute top-4 left-6 md:static z-30">
+            <div className="absolute top-20 left-6 md:static z-30">
               <Button variant="ghost" asChild className="text-white hover:text-white hover:bg-white/20 rounded-full h-10 w-auto px-4 gap-2 bg-black/50 backdrop-blur-md md:bg-transparent md:backdrop-blur-none">
                 <Link href="/post">
                   <ArrowLeft className="w-4 h-4" />

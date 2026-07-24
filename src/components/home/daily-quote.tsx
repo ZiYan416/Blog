@@ -402,76 +402,25 @@ export function DailyQuote() {
   );
 
   return (
-    <>
-      {/* Quote Card */}
-      <div
-        ref={cardRef}
-        className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-black/[0.03] dark:bg-black/40 border border-black/[0.05] dark:border-amber-200/40 mb-6 md:mb-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 relative z-[100] dark:shadow-[0_0_20px_2px_rgba(251,191,36,0.3)] backdrop-blur-sm transition-all"
+    <div
+      ref={cardRef}
+      className="inline-flex items-center gap-2 px-4 py-2 rounded-full liquid-glass border border-white/20 mb-6 md:mb-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 relative z-[100] backdrop-blur-md transition-all shadow-lg"
+    >
+      <Sparkles className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+      <span
+        className="text-xs font-medium font-serif text-white/90 italic text-center leading-relaxed drop-shadow-sm"
+        style={{
+          display: 'inline-block',
+          width: 'fit-content',
+          maxWidth: 'min(82vw, 560px)',
+        }}
       >
-        <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0 dark:text-amber-300" />
-        <span
-          className="text-xs font-medium font-serif text-neutral-600 dark:text-amber-100/90 italic text-center leading-relaxed"
-          style={{
-            display: 'inline-block',
-            width: 'fit-content',
-            maxWidth: 'min(82vw, 560px)',
-          }}
-        >
-          {quoteLines.map((line, i) => (
-            <span key={i} style={{ display: 'block' }}>
-              {line}
-            </span>
-          ))}
-        </span>
-
-        {/* Light Cone - Bottom width based on viewport, top matches card */}
-        <div className="hidden dark:block absolute top-full left-1/2 -translate-x-1/2 pointer-events-none overflow-visible">
-          {/* Soft cone with smooth edges and center-out animation */}
-          <div
-            style={{
-              width: `${lightConeBottomWidth}px`,
-              height: '300px', // 稍微加长一点
-              background: 'linear-gradient(180deg, rgba(251, 191, 36, 0.2) 0%, rgba(251, 191, 36, 0.1) 30%, transparent 100%)',
-              // 关键帧动画效果：isExpanded ? 扇形展开 : 底部收拢
-              clipPath: (() => {
-                const topLeftPercent = lightConeBottomWidth > 0
-                  ? ((lightConeBottomWidth - cardWidth) / 2) / lightConeBottomWidth * 100
-                  : 50;
-                const topRightPercent = 100 - topLeftPercent;
-
-                // 展开状态：底部扩散到 0% 和 100%，顶部扩散到卡片两端
-                if (isExpanded) {
-                  return `polygon(${topLeftPercent}% 0%, 0% 100%, 100% 100%, ${topRightPercent}% 0%)`;
-                }
-                // 初始状态：顶部和底部都收拢在中心线 (完全闭合，像一束激光)
-                return `polygon(50% 0%, 50% 100%, 50% 100%, 50% 0%)`;
-              })(),
-              // 添加遮罩以柔化边缘（消除硬边）
-              maskImage: 'linear-gradient(to right, transparent, black 15%, black 85%, transparent)',
-              WebkitMaskImage: 'linear-gradient(to right, transparent, black 15%, black 85%, transparent)',
-              filter: 'blur(40px)',
-              opacity: isExpanded ? 1 : 0,
-              transition: 'clip-path 1.5s ease-out, opacity 1s ease-in',
-              transformOrigin: 'top center',
-            }}
-          />
-
-          {/* Core Beam - Stronger center light */}
-          <div
-             className="absolute top-0 left-1/2 -translate-x-1/2"
-             style={{
-               width: `${cardWidth * 0.8}px`, // 核心光束较窄
-               height: '250px',
-               background: 'linear-gradient(180deg, rgba(251, 191, 36, 0.15) 0%, transparent 80%)',
-               filter: 'blur(20px)',
-               opacity: isExpanded ? 1 : 0,
-               transition: 'opacity 1.5s ease-out 0.2s', // 稍微延迟显示核心
-             }}
-          />
-        </div>
-      </div>
-
-      {/* Remove global styles as we use inline transitions now */}
-    </>
+        {quoteLines.map((line, i) => (
+          <span key={i} style={{ display: 'block' }}>
+            {line}
+          </span>
+        ))}
+      </span>
+    </div>
   );
 }

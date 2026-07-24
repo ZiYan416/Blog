@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
@@ -6,6 +7,15 @@ import { Toaster } from "@/components/ui/toaster";
 import { SplashScreen } from "@/components/layout/splash-screen";
 import { createClient } from "@/lib/supabase/server";
 import { AuthProvider } from "@/components/providers/auth-provider";
+import { cn } from "@/lib/utils";
+
+const instrumentSerif = Instrument_Serif({
+  weight: ["400"],
+  subsets: ["latin"],
+  style: ["normal", "italic"],
+  variable: "--font-instrument-serif",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -48,7 +58,10 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="min-h-screen bg-[#fafafa] dark:bg-[#050505] text-neutral-900 dark:text-neutral-100 selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black antialiased flex flex-col font-sans">
+      <body className={cn(
+        "min-h-screen bg-[#fafafa] dark:bg-[#050505] text-neutral-900 dark:text-neutral-100 selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black antialiased flex flex-col font-sans",
+        instrumentSerif.variable
+      )}>
         <SplashScreen />
         <AuthProvider initialUser={user} initialProfile={profile}>
           <Navbar user={user} />

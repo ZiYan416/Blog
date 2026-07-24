@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useRef, useState } from 'react'
-import { Check, ChevronDown, Copy } from 'lucide-react'
+import { Check, ChevronDown, Copy, Sparkles } from 'lucide-react'
+import hljs from 'highlight.js'
 import { cn } from '@/lib/utils'
 
 interface CodeBlockShellProps {
@@ -18,6 +19,19 @@ export function extractCodeBlockLanguage(className?: string | null) {
   return match?.[1]?.toLowerCase() || 'text'
 }
 
+function autoDetectLanguage(codeText: string): string | null {
+  if (!codeText || codeText.trim().length < 3) return null
+  try {
+    const result = hljs.highlightAuto(codeText)
+    if (result && result.language && (result.relevance === undefined || result.relevance > 0)) {
+      return result.language
+    }
+  } catch (err) {
+    // Ignore detection errors
+  }
+  return null
+}
+
 export function CodeBlockShell({
   children,
   language = 'text',
@@ -32,9 +46,30 @@ export function CodeBlockShell({
   const [canCollapse, setCanCollapse] = useState(false)
   const [contentHeight, setContentHeight] = useState(0)
   const [expandedMaxHeight, setExpandedMaxHeight] = useState(DEFAULT_EXPANDED_MAX_HEIGHT)
+  const [displayLanguage, setDisplayLanguage] = useState(language)
+  const [isAuto, setIsAuto] = useState(false)
+
   const headerRef = useRef<HTMLDivElement>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const isUnspecified =
+      !language || ['text', 'plaintext', 'raw', 'unknown', 'code'].includes(language.toLowerCase())
+
+    if (isUnspecified && bodyRef.current) {
+      const codeText = bodyRef.current.textContent || ''
+      const detected = autoDetectLanguage(codeText)
+      if (detected) {
+        setDisplayLanguage(detected)
+        setIsAuto(true)
+        return
+      }
+    }
+
+    setDisplayLanguage(language || 'text')
+    setIsAuto(false)
+  }, [children, language])
 
   useEffect(() => {
     const syncExpandedLimit = () => {
@@ -107,7 +142,18 @@ export function CodeBlockShell({
               <div className="article-code-block__dot article-code-block__dot--yellow" />
               <div className="article-code-block__dot article-code-block__dot--green" />
             </div>
-            <span className="article-code-block__language">{language}</span>
+            <div className="flex items-center gap-1.5 ml-1">
+              <span className="article-code-block__language">{displayLanguage}</span>
+              {isAuto && (
+                <span
+                  className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-medium bg-indigo-500/10 text-indigo-600 dark:bg-indigo-400/15 dark:text-indigo-300 font-sans tracking-normal select-none"
+                  title="自动识别的代码语言"
+                >
+                  <Sparkles className="w-2.5 h-2.5" />
+                  <span>auto</span>
+                </span>
+              )}
+            </div>
           </div>
           <div className="article-code-block__controls">
             {canCollapse ? (
@@ -141,3 +187,4 @@ export function CodeBlockShell({
     </div>
   )
 }
+

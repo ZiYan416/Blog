@@ -1,6 +1,55 @@
 @import "tailwindcss";
 @config "../tailwind.config.ts";
 
+html, body {
+  overscroll-behavior-y: none;
+}
+
+.font-serif-instrument {
+  font-family: var(--font-instrument-serif), Georgia, serif;
+}
+
+/* Liquid Glass Effect */
+.liquid-glass {
+  background: rgba(255, 255, 255, 0.04);
+  background-blend-mode: luminosity;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: none;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.liquid-glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.4px;
+  background: linear-gradient(180deg,
+    rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.15) 20%,
+    rgba(255,255,255,0) 40%, rgba(255,255,255,0) 60%,
+    rgba(255,255,255,0.15) 80%, rgba(255,255,255,0.45) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+@keyframes trainBob {
+  0%, 100% {
+    transform: scale(1.03) translateY(0px);
+  }
+  50% {
+    transform: scale(1.03) translateY(-6px);
+  }
+}
+
+.animate-train-bob {
+  animation: trainBob 3s ease-in-out infinite;
+}
+
 @layer base {
   :root {
     --font-sans: "Inter", "Segoe UI", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
@@ -182,6 +231,75 @@
   .article-code-block__viewport--scrollable {
     overflow-y: auto;
     scrollbar-gutter: stable;
+  }
+
+  /* Custom scrollbars for code blocks in light & dark modes */
+  .article-code-block__viewport,
+  .article-code-block__pre,
+  .article-code-block pre,
+  .ProseMirror > pre {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+  }
+
+  .dark .article-code-block__viewport,
+  .dark .article-code-block__pre,
+  .dark .article-code-block pre,
+  .dark .ProseMirror > pre {
+    scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+  }
+
+  .article-code-block__viewport::-webkit-scrollbar,
+  .article-code-block__pre::-webkit-scrollbar,
+  .article-code-block pre::-webkit-scrollbar,
+  .ProseMirror > pre::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .article-code-block__viewport::-webkit-scrollbar-track,
+  .article-code-block__pre::-webkit-scrollbar-track,
+  .article-code-block pre::-webkit-scrollbar-track,
+  .ProseMirror > pre::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 9999px;
+  }
+
+  .article-code-block__viewport::-webkit-scrollbar-thumb,
+  .article-code-block__pre::-webkit-scrollbar-thumb,
+  .article-code-block pre::-webkit-scrollbar-thumb,
+  .ProseMirror > pre::-webkit-scrollbar-thumb {
+    background-color: rgba(148, 163, 184, 0.35);
+    border-radius: 9999px;
+    transition: background-color 0.2s ease;
+  }
+
+  .article-code-block__viewport::-webkit-scrollbar-thumb:hover,
+  .article-code-block__pre::-webkit-scrollbar-thumb:hover,
+  .article-code-block pre::-webkit-scrollbar-thumb:hover,
+  .ProseMirror > pre::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(100, 116, 139, 0.65);
+  }
+
+  .dark .article-code-block__viewport::-webkit-scrollbar-thumb,
+  .dark .article-code-block__pre::-webkit-scrollbar-thumb,
+  .dark .article-code-block pre::-webkit-scrollbar-thumb,
+  .dark .ProseMirror > pre::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .dark .article-code-block__viewport::-webkit-scrollbar-thumb:hover,
+  .dark .article-code-block__pre::-webkit-scrollbar-thumb:hover,
+  .dark .article-code-block pre::-webkit-scrollbar-thumb:hover,
+  .dark .ProseMirror > pre::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.4);
+  }
+
+  .article-code-block__viewport::-webkit-scrollbar-corner,
+  .article-code-block__pre::-webkit-scrollbar-corner,
+  .article-code-block pre::-webkit-scrollbar-corner,
+  .ProseMirror > pre::-webkit-scrollbar-corner {
+    background: transparent;
   }
 
   .article-code-block__viewport--collapsed .article-code-block__body {

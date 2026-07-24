@@ -5,7 +5,7 @@ import { Moon, Sun } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
-export function ThemeToggle() {
+export function ThemeToggle({ className }: { className?: string }) {
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
 
   useEffect(() => {
@@ -31,7 +31,8 @@ export function ThemeToggle() {
       onClick={toggleTheme}
       className={cn(
         'relative w-10 h-10 rounded-full border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all',
-        theme === 'dark' && 'bg-slate-800 text-yellow-400'
+        theme === 'dark' && 'bg-slate-800 text-yellow-400',
+        className
       )}
       aria-label="切换主题"
     >

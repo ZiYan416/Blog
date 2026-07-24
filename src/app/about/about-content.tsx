@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 import { useInView } from "react-intersection-observer";
-import { Github, Mail, ArrowUpRight, Sparkles } from "lucide-react";
+import { CinematicHero } from "@/components/home/cinematic-hero";
 
 /* ─────────────────────────────────────────────
    Utility: Scroll-triggered section wrapper
@@ -193,79 +193,12 @@ export default function AboutContent() {
       {/* ══════════════════════════════════════
          HERO — Cinematic Entrance
          ══════════════════════════════════════ */}
-      <section className="relative min-h-[90vh] flex flex-col items-center justify-center overflow-hidden px-6">
-        {/* Radial gradient bg */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_40%,rgba(120,120,120,0.12),transparent)] dark:bg-[radial-gradient(ellipse_60%_50%_at_50%_40%,rgba(255,255,255,0.04),transparent)]" />
-
-        {/* Decorative rings */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] md:w-[600px] md:h-[600px] rounded-full border border-neutral-200/20 dark:border-white/[0.04]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200px] h-[200px] md:w-[400px] md:h-[400px] rounded-full border border-neutral-200/15 dark:border-white/[0.06]" />
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-          className="relative z-10 text-center"
-        >
-          {/* Uppercase label */}
-          <motion.p
-            initial={{ opacity: 0, y: 20, letterSpacing: "0.1em" }}
-            animate={{ opacity: 1, y: 0, letterSpacing: "0.3em" }}
-            transition={{ duration: 1, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            className="text-[10px] sm:text-xs uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500 mb-8"
-          >
-            College Student
-          </motion.p>
-
-          {/* Main name */}
-          <motion.h1
-            initial={{ opacity: 0, y: 40, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 1.2, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            className="text-5xl sm:text-7xl md:text-9xl font-black tracking-tight text-neutral-900 dark:text-white leading-[0.9] mb-4"
-          >
-            荔冰酪
-          </motion.h1>
-
-          {/* English name — thin & elegant */}
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="font-serif text-xl sm:text-3xl md:text-4xl font-light text-neutral-400 dark:text-neutral-500 tracking-wide"
-          >
-            Lycheeling
-          </motion.p>
-
-          {/* Thin divider */}
-          <motion.div
-            initial={{ scaleX: 0 }}
-            animate={{ scaleX: 1 }}
-            transition={{ duration: 1.2, delay: 0.9, ease: [0.22, 1, 0.36, 1] }}
-            className="mx-auto mt-10 w-16 h-px bg-neutral-300 dark:bg-neutral-700"
-          />
-
-          {/* Scroll indicator */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 1.5 }}
-            className="mt-12"
-          >
-            <motion.div
-              animate={{ y: [0, 8, 0] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              className="w-5 h-8 mx-auto rounded-full border border-neutral-300 dark:border-neutral-700 flex items-start justify-center p-1.5"
-            >
-              <motion.div
-                animate={{ opacity: [0.3, 1, 0.3], height: ["4px", "8px", "4px"] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                className="w-0.5 rounded-full bg-neutral-400 dark:bg-neutral-500"
-              />
-            </motion.div>
-          </motion.div>
-        </motion.div>
-      </section>
+      <CinematicHero
+        badgeText="College Student · Developer · Creator"
+        titleLine1="荔冰酪"
+        titleLine2="Lycheeling"
+        subtitle="在代码与美学之间寻找平衡。每一行代码都是一次对极致的追求，每一个像素都值得被认真对待。"
+      />
 
       {/* ══════════════════════════════════════
          PHILOSOPHY — Word-by-word reveal
