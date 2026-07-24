@@ -71,7 +71,8 @@ function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopP
     if (!video || !video.duration) return;
 
     const remainingTime = video.duration - video.currentTime;
-    if (remainingTime <= 1.5 && !isTransitioningRef.current) {
+    // Trigger crossfade transition only when video is near its end (<= 0.8s remaining)
+    if (remainingTime <= 0.8 && !isTransitioningRef.current) {
       isTransitioningRef.current = true;
       switchNext();
       setTimeout(() => {
@@ -174,9 +175,9 @@ export function CinematicHero({
       {/* Dynamic Ambient Train Cabin Lighting & Reflection Overlay */}
       <div
         className={cn(
-          "absolute inset-0 z-[1] pointer-events-none transition-all duration-1000 ease-in-out",
+          "absolute inset-0 z-[1] pointer-events-none transition-all duration-1500 ease-in-out",
           !isDark
-            ? "bg-gradient-to-b from-slate-200/10 via-slate-400/5 to-slate-800/25 opacity-60"
+            ? "bg-gradient-to-b from-white/20 via-slate-100/10 to-slate-400/20 opacity-80"
             : "bg-gradient-to-b from-amber-500/15 via-orange-600/10 to-amber-950/35 opacity-90"
         )}
       />
@@ -184,9 +185,9 @@ export function CinematicHero({
       {/* Transparent PNG Overlay (z-index 2) with train-bob animation and day/night train cabin interior lighting filter */}
       <div
         className={cn(
-          "absolute inset-0 z-[2] pointer-events-none overflow-hidden transition-all duration-1000 ease-in-out",
+          "absolute inset-0 z-[2] pointer-events-none overflow-hidden transition-all duration-1500 ease-in-out",
           !isDark
-            ? "contrast-[1.12] brightness-[1.06] saturate-[0.65] grayscale-[0.2]"
+            ? "contrast-[1.08] brightness-[1.28] saturate-[0.8] grayscale-[0.1]"
             : "contrast-[1.08] brightness-[0.96] sepia-[0.35] hue-rotate-[-15deg] saturate-[1.25]"
         )}
       >
