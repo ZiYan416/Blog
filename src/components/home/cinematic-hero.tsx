@@ -39,12 +39,13 @@ interface GroupVideoLoopProps {
 
 function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopProps) {
   const [activeIdx, setActiveIdx] = useState(0);
-  const [hasSwitched, setHasSwitched] = useState(false);
+  const isTransitioningRef = useRef(false);
 
   const ref0 = useRef<HTMLVideoElement>(null);
   const ref1 = useRef<HTMLVideoElement>(null);
   const videoRefs = [ref0, ref1];
 
+  // Play active video when active
   useEffect(() => {
     if (isActiveGroup) {
       const activeVideo = videoRefs[activeIdx]?.current;
@@ -54,25 +55,28 @@ function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopP
     }
   }, [activeIdx, isActiveGroup]);
 
+  const switchNext = () => {
+    const nextIdx = (activeIdx + 1) % videos.length;
+    const nextVideo = videoRefs[nextIdx]?.current;
+    if (nextVideo) {
+      nextVideo.currentTime = 0;
+      nextVideo.play().catch(() => {});
+    }
+    setActiveIdx(nextIdx);
+  };
+
   const handleTimeUpdate = (idx: number) => {
     if (idx !== activeIdx) return;
     const video = videoRefs[idx]?.current;
     if (!video || !video.duration) return;
 
     const remainingTime = video.duration - video.currentTime;
-    if (remainingTime <= 1.5 && !hasSwitched) {
-      setHasSwitched(true);
-      const nextIdx = (activeIdx + 1) % videos.length;
-      const nextVideo = videoRefs[nextIdx]?.current;
-
-      if (nextVideo) {
-        nextVideo.currentTime = 0;
-        nextVideo.play().catch(() => {});
-      }
-
-      setActiveIdx(nextIdx);
-    } else if (remainingTime > 2.0 && hasSwitched) {
-      setHasSwitched(false);
+    if (remainingTime <= 1.5 && !isTransitioningRef.current) {
+      isTransitioningRef.current = true;
+      switchNext();
+      setTimeout(() => {
+        isTransitioningRef.current = false;
+      }, 3000);
     }
   };
 
@@ -90,8 +94,12 @@ function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopP
           autoPlay
           muted
           playsInline
-          onLoadedData={() => {
+          onCanPlayThrough={() => {
             if (idx === 0 && onVideoReady) onVideoReady();
+          }}
+          onTimeUpdate={() => handleTimeUpdate(idx)}
+          onEnded={() => {
+            switchNext();
           }}
           className={cn(
             "absolute inset-0 w-full h-full object-cover transition-opacity duration-1500 ease-in-out",
@@ -141,7 +149,7 @@ export function CinematicHero({
 
   return (
     <section className="relative w-full h-screen overflow-hidden bg-black flex flex-col justify-between pt-20 pb-8 px-4 sm:px-6 isolate">
-      {/* Container for initial video load fade-in */}
+      {/* Container for initial video load fade-in: pure black until video is 100% buffered and ready */}
       <div
         className={cn(
           "absolute inset-0 z-0 transition-opacity duration-1500 ease-in-out",
@@ -173,13 +181,13 @@ export function CinematicHero({
         )}
       />
 
-      {/* Transparent PNG Overlay (z-index 2) with train-bob animation and day/night color filter */}
+      {/* Transparent PNG Overlay (z-index 2) with train-bob animation and day/night train cabin interior lighting filter */}
       <div
         className={cn(
           "absolute inset-0 z-[2] pointer-events-none overflow-hidden transition-all duration-1000 ease-in-out",
           !isDark
-            ? "drop-shadow-[0_0_35px_rgba(56,189,248,0.15)]"
-            : "drop-shadow-[0_0_45px_rgba(245,158,11,0.3)]"
+            ? "contrast-[1.04] brightness-[1.02] sepia-[0.15] hue-rotate-[170deg]"
+            : "contrast-[1.08] brightness-[0.96] sepia-[0.35] hue-rotate-[-15deg] saturate-[1.25]"
         )}
       >
         <img
