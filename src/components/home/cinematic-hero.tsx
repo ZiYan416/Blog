@@ -45,40 +45,59 @@ function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopP
   const ref1 = useRef<HTMLVideoElement>(null);
   const videoRefs = [ref0, ref1];
 
-  // Play active video when active
+  // Manage play / pause state strictly based on activeIdx and isActiveGroup
   useEffect(() => {
-    if (isActiveGroup) {
-      const activeVideo = videoRefs[activeIdx]?.current;
-      if (activeVideo) {
-        activeVideo.play().catch(() => {});
+    videoRefs.forEach((ref, idx) => {
+      const v = ref.current;
+      if (!v) return;
+
+      if (isActiveGroup && idx === activeIdx) {
+        v.play().catch(() => {});
+      } else {
+        v.pause();
       }
-    }
+    });
   }, [activeIdx, isActiveGroup]);
 
-  const switchNext = () => {
-    const nextIdx = (activeIdx + 1) % videos.length;
-    const nextVideo = videoRefs[nextIdx]?.current;
-    if (nextVideo) {
-      nextVideo.currentTime = 0;
-      nextVideo.play().catch(() => {});
+  const triggerNext = (currentIdx: number) => {
+    if (currentIdx !== activeIdx || isTransitioningRef.current) return;
+    isTransitioningRef.current = true;
+
+    const nextIdx = (currentIdx + 1) % videos.length;
+    const nextV = videoRefs[nextIdx]?.current;
+    const currV = videoRefs[currentIdx]?.current;
+
+    if (nextV) {
+      nextV.currentTime = 0;
+      nextV.play().catch(() => {});
     }
+
     setActiveIdx(nextIdx);
+
+    // Unlock transition state and pause inactive video after crossfade finishes
+    setTimeout(() => {
+      if (currV) {
+        currV.pause();
+      }
+      isTransitioningRef.current = false;
+    }, 2000);
   };
 
   const handleTimeUpdate = (idx: number) => {
-    if (idx !== activeIdx) return;
+    if (idx !== activeIdx || !isActiveGroup) return;
     const video = videoRefs[idx]?.current;
-    if (!video || !video.duration) return;
+    if (!video || !video.duration || video.duration < 1) return;
 
     const remainingTime = video.duration - video.currentTime;
-    // Trigger crossfade transition only when video is near its end (<= 0.8s remaining)
-    if (remainingTime <= 0.8 && !isTransitioningRef.current) {
-      isTransitioningRef.current = true;
-      switchNext();
-      setTimeout(() => {
-        isTransitioningRef.current = false;
-      }, 3000);
+    // Trigger transition when current video is 0.8 seconds from the end
+    if (remainingTime <= 0.8) {
+      triggerNext(idx);
     }
+  };
+
+  const handleEnded = (idx: number) => {
+    if (idx !== activeIdx || !isActiveGroup) return;
+    triggerNext(idx);
   };
 
   return (
@@ -99,9 +118,7 @@ function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopP
             if (idx === 0 && onVideoReady) onVideoReady();
           }}
           onTimeUpdate={() => handleTimeUpdate(idx)}
-          onEnded={() => {
-            switchNext();
-          }}
+          onEnded={() => handleEnded(idx)}
           className={cn(
             "absolute inset-0 w-full h-full object-cover transition-opacity duration-1500 ease-in-out",
             activeIdx === idx ? "opacity-100" : "opacity-0"
@@ -185,7 +202,7 @@ export function CinematicHero({
       {/* Transparent PNG Overlay (z-index 2) with train-bob animation and day/night train cabin interior lighting filter */}
       <div
         className={cn(
-          "absolute inset-0 z-[2] pointer-events-none overflow-hidden transition-all duration-1500 ease-in-out",
+          "absolute inset-0 z-[2] pointer-events-none overflow-hidden transition-all duration-1000 ease-in-out",
           !isDark
             ? "contrast-[1.08] brightness-[1.28] saturate-[0.8] grayscale-[0.1]"
             : "contrast-[1.08] brightness-[0.96] sepia-[0.35] hue-rotate-[-15deg] saturate-[1.25]"
