@@ -47,11 +47,13 @@ function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopP
   const ref1 = useRef<HTMLVideoElement>(null);
   const videoRefs = [ref0, ref1];
 
-  // Manage play / pause state strictly based on activeIdx and isActiveGroup
+  // Set 0.75x slow-motion playback speed & handle active play state
   useEffect(() => {
     videoRefs.forEach((ref, idx) => {
       const v = ref.current;
       if (!v) return;
+
+      v.playbackRate = 0.75; // Dreamy 0.75x slow-motion playback
 
       if (isActiveGroup && idx === activeIdx) {
         v.play().catch(() => {});
@@ -69,19 +71,22 @@ function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopP
     const nextV = videoRefs[nextIdx]?.current;
     const currV = videoRefs[currentIdx]?.current;
 
+    // Start playing next video in advance so it is already decoding when crossfade starts
     if (nextV) {
       nextV.currentTime = 0;
+      nextV.playbackRate = 0.75;
       nextV.play().catch(() => {});
     }
 
     setActiveIdx(nextIdx);
 
+    // Pause previous video after 2.5s crossfade overlap finishes
     setTimeout(() => {
-      if (currV) {
+      if (currV && currV !== videoRefs[nextIdx]?.current) {
         currV.pause();
       }
       isTransitioningRef.current = false;
-    }, 2000);
+    }, 2500);
   };
 
   const handleTimeUpdate = (idx: number) => {
@@ -90,7 +95,8 @@ function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopP
     if (!video || !video.duration || video.duration < 1) return;
 
     const remainingTime = video.duration - video.currentTime;
-    if (remainingTime <= 0.8) {
+    // Pre-start crossfade 1.5s before end of video for seamless overlap
+    if (remainingTime <= 1.5) {
       triggerNext(idx);
     }
   };
@@ -114,7 +120,8 @@ function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopP
           autoPlay
           muted
           playsInline
-          onCanPlayThrough={() => {
+          onCanPlayThrough={(e) => {
+            e.currentTarget.playbackRate = 0.75;
             if (idx === 0 && onVideoReady) onVideoReady();
           }}
           onTimeUpdate={() => handleTimeUpdate(idx)}
@@ -167,10 +174,10 @@ export function CinematicHero({
 
   return (
     <section className="relative w-full h-screen overflow-hidden bg-black flex flex-col justify-between pt-20 pb-8 px-4 sm:px-6 isolate">
-      {/* Container for initial video load fade-in: pure black until video is 100% buffered and ready */}
+      {/* Container for initial video AND train cabin load fade-in: pure black until video is 100% ready */}
       <div
         className={cn(
-          "absolute inset-0 z-0 transition-opacity duration-1500 ease-in-out",
+          "absolute inset-0 transition-opacity duration-1500 ease-in-out",
           isInitialVideoLoaded ? "opacity-100" : "opacity-0"
         )}
       >
@@ -187,44 +194,44 @@ export function CinematicHero({
           isActiveGroup={isDark}
           onVideoReady={() => setIsInitialVideoLoaded(true)}
         />
-      </div>
 
-      {/* Dynamic Ambient Train Cabin Lighting & Reflection Overlay */}
-      <div
-        className={cn(
-          "absolute inset-0 z-[1] pointer-events-none transition-all duration-1500 ease-in-out",
-          !isDark
-            ? "bg-gradient-to-b from-white/20 via-slate-100/10 to-slate-400/20 opacity-80"
-            : "bg-gradient-to-b from-amber-500/15 via-orange-600/10 to-amber-950/35 opacity-90"
-        )}
-      />
-
-      {/* Light Mode Silver-Iron Metallic Train Cabin Overlay (z-index 2) */}
-      <div
-        className={cn(
-          "absolute inset-0 z-[2] pointer-events-none overflow-hidden transition-opacity duration-1000 ease-in-out",
-          !isDark ? "opacity-100" : "opacity-0"
-        )}
-      >
-        <img
-          src={OVERLAY_IMAGE_SILVER}
-          alt="Train Window Frame (Silver Metallic)"
-          className="w-full h-full object-fill pointer-events-none animate-train-bob"
+        {/* Dynamic Ambient Train Cabin Lighting & Reflection Overlay */}
+        <div
+          className={cn(
+            "absolute inset-0 z-[1] pointer-events-none transition-all duration-1500 ease-in-out",
+            !isDark
+              ? "bg-gradient-to-b from-white/20 via-slate-100/10 to-slate-400/20 opacity-80"
+              : "bg-gradient-to-b from-amber-500/15 via-orange-600/10 to-amber-950/35 opacity-90"
+          )}
         />
-      </div>
 
-      {/* Dark Mode Warm Sunset Amber Train Cabin Overlay (z-index 2) */}
-      <div
-        className={cn(
-          "absolute inset-0 z-[2] pointer-events-none overflow-hidden transition-opacity duration-1000 ease-in-out",
-          isDark ? "opacity-100" : "opacity-0"
-        )}
-      >
-        <img
-          src={OVERLAY_IMAGE_DARK}
-          alt="Train Window Frame (Sunset Amber)"
-          className="w-full h-full object-fill pointer-events-none animate-train-bob contrast-[1.08] brightness-[0.96] sepia-[0.35] hue-rotate-[-15deg] saturate-[1.25]"
-        />
+        {/* Light Mode Silver-Iron Metallic Train Cabin Overlay (z-index 2) */}
+        <div
+          className={cn(
+            "absolute inset-0 z-[2] pointer-events-none overflow-hidden transition-opacity duration-1000 ease-in-out",
+            !isDark ? "opacity-100" : "opacity-0"
+          )}
+        >
+          <img
+            src={OVERLAY_IMAGE_SILVER}
+            alt="Train Window Frame (Silver Metallic)"
+            className="w-full h-full object-fill pointer-events-none animate-train-bob"
+          />
+        </div>
+
+        {/* Dark Mode Warm Sunset Amber Train Cabin Overlay (z-index 2) */}
+        <div
+          className={cn(
+            "absolute inset-0 z-[2] pointer-events-none overflow-hidden transition-opacity duration-1000 ease-in-out",
+            isDark ? "opacity-100" : "opacity-0"
+          )}
+        >
+          <img
+            src={OVERLAY_IMAGE_DARK}
+            alt="Train Window Frame (Sunset Amber)"
+            className="w-full h-full object-fill pointer-events-none animate-train-bob contrast-[1.08] brightness-[0.96] sepia-[0.35] hue-rotate-[-15deg] saturate-[1.25]"
+          />
+        </div>
       </div>
 
       {/* Hero Main Content (z-index 3) */}
