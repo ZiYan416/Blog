@@ -75,9 +75,7 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
       <header className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out overflow-hidden",
         isNavbarVisible
-          ? isTransparent
-            ? "h-16 border-b border-black/10 dark:border-white/10 bg-white/20 dark:bg-black/30 backdrop-blur-md shadow-sm"
-            : "h-16 border-b border-black/5 dark:border-white/5 bg-white/70 dark:bg-black/70 backdrop-blur-xl"
+          ? "h-16 border-b border-black/5 dark:border-white/5 bg-white/70 dark:bg-black/70 backdrop-blur-xl"
           : "h-0 border-none bg-transparent"
       )}>
         <div className={cn(
@@ -91,14 +89,7 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
               <Button
                 variant="ghost"
                 size="icon"
-                className={cn(
-                  "md:hidden transition-colors",
-                  isTransparent
-                    ? isPostDetailPage
-                      ? "text-white/90 hover:text-white hover:bg-white/15"
-                      : "text-neutral-700 dark:text-white/90 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/15"
-                    : "text-neutral-500 hover:text-black dark:hover:text-white"
-                )}
+                className="md:hidden text-neutral-500 hover:text-black dark:hover:text-white transition-colors"
                 suppressHydrationWarning
               >
                 <Menu className="w-5 h-5" />
@@ -211,14 +202,7 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
 
           <Link href="/" className="hidden md:flex items-center gap-3 group">
             <Logo className="group-hover:scale-105 transition-transform duration-300" />
-            <span className={cn(
-              "text-xl font-bold tracking-tight font-serif italic transition-colors",
-              isTransparent
-                ? isPostDetailPage
-                  ? "text-white"
-                  : "text-neutral-900 dark:text-white"
-                : "text-neutral-900 dark:text-neutral-100"
-            )}>Blog</span>
+            <span className="text-xl font-bold tracking-tight font-serif italic text-neutral-900 dark:text-neutral-100 transition-colors">Blog</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">
@@ -228,17 +212,9 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
                 href={item.href}
                 className={cn(
                   "px-4 py-2 text-sm font-medium rounded-full transition-all",
-                  isTransparent
-                    ? isPostDetailPage
-                      ? pathname === item.href
-                        ? "bg-white/20 text-white font-bold"
-                        : "text-white/80 hover:text-white hover:bg-white/15"
-                      : pathname === item.href
-                        ? "bg-black/10 dark:bg-white/20 text-black dark:text-white font-bold"
-                        : "text-neutral-700 dark:text-white/80 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/15"
-                    : pathname === item.href
-                      ? "bg-black/5 dark:bg-white/5 text-black dark:text-white"
-                      : "text-neutral-500 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5"
+                  pathname === item.href
+                    ? "bg-black/5 dark:bg-white/5 text-black dark:text-white"
+                    : "text-neutral-500 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5"
                 )}
               >
                 {item.label}
@@ -249,32 +225,18 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
 
         <div className="flex items-center gap-3 pr-8 md:pr-0">
           <form onSubmit={handleSearch} className="flex items-center mr-2 relative">
-            <Search className={cn(
-              "absolute left-3 w-4 h-4 transition-colors pointer-events-none",
-              isTransparent
-                ? isPostDetailPage
-                  ? "text-white/70"
-                  : "text-neutral-400 dark:text-white/70"
-                : "text-neutral-400"
-            )} />
+            <Search className="absolute left-3 w-4 h-4 text-neutral-400 pointer-events-none transition-colors" />
             <input
               type="search"
               enterKeyHint="search"
               placeholder="搜索..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className={cn(
-                "pl-9 pr-4 py-1.5 text-sm rounded-full w-32 focus:w-48 transition-all outline-none appearance-none",
-                isTransparent
-                  ? isPostDetailPage
-                    ? "bg-white/15 text-white placeholder:text-white/60 focus:bg-white/25 ring-1 ring-white/20"
-                    : "bg-black/5 dark:bg-white/15 text-neutral-900 dark:text-white placeholder:text-neutral-400 dark:placeholder:text-white/60 focus:bg-black/10 dark:focus:bg-white/25 ring-1 ring-black/10 dark:ring-white/20"
-                  : "bg-neutral-100 dark:bg-neutral-900 border-none text-neutral-900 dark:text-neutral-100 focus:ring-1 ring-black/10 dark:ring-white/10"
-              )}
+              className="pl-9 pr-4 py-1.5 text-sm rounded-full w-32 focus:w-48 transition-all outline-none appearance-none bg-neutral-100 dark:bg-neutral-900 border-none text-neutral-900 dark:text-neutral-100 focus:ring-1 ring-black/10 dark:ring-white/10"
             />
           </form>
 
-          <ThemeToggle className={isTransparent ? (isPostDetailPage ? "border-white/20 text-white hover:bg-white/15 hover:text-white" : "border-black/10 dark:border-white/20 text-neutral-800 dark:text-white hover:bg-black/5 dark:hover:bg-white/15") : undefined} />
+          <ThemeToggle />
 
           {user ? (
             <DropdownMenu>
