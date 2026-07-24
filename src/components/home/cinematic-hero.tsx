@@ -37,7 +37,7 @@ interface GroupVideoLoopProps {
   onVideoReady?: () => void;
 }
 
-// Seamless zero-stutter video crossfade triggered by actual video completion
+// Seamless 100% duration-triggered video player engine
 function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopProps) {
   const [activeIdx, setActiveIdx] = useState(0);
   const isTransitioningRef = useRef(false);
@@ -46,19 +46,47 @@ function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopP
   const ref1 = useRef<HTMLVideoElement>(null);
   const videoRefs = [ref0, ref1];
 
-  // Keep videos playing in sync at 0.75x speed
+  // Strictly control video play/pause & reset currentTime to 0.0s on activation
   useEffect(() => {
-    videoRefs.forEach((ref) => {
+    videoRefs.forEach((ref, idx) => {
       const v = ref.current;
       if (!v) return;
-      v.playbackRate = 0.75;
-      if (isActiveGroup) {
+
+      if (isActiveGroup && idx === activeIdx) {
+        v.currentTime = 0; // Always start active video from beginning (0.0s)
+        v.playbackRate = 0.75;
         v.play().catch(() => {});
       } else {
         v.pause();
       }
     });
-  }, [isActiveGroup]);
+  }, [activeIdx, isActiveGroup]);
+
+  const triggerNext = (currentIdx: number) => {
+    if (currentIdx !== activeIdx || isTransitioningRef.current) return;
+    isTransitioningRef.current = true;
+
+    const nextIdx = (currentIdx + 1) % videos.length;
+    const nextVideo = videoRefs[nextIdx]?.current;
+    const currVideo = videoRefs[currentIdx]?.current;
+
+    // Reset next video to start from 0.0s before crossfade begins
+    if (nextVideo) {
+      nextVideo.currentTime = 0;
+      nextVideo.playbackRate = 0.75;
+      nextVideo.play().catch(() => {});
+    }
+
+    setActiveIdx(nextIdx);
+
+    // Pause previous video after 2.0s crossfade overlap finishes
+    setTimeout(() => {
+      if (currVideo && currVideo !== videoRefs[nextIdx]?.current) {
+        currVideo.pause();
+      }
+      isTransitioningRef.current = false;
+    }, 2000);
+  };
 
   const handleTimeUpdate = (idx: number) => {
     if (idx !== activeIdx || !isActiveGroup) return;
@@ -66,27 +94,15 @@ function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopP
     if (!video || !video.duration || video.duration < 1) return;
 
     const remainingTime = video.duration - video.currentTime;
-    // Trigger transition when current video is 1.0s before finishing
-    if (remainingTime <= 1.0 && !isTransitioningRef.current) {
-      isTransitioningRef.current = true;
-      const nextIdx = (activeIdx + 1) % videos.length;
-      setActiveIdx(nextIdx);
-
-      setTimeout(() => {
-        isTransitioningRef.current = false;
-      }, 3000);
+    // Trigger transition when current video is 1.0s from finishing
+    if (remainingTime <= 1.0) {
+      triggerNext(idx);
     }
   };
 
   const handleEnded = (idx: number) => {
     if (idx !== activeIdx || !isActiveGroup) return;
-    if (!isTransitioningRef.current) {
-      isTransitioningRef.current = true;
-      setActiveIdx((activeIdx + 1) % videos.length);
-      setTimeout(() => {
-        isTransitioningRef.current = false;
-      }, 3000);
-    }
+    triggerNext(idx);
   };
 
   return (
@@ -102,7 +118,6 @@ function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopP
           ref={videoRefs[idx]}
           autoPlay
           muted
-          loop
           playsInline
           onCanPlayThrough={(e) => {
             e.currentTarget.playbackRate = 0.75;
@@ -157,7 +172,7 @@ export function CinematicHero({
   }, []);
 
   return (
-    <section className="relative w-full h-[calc(100vh-4rem)] overflow-hidden bg-black flex flex-col justify-between py-8 px-4 sm:px-6 isolate">
+    <section className="relative w-full h-[calc(100vh-4rem)] overflow-hidden bg-black flex flex-col justify-between py-6 px-4 sm:px-6 isolate">
       {/* Container for initial load: pure black until video is ready, then train cabin + video dissolve in TOGETHER */}
       <div
         className={cn(
@@ -179,8 +194,8 @@ export function CinematicHero({
           onVideoReady={() => setIsInitialVideoLoaded(true)}
         />
 
-        {/* Standard Transparent PNG Overlay (z-index 2) - train cabin overlay dissolves in TOGETHER with video */}
-        <div className="absolute inset-0 z-[2] pointer-events-none overflow-hidden">
+        {/* Standard Transparent PNG Overlay (z-index 2) - train cabin overlay framed nicely inside black container */}
+        <div className="absolute inset-1 sm:inset-2 z-[2] pointer-events-none overflow-hidden">
           <img
             src={OVERLAY_IMAGE}
             alt="Train Window Frame"
