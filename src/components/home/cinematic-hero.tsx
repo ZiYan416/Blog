@@ -224,15 +224,13 @@ export function CinematicHero({
           />
         </div>
 
-        {/* Standard Transparent PNG Overlay (z-index 2) - -inset-2 physically expands the layer to hide iOS Safari edge-clamping stretch bugs */}
-        <div className="absolute -inset-2 z-[2] pointer-events-none">
-          <div className="w-full h-full animate-train-bob transform-gpu translate-z-0 backface-hidden origin-top md:origin-center">
-            <img
-              src={OVERLAY_IMAGE}
-              alt="Train Window Frame"
-              className="w-full h-full object-cover object-top md:object-center pointer-events-none"
-            />
-          </div>
+        {/* Standard Transparent PNG Overlay (z-index 2) - transform-gpu ensures 60fps hardware compositing */}
+        <div className="absolute inset-0 z-[2] pointer-events-none overflow-hidden">
+          <img
+            src={OVERLAY_IMAGE}
+            alt="Train Window Frame"
+            className="w-full sm:h-full sm:top-0 sm:object-center sm:translate-y-0 sm:scale-100 max-sm:h-[108%] max-sm:-top-[2%] max-sm:object-[center_30%] max-sm:-translate-y-4 max-sm:scale-110 object-cover pointer-events-none animate-train-bob transform-gpu translate-z-0 backface-hidden origin-center"
+          />
         </div>
       </div>
 
