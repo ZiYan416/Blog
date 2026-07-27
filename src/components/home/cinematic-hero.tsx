@@ -215,20 +215,24 @@ export function CinematicHero({
         )}
       >
         {/* Active Scenery Group (only mount active group to cut VRAM and decoder pipelines in half) */}
-        <GroupVideoLoop
-          key={isDark ? "night" : "day"}
-          videos={isDark ? NIGHT_VIDEOS : DAY_VIDEOS}
-          isActiveGroup={true}
-          onVideoReady={() => setIsInitialVideoLoaded(true)}
-        />
-
-        {/* Standard Transparent PNG Overlay (z-index 2) - transform-gpu ensures 60fps hardware compositing */}
-        <div className="absolute inset-0 z-[2] pointer-events-none overflow-hidden">
-          <img
-            src={OVERLAY_IMAGE}
-            alt="Train Window Frame"
-            className="w-full h-full object-cover object-[center_18%] md:object-center pointer-events-none animate-train-bob transform-gpu translate-z-0 backface-hidden"
+        <div className="absolute -inset-1 z-0">
+          <GroupVideoLoop
+            key={isDark ? "night" : "day"}
+            videos={isDark ? NIGHT_VIDEOS : DAY_VIDEOS}
+            isActiveGroup={true}
+            onVideoReady={() => setIsInitialVideoLoaded(true)}
           />
+        </div>
+
+        {/* Standard Transparent PNG Overlay (z-index 2) - -inset-2 physically expands the layer to hide iOS Safari edge-clamping stretch bugs */}
+        <div className="absolute -inset-2 z-[2] pointer-events-none">
+          <div className="w-full h-full animate-train-bob transform-gpu translate-z-0 backface-hidden origin-top md:origin-center">
+            <img
+              src={OVERLAY_IMAGE}
+              alt="Train Window Frame"
+              className="w-full h-full object-cover object-top md:object-center pointer-events-none"
+            />
+          </div>
         </div>
       </div>
 

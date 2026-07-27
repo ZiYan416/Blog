@@ -82,7 +82,7 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
           : "h-0 border-none bg-transparent"
       )}>
         <div className={cn(
-          "container max-w-6xl mx-auto h-16 flex items-center justify-between px-3 sm:px-6 transition-all duration-300 ease-in-out",
+          "container max-w-6xl mx-auto h-16 flex items-center justify-between px-4 md:px-6 transition-all duration-300 ease-in-out",
           !isNavbarVisible && "-translate-y-full opacity-0"
         )}>
         <div className="flex items-center gap-4 md:gap-8">
@@ -92,7 +92,7 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="md:hidden -ml-1.5 sm:ml-0 text-neutral-500 hover:text-black dark:hover:text-white transition-colors"
+                className="md:hidden -ml-3 text-neutral-500 hover:text-black dark:hover:text-white transition-colors"
                 suppressHydrationWarning
               >
                 <Menu className="w-5 h-5" />
@@ -236,7 +236,7 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
           </nav>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 pr-8 md:pr-0">
           <form onSubmit={handleSearch} className="flex items-center mr-2 relative">
             <Search className="absolute left-3 w-4 h-4 text-neutral-400 pointer-events-none transition-colors" />
             <input
