@@ -47,19 +47,18 @@ function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopP
   const videoRefs = [ref0, ref1];
 
   // Strictly control video play/pause & reset currentTime to 0.0s on activation
+  // Control initial play/pause state for active group
   useEffect(() => {
-    videoRefs.forEach((ref, idx) => {
-      const v = ref.current;
-      if (!v) return;
+    if (!isActiveGroup) {
+      videoRefs.forEach((ref) => ref.current?.pause());
+      return;
+    }
 
-      if (isActiveGroup && idx === activeIdx) {
-        v.currentTime = 0; // Always start active video from beginning (0.0s)
-        v.playbackRate = 0.75;
-        v.play().catch(() => {});
-      } else {
-        v.pause();
-      }
-    });
+    const activeVideo = videoRefs[activeIdx]?.current;
+    if (activeVideo) {
+      activeVideo.playbackRate = 0.75;
+      activeVideo.play().catch(() => {});
+    }
   }, [activeIdx, isActiveGroup]);
 
   const triggerNext = (currentIdx: number) => {
@@ -70,22 +69,28 @@ function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopP
     const nextVideo = videoRefs[nextIdx]?.current;
     const currVideo = videoRefs[currentIdx]?.current;
 
-    // Reset next video to start from 0.0s before crossfade begins
     if (nextVideo) {
+      // 1. Reset next video to 0.0s
       nextVideo.currentTime = 0;
       nextVideo.playbackRate = 0.75;
+      // 2. Start decoding and playing nextVideo while invisible (opacity-0)
       nextVideo.play().catch(() => {});
+
+      // 3. Wait 250ms for browser hardware decoder to spin up to active 60fps playback before triggering CSS opacity dissolve
+      setTimeout(() => {
+        setActiveIdx(nextIdx);
+      }, 250);
+    } else {
+      setActiveIdx(nextIdx);
     }
 
-    setActiveIdx(nextIdx);
-
-    // Pause previous video after 2.0s crossfade overlap finishes
+    // 4. Pause previous video after 2.2s (250ms pre-roll + 1500ms opacity transition + buffer safety)
     setTimeout(() => {
       if (currVideo && currVideo !== videoRefs[nextIdx]?.current) {
         currVideo.pause();
       }
       isTransitioningRef.current = false;
-    }, 2000);
+    }, 2200);
   };
 
   const handleTimeUpdate = (idx: number) => {
@@ -94,8 +99,8 @@ function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopP
     if (!video || !video.duration || video.duration < 1) return;
 
     const remainingTime = video.duration - video.currentTime;
-    // Trigger transition when current video is 1.0s from finishing
-    if (remainingTime <= 1.0) {
+    // Trigger pre-roll when current video has 2.0s remaining (250ms pre-roll + 1.5s crossfade)
+    if (remainingTime <= 2.0) {
       triggerNext(idx);
     }
   };
@@ -194,12 +199,12 @@ export function CinematicHero({
           onVideoReady={() => setIsInitialVideoLoaded(true)}
         />
 
-        {/* Standard Transparent PNG Overlay (z-index 2) - object-contain ensures 100% of top roof arch is fully visible */}
-        <div className="absolute inset-0 z-[2] pointer-events-none overflow-hidden flex items-center justify-center">
+        {/* Standard Transparent PNG Overlay (z-index 2) - object-cover object-top pins cabin roof directly under navbar */}
+        <div className="absolute inset-0 z-[2] pointer-events-none overflow-hidden">
           <img
             src={OVERLAY_IMAGE}
             alt="Train Window Frame"
-            className="w-full h-full object-contain object-center pointer-events-none animate-train-bob"
+            className="w-full h-full object-cover object-top pointer-events-none animate-train-bob"
           />
         </div>
       </div>

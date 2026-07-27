@@ -65,7 +65,80 @@ export default function PostList({
   const isDesktop = useMediaQuery("(min-width: 768px)")
   const { ref, inView } = useInView()
 
-  // Reset state when filters or initial data change
+  // Save current list state (page, sort, scrollY) before navigating to a post detail page
+  useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const anchor = target.closest("a");
+      if (anchor && anchor.getAttribute("href")?.startsWith("/post/")) {
+        sessionStorage.setItem(
+          "post_list_state",
+          JSON.stringify({
+            page,
+            sort,
+            scrollY: window.scrollY,
+            pathname: window.location.pathname,
+          })
+        );
+      }
+    };
+
+    document.addEventListener("click", handleGlobalClick);
+    return () => document.removeEventListener("click", handleGlobalClick);
+  }, [page, sort]);
+
+  // Restore pagination & scroll position if returning from post detail page
+  useEffect(() => {
+    const restoreState = async () => {
+      try {
+        const savedRaw = sessionStorage.getItem("post_list_state");
+        if (!savedRaw) return;
+
+        const saved = JSON.parse(savedRaw);
+        if (saved.pathname !== window.location.pathname) return;
+
+        const targetPage = saved.page || 1;
+        const targetSort = saved.sort || "latest";
+
+        if (targetPage > 1 || targetSort !== "latest") {
+          setLoading(true);
+          const params = new URLSearchParams({
+            page: targetPage.toString(),
+            limit: limit.toString(),
+            sort: targetSort,
+          });
+          if (category) params.append("category", category);
+          if (tag) params.append("tag", tag);
+          if (search) params.append("search", search);
+
+          const res = await fetch(`/api/posts?${params.toString()}`);
+          const data = await res.json();
+
+          if (data.posts && data.posts.length > 0) {
+            setPosts(data.posts);
+            setPage(targetPage);
+            setSort(targetSort);
+            setTotal(data.total || 0);
+            setHasMore(data.posts.length < (data.total || 0));
+          }
+          setLoading(false);
+        }
+
+        // Restore exact scroll position
+        if (saved.scrollY && saved.scrollY > 0) {
+          setTimeout(() => {
+            window.scrollTo({ top: saved.scrollY, behavior: "instant" });
+          }, 150);
+        }
+      } catch (err) {
+        console.error("Error restoring post list state:", err);
+      }
+    };
+
+    restoreState();
+  }, []);
+
+  // Reset state when filters change (category, tag, search)
   useEffect(() => {
     const currentPosts = initialPosts || legacyPosts || []
     const currentTotal = initialTotal || currentPosts.length
@@ -76,13 +149,12 @@ export default function PostList({
     setHasMore(currentPosts.length < currentTotal)
     setSort('latest')
 
-    // Cleanup abort controller on unmount or deps change
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort()
       }
     }
-  }, [initialPosts, legacyPosts, initialTotal, category, tag, search])
+  }, [category, tag, search])
 
   // Mobile Infinite Scroll Effect
   useEffect(() => {
@@ -152,6 +224,23 @@ export default function PostList({
   }
 
   const handlePageChange = async (newPage: number) => {
+    // Sync search params in browser URL
+    try {
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.set("page", newPage.toString());
+      window.history.replaceState(null, "", newUrl.toString());
+
+      sessionStorage.setItem(
+        "post_list_state",
+        JSON.stringify({
+          page: newPage,
+          sort,
+          scrollY: 0,
+          pathname: window.location.pathname,
+        })
+      );
+    } catch (e) {}
+
     // Cancel previous request if exists
     if (abortControllerRef.current) {
       abortControllerRef.current.abort()

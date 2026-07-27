@@ -75,7 +75,7 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
       <header className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out overflow-hidden",
         isNavbarVisible
-          ? "h-16 border-b border-black/10 dark:border-white/10 bg-white/90 dark:bg-black/90 backdrop-blur-xl shadow-sm"
+          ? "h-16 border-b border-black/5 dark:border-white/5 bg-white/70 dark:bg-black/70 backdrop-blur-xl shadow-sm"
           : "h-0 border-none bg-transparent"
       )}>
         <div className={cn(
@@ -241,15 +241,12 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className={cn("hidden md:flex rounded-full w-11 h-11", isTransparent && "hover:bg-white/15")} suppressHydrationWarning>
-                   <div className={cn(
-                     "w-9 h-9 rounded-full flex items-center justify-center overflow-hidden border transition-colors",
-                     isTransparent ? "border-white/20 bg-black/30" : "bg-neutral-100 dark:bg-neutral-800 border-black/5 dark:border-white/5"
-                   )}>
+                <Button variant="ghost" size="icon" className="hidden md:flex rounded-full w-11 h-11" suppressHydrationWarning>
+                   <div className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden border bg-neutral-100 dark:bg-neutral-800 border-black/5 dark:border-white/5 transition-colors">
                       {avatarUrl ? (
                         <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                       ) : (
-                        <User className={cn("w-4 h-4", isTransparent ? "text-white" : "text-black dark:text-white")} />
+                        <User className="w-4 h-4 text-black dark:text-white" />
                       )}
                    </div>
                 </Button>
@@ -299,14 +296,14 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
             </DropdownMenu>
           ) : (
             <LoginModal>
-              <Button variant="ghost" size="icon" className={cn("hidden md:flex rounded-full", isTransparent && "text-white hover:bg-white/15")}>
+              <Button variant="ghost" size="icon" className="hidden md:flex rounded-full">
                 <User className="w-5 h-5" />
               </Button>
             </LoginModal>
           )}
 
           {isAdmin && (
-            <Button asChild className={cn("hidden sm:flex rounded-full px-6 transition-all", isTransparent ? "bg-white text-black hover:bg-white/90" : "bg-black dark:bg-white text-white dark:text-black hover:opacity-90")}>
+            <Button asChild className="hidden sm:flex rounded-full px-6 bg-black dark:bg-white text-white dark:text-black hover:opacity-90 transition-all">
               <Link href="/admin/posts/new">
                 <Plus className="w-4 h-4 mr-1.5" />
                 发布
@@ -322,12 +319,7 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
       <Button
         variant="ghost"
         size="icon"
-        className={cn(
-          "fixed top-3 right-2 z-[60] md:hidden rounded-full transition-colors",
-          isTransparent
-            ? "text-white/90 hover:bg-white/15 hover:text-white"
-            : "hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-500"
-        )}
+        className="fixed top-3 right-2 z-[60] md:hidden rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-500 transition-colors"
         onClick={() => setIsNavbarVisible(!isNavbarVisible)}
       >
         {isNavbarVisible ? (
@@ -337,10 +329,10 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
         )}
       </Button>
 
-      {/* Spacer to prevent content overlap, animates with navbar visibility */}
+      {/* Spacer to prevent content overlap */}
       <div className={cn(
         "transition-all duration-300 ease-in-out",
-        isNavbarVisible && !isTransparent ? "h-16" : "h-0"
+        isNavbarVisible ? "h-16" : "h-0"
       )} />
     </>
   );
