@@ -52,6 +52,7 @@ function GroupVideoLoop({
   const [activeIdx, setActiveIdx] = useState(0);
   const [preloadedIdxs, setPreloadedIdxs] = useState<Set<number>>(new Set([0]));
   const isTransitioningRef = useRef(false);
+  const hasTriggeredReadyRef = useRef<Record<number, boolean>>({});
 
   const ref0 = useRef<HTMLVideoElement>(null);
   const ref1 = useRef<HTMLVideoElement>(null);
@@ -71,13 +72,16 @@ function GroupVideoLoop({
     }
   }, [activeIdx, isActiveGroup]);
 
-  // When primary video 0 is ready/playing, lazy-trigger preloading for all deferred videos in the background
+  // When primary video 0 is ready/playing (handles iOS/Android mobile WebKit event differences), lazy-trigger preloading
   const handleCanPlay = (idx: number, e: React.SyntheticEvent<HTMLVideoElement>) => {
     e.currentTarget.playbackRate = 1.0;
     if (idx === 0) {
-      if (onVideoReady) onVideoReady();
-      if (isPrimaryGroup && onPrimaryReady) {
-        onPrimaryReady();
+      if (!hasTriggeredReadyRef.current[idx]) {
+        hasTriggeredReadyRef.current[idx] = true;
+        if (onVideoReady) onVideoReady();
+        if (isPrimaryGroup && onPrimaryReady) {
+          onPrimaryReady();
+        }
       }
       setPreloadedIdxs((prev) => {
         if (prev.has(1)) return prev;
@@ -167,6 +171,9 @@ function GroupVideoLoop({
             playsInline
             preload={isPreloadAllowed ? "auto" : "none"}
             onCanPlayThrough={(e) => handleCanPlay(idx, e)}
+            onCanPlay={(e) => handleCanPlay(idx, e)}
+            onLoadedData={(e) => handleCanPlay(idx, e)}
+            onPlaying={(e) => handleCanPlay(idx, e)}
             onTimeUpdate={() => handleTimeUpdate(idx)}
             onEnded={() => handleEnded(idx)}
             className={cn(
@@ -218,7 +225,15 @@ export function CinematicHero({
       attributeFilter: ["class"],
     });
 
-    return () => observer.disconnect();
+    // Mobile safety timer fallback: guarantees 1.5s initial dissolve fade-in triggers on all mobile WebKit devices
+    const safetyTimer = setTimeout(() => {
+      setIsInitialVideoLoaded(true);
+    }, 500);
+
+    return () => {
+      observer.disconnect();
+      clearTimeout(safetyTimer);
+    };
   }, []);
 
   return (
