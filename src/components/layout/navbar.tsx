@@ -82,17 +82,17 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
           : "h-0 border-none bg-transparent"
       )}>
         <div className={cn(
-          "container max-w-6xl mx-auto h-16 flex items-center justify-between px-6 transition-all duration-300 ease-in-out",
+          "container max-w-6xl mx-auto h-16 flex items-center justify-between px-3 sm:px-6 transition-all duration-300 ease-in-out",
           !isNavbarVisible && "-translate-y-full opacity-0"
         )}>
-        <div className="flex items-center gap-4 md:gap-8">
+        <div className="flex items-center gap-2 sm:gap-4 md:gap-8">
           {/* Mobile Menu */}
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className="md:hidden text-neutral-500 hover:text-black dark:hover:text-white transition-colors"
+                className="md:hidden text-neutral-500 hover:text-black dark:hover:text-white transition-colors -ml-2 sm:ml-0"
                 suppressHydrationWarning
               >
                 <Menu className="w-5 h-5" />
