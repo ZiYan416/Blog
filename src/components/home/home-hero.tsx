@@ -50,7 +50,7 @@ export function HomeHero() {
   // Default Cinematic Hero
   return (
     <CinematicHero
-      badgeText={<DailyQuote />}
+      badgeText={<DailyQuote showLightCone={false} />}
       titleLine1="有些故事，"
       titleLine2="值得被认真记录"
       subtitle="用心感受生活的温度，用代码构建数字的花园。在这里，我们探讨技术，也分享生活的沉淀与感悟。"
