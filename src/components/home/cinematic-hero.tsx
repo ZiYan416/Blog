@@ -34,25 +34,15 @@ const OVERLAY_IMAGE = "/images/hero-overlay.png";
 interface GroupVideoLoopProps {
   videos: { local: string; remote: string }[];
   isActiveGroup: boolean;
-  isPrimaryGroup: boolean;
-  allowDeferredPreload: boolean;
   onVideoReady?: () => void;
-  onPrimaryReady?: () => void;
 }
 
 // Seamless 100% duration-triggered video player engine with progressive lazy-preloading
-function GroupVideoLoop({
-  videos,
-  isActiveGroup,
-  isPrimaryGroup,
-  allowDeferredPreload,
-  onVideoReady,
-  onPrimaryReady,
-}: GroupVideoLoopProps) {
+function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopProps) {
   const [activeIdx, setActiveIdx] = useState(0);
+  // Initial page load ONLY loads video 0; subsequent videos are lazily preloaded in the background
   const [preloadedIdxs, setPreloadedIdxs] = useState<Set<number>>(new Set([0]));
   const isTransitioningRef = useRef(false);
-  const hasTriggeredReadyRef = useRef<Record<number, boolean>>({});
 
   const ref0 = useRef<HTMLVideoElement>(null);
   const ref1 = useRef<HTMLVideoElement>(null);
@@ -72,15 +62,11 @@ function GroupVideoLoop({
     }
   }, [activeIdx, isActiveGroup]);
 
-  const markVideoReady = (idx: number) => {
+  // When video 0 is ready/playing, lazy-trigger preloading for video 1 in the background
+  const handleCanPlay = (idx: number, e: React.SyntheticEvent<HTMLVideoElement>) => {
+    e.currentTarget.playbackRate = 1.0;
     if (idx === 0) {
-      if (!hasTriggeredReadyRef.current[idx]) {
-        hasTriggeredReadyRef.current[idx] = true;
-        if (onVideoReady) onVideoReady();
-        if (isPrimaryGroup && onPrimaryReady) {
-          onPrimaryReady();
-        }
-      }
+      if (onVideoReady) onVideoReady();
       setPreloadedIdxs((prev) => {
         if (prev.has(1)) return prev;
         const next = new Set(prev);
@@ -90,18 +76,12 @@ function GroupVideoLoop({
     }
   };
 
-  // When primary video 0 is ready/playing (handles iOS/Android mobile WebKit event differences), lazy-trigger preloading
-  const handleCanPlay = (idx: number, e: React.SyntheticEvent<HTMLVideoElement>) => {
-    e.currentTarget.playbackRate = 1.0;
-    markVideoReady(idx);
-  };
-
   const triggerNext = (currentIdx: number) => {
     if (currentIdx !== activeIdx || isTransitioningRef.current) return;
     isTransitioningRef.current = true;
 
     const nextIdx = (currentIdx + 1) % videos.length;
-
+    
     // Ensure target next video is allowed to preload/decode before activation
     setPreloadedIdxs((prev) => {
       if (prev.has(nextIdx)) return prev;
@@ -138,17 +118,9 @@ function GroupVideoLoop({
   };
 
   const handleTimeUpdate = (idx: number) => {
-    if (!isActiveGroup) return;
+    if (idx !== activeIdx || !isActiveGroup) return;
     const video = videoRefs[idx]?.current;
-    if (!video) return;
-
-    // Trigger initial dissolve fade-in as soon as the first video frame is actually rendering (currentTime > 0)
-    if (idx === 0 && isPrimaryGroup && video.currentTime > 0) {
-      markVideoReady(0);
-    }
-
-    if (idx !== activeIdx) return;
-    if (!video.duration || video.duration < 1) return;
+    if (!video || !video.duration || video.duration < 1) return;
 
     const remainingTime = video.duration - video.currentTime;
     // Trigger pre-roll when current video has 2.0s remaining (250ms pre-roll + 1.5s crossfade)
@@ -170,22 +142,16 @@ function GroupVideoLoop({
       )}
     >
       {videos.map((vid, idx) => {
-        // Video 0 of Primary group loads immediately; all other videos load after primary video 0 is ready
-        const isPreloadAllowed =
-          (isPrimaryGroup && idx === 0) || allowDeferredPreload || preloadedIdxs.has(idx);
-
+        const isPreloadAllowed = preloadedIdxs.has(idx);
         return (
           <video
             key={vid.remote}
             ref={videoRefs[idx]}
-            autoPlay={isPrimaryGroup && idx === 0}
+            autoPlay={idx === 0}
             muted
             playsInline
             preload={isPreloadAllowed ? "auto" : "none"}
             onCanPlayThrough={(e) => handleCanPlay(idx, e)}
-            onCanPlay={(e) => handleCanPlay(idx, e)}
-            onLoadedData={(e) => handleCanPlay(idx, e)}
-            onPlaying={(e) => handleCanPlay(idx, e)}
             onTimeUpdate={() => handleTimeUpdate(idx)}
             onEnded={() => handleEnded(idx)}
             className={cn(
@@ -222,7 +188,6 @@ export function CinematicHero({
   ctaNode,
 }: CinematicHeroProps) {
   const [isDark, setIsDark] = useState(false);
-  const [isPrimaryReady, setIsPrimaryReady] = useState(false);
   const [isInitialVideoLoaded, setIsInitialVideoLoaded] = useState(false);
 
   useEffect(() => {
@@ -249,32 +214,20 @@ export function CinematicHero({
           isInitialVideoLoaded ? "opacity-100" : "opacity-0"
         )}
       >
-        {/* Daytime Scenery Group - Persistent DOM mounting for instant theme switching */}
+        {/* Active Scenery Group (only mount active group to cut VRAM and decoder pipelines in half) */}
         <GroupVideoLoop
-          videos={DAY_VIDEOS}
-          isActiveGroup={!isDark}
-          isPrimaryGroup={!isDark}
-          allowDeferredPreload={isPrimaryReady}
+          key={isDark ? "night" : "day"}
+          videos={isDark ? NIGHT_VIDEOS : DAY_VIDEOS}
+          isActiveGroup={true}
           onVideoReady={() => setIsInitialVideoLoaded(true)}
-          onPrimaryReady={() => setIsPrimaryReady(true)}
         />
 
-        {/* Nighttime Scenery Group - Persistent DOM mounting for instant theme switching */}
-        <GroupVideoLoop
-          videos={NIGHT_VIDEOS}
-          isActiveGroup={isDark}
-          isPrimaryGroup={isDark}
-          allowDeferredPreload={isPrimaryReady}
-          onVideoReady={() => setIsInitialVideoLoaded(true)}
-          onPrimaryReady={() => setIsPrimaryReady(true)}
-        />
-
-        {/* Standard Transparent PNG Overlay (z-index 2) - 100% pixel-perfect equal top/bottom margins on PC matching original design */}
+        {/* Standard Transparent PNG Overlay (z-index 2) - transform-gpu ensures 60fps hardware compositing */}
         <div className="absolute inset-0 z-[2] pointer-events-none overflow-hidden">
           <img
             src={OVERLAY_IMAGE}
             alt="Train Window Frame"
-            className="w-full h-full object-cover object-center pointer-events-none animate-train-bob transform-gpu translate-z-0 backface-hidden"
+            className="w-full h-full object-cover object-top md:object-center pointer-events-none animate-train-bob transform-gpu translate-z-0 backface-hidden"
           />
         </div>
       </div>
