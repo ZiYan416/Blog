@@ -7,25 +7,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Save, User as UserIcon, Globe, Info, Loader2, Camera, Palette, ChevronDown, ChevronUp, Upload, CheckCircle2 } from "lucide-react";
+import { Save, User as UserIcon, Globe, Info, Loader2, Camera, Palette, ChevronDown, ChevronUp, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { CARD_STYLES, getCardStyle } from "@/lib/card-styles";
 import { cn } from "@/lib/utils";
 import { type User } from "@supabase/supabase-js";
 import { motion, AnimatePresence } from "framer-motion";
+import type { EditableProfile } from "./types";
+import { getErrorMessage } from "@/lib/errors";
+import { SafeImage } from "@/components/ui/safe-image";
 
 interface ProfileSettingsFormProps {
   user: User;
-  initialProfile: {
-    display_name: string;
-    bio: string;
-    website: string;
-    avatar_url: string;
-    card_bg: string;
-    alipay_qr?: string;
-    wechat_qr?: string;
-    enable_tipping?: boolean;
-  };
+  initialProfile: EditableProfile;
   onSaveSuccess?: () => void;
 }
 
@@ -94,11 +88,11 @@ export function ProfileSettingsForm({ user, initialProfile, onSaveSuccess }: Pro
       setProfile(prev => ({ ...prev, avatar_url: publicUrl }));
       toast({ title: "头像已更新", description: "您的新头像已成功保存。" });
       router.refresh();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         variant: "destructive",
         title: "上传失败",
-        description: error.message || "请检查网络或存储权限",
+        description: getErrorMessage(error, "请检查网络或存储权限"),
       });
     } finally {
       setUploading(false);
@@ -145,11 +139,14 @@ export function ProfileSettingsForm({ user, initialProfile, onSaveSuccess }: Pro
         .from('avatars')
         .getPublicUrl(filePath);
 
-      const fieldName = type === 'alipay' ? 'alipay_qr' : 'wechat_qr';
-      
+      const fieldName: 'alipay_qr' | 'wechat_qr' = type === 'alipay' ? 'alipay_qr' : 'wechat_qr';
+      const qrUpdate = type === 'alipay'
+        ? { alipay_qr: publicUrl }
+        : { wechat_qr: publicUrl };
+
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ [fieldName]: publicUrl })
+        .update(qrUpdate)
         .eq('id', user.id);
 
       if (updateError) throw updateError;
@@ -157,11 +154,11 @@ export function ProfileSettingsForm({ user, initialProfile, onSaveSuccess }: Pro
       setProfile(prev => ({ ...prev, [fieldName]: publicUrl }));
       toast({ title: "二维码已上传", description: `您的${type === 'alipay' ? '支付宝' : '微信'}赞赏码已成功保存。` });
       router.refresh();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         variant: "destructive",
         title: "上传失败",
-        description: error.message || "请检查网络或存储权限",
+        description: getErrorMessage(error, "请检查网络或存储权限"),
       });
     } finally {
       setQrUploading(null);
@@ -212,12 +209,14 @@ export function ProfileSettingsForm({ user, initialProfile, onSaveSuccess }: Pro
         <Card className="border-none shadow-sm bg-white dark:bg-neutral-900 rounded-3xl p-0 overflow-hidden text-center sticky top-6">
           <div className={cn("h-32 w-full relative transition-all duration-500", getCardStyle(profile.card_bg).class)}>
             <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-24 h-24 group/avatar">
-              <div className="w-full h-full bg-neutral-100 dark:bg-neutral-800 rounded-full flex items-center justify-center overflow-hidden border-4 border-white dark:border-neutral-900">
+              <div className="relative w-full h-full bg-neutral-100 dark:bg-neutral-800 rounded-full flex items-center justify-center overflow-hidden border-4 border-white dark:border-neutral-900">
                 {profile.avatar_url ? (
-                  <img
+                  <SafeImage
                     src={profile.avatar_url}
                     alt="Avatar"
-                    className="w-full h-full object-cover"
+                    fill
+                    sizes="128px"
+                    className="object-cover"
                   />
                 ) : (
                   <UserIcon className="w-10 h-10 text-neutral-400" />
@@ -245,7 +244,7 @@ export function ProfileSettingsForm({ user, initialProfile, onSaveSuccess }: Pro
             <p className="text-xs text-neutral-500 truncate mb-6">{user?.email}</p>
             <div className="pt-6 border-t border-black/5 dark:border-white/5">
               <p className="text-xs text-neutral-400 leading-relaxed italic">
-                "{profile.bio || "还没写简介..."}"
+                &ldquo;{profile.bio || "还没写简介..."}&rdquo;
               </p>
             </div>
           </div>
@@ -383,7 +382,7 @@ export function ProfileSettingsForm({ user, initialProfile, onSaveSuccess }: Pro
                       <div className="flex items-start gap-4">
                         <div className="w-24 h-24 bg-neutral-100 dark:bg-neutral-800 rounded-xl overflow-hidden shadow-inner border border-black/5 dark:border-white/5 relative group/qr">
                           {profile.alipay_qr ? (
-                            <img src={profile.alipay_qr} alt="Alipay QR" className="w-full h-full object-cover" />
+                            <SafeImage src={profile.alipay_qr} alt="支付宝赞赏码" fill sizes="96px" className="object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-neutral-400">
                               <Camera className="w-6 h-6" />
@@ -419,7 +418,7 @@ export function ProfileSettingsForm({ user, initialProfile, onSaveSuccess }: Pro
                       <div className="flex items-start gap-4">
                         <div className="w-24 h-24 bg-neutral-100 dark:bg-neutral-800 rounded-xl overflow-hidden shadow-inner border border-black/5 dark:border-white/5 relative group/qr">
                           {profile.wechat_qr ? (
-                            <img src={profile.wechat_qr} alt="Wechat QR" className="w-full h-full object-cover" />
+                            <SafeImage src={profile.wechat_qr} alt="微信赞赏码" fill sizes="96px" className="object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-neutral-400">
                               <Camera className="w-6 h-6" />

@@ -1,12 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CinematicHero } from "@/components/home/cinematic-hero";
 import { DailyQuote } from "@/components/home/daily-quote";
 import { useThemeSettings } from "@/hooks/use-theme-settings";
-import { cn } from "@/lib/utils";
 
 export function HomeHero() {
   const { cinematicHeroEnabled, isLoaded } = useThemeSettings();

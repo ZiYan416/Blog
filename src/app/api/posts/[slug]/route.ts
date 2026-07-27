@@ -10,7 +10,7 @@ export async function GET(
 
   const { data: post, error } = await supabase
     .from('posts')
-    .select('*, profiles!author_id (id, email)')
+    .select('*')
     .eq('slug', slug)
     .eq('published', true)
     .single()

@@ -17,6 +17,7 @@ import { Switch } from "@/components/ui/switch";
 import { UserCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import { SafeImage } from "@/components/ui/safe-image";
 
 interface User {
   id: string;
@@ -113,12 +114,14 @@ export function UserDetailDialog({
         <form onSubmit={handleSubmit} className="space-y-6 py-4">
           {/* 用户头像预览 */}
           <div className="flex flex-col items-center gap-4 pb-4 border-b border-black/[0.03] dark:border-white/[0.03]">
-            <div className="w-20 h-20 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden flex items-center justify-center">
+            <div className="relative w-20 h-20 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden flex items-center justify-center">
               {formData.avatar_url ? (
-                <img
+                <SafeImage
                   src={formData.avatar_url}
                   alt={formData.display_name || user.email}
-                  className="w-full h-full object-cover"
+                  fill
+                  sizes="80px"
+                  className="object-cover"
                 />
               ) : (
                 <UserCircle className="w-12 h-12 text-neutral-400" />

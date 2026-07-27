@@ -1,125 +1,68 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse, type NextRequest } from 'next/server'
-import { generatePostSlug } from '@/lib/markdown'
+import { generatePostSlug, getPostExcerpt } from '@/lib/markdown'
+import { AccessError, requireAdmin } from '@/lib/server-auth'
+import { getValidationMessage, postPayloadSchema } from '@/lib/validation'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
 
-  // Check authentication
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return NextResponse.json({ error: '未授权' }, { status: 401 })
+  try {
+    await requireAdmin(supabase)
+  } catch (error) {
+    if (error instanceof AccessError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.status })
+    }
+    throw error
   }
 
-  const body = await request.json()
-  const { title, content, excerpt, cover_image, tags, category, published } = body
-
-  if (!title || !content) {
-    return NextResponse.json({ error: '标题和内容不能为空' }, { status: 400 })
+  let body: unknown
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: '请求体必须是有效的 JSON' }, { status: 400 })
   }
 
-  const slug = generatePostSlug(title)
-
-  // Check if slug already exists
-  const { data: existingPost } = await supabase
-    .from('posts')
-    .select('id')
-    .eq('slug', slug)
-    .single()
-
-  if (existingPost) {
-    return NextResponse.json({ error: '标题已存在' }, { status: 400 })
+  const parsedBody = postPayloadSchema.safeParse(body)
+  if (!parsedBody.success) {
+    return NextResponse.json(
+      { error: getValidationMessage(parsedBody.error) },
+      { status: 400 }
+    )
   }
 
+  const { title, slug: requestedSlug, content, excerpt, cover_image, tags, category, published } = parsedBody.data
+  const slug = generatePostSlug(requestedSlug || title)
+
+  if (!slug) {
+    return NextResponse.json({ error: '标题无法生成有效链接' }, { status: 400 })
+  }
+
+  const tagSlugs = tags.map((tag) => generatePostSlug(tag))
+  if (tagSlugs.some((tagSlug) => !tagSlug)) {
+    return NextResponse.json({ error: '标签无法生成有效链接' }, { status: 400 })
+  }
+
+  // The RPC writes the post, tags, and join rows in one database transaction.
   const { data: post, error } = await supabase
-    .from('posts')
-    .insert({
-      title,
-      slug,
-      content,
-      excerpt: excerpt || content.slice(0, 150),
-      cover_image,
-      tags: tags || [],
-      category,
-      published: published || false,
-      author_id: user.id,
+    .rpc('create_post_with_tags', {
+      p_title: title,
+      p_slug: slug,
+      p_content: content,
+      p_excerpt: excerpt || getPostExcerpt(content),
+      p_cover_image: cover_image,
+      p_tag_names: tags,
+      p_tag_slugs: tagSlugs,
+      p_category: category,
+      p_published: published,
     })
-    .select()
     .single()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-
-  // Handle tags relationship
-  if (tags && Array.isArray(tags)) {
-    for (const tagName of tags) {
-      // Check if tag exists
-      const { data: existingTag } = await supabase
-        .from('tags')
-        .select('id')
-        .eq('name', tagName)
-        .single()
-
-      let tagId = existingTag?.id
-
-      if (!tagId) {
-        // Create new tag
-        let tagSlug = generatePostSlug(tagName)
-
-        // Check if slug exists
-        const { data: existingSlugTag } = await supabase
-          .from('tags')
-          .select('id')
-          .eq('slug', tagSlug)
-          .maybeSingle()
-
-        if (existingSlugTag) {
-          // Slug collision! Append a random suffix
-          tagSlug = `${tagSlug}-${Math.floor(Math.random() * 1000)}`
-        }
-
-        const { data: newTag, error: createError } = await supabase
-          .from('tags')
-          .insert({
-            name: tagName,
-            slug: tagSlug
-            // Note: color is handled dynamically on frontend, not stored in DB
-          })
-          .select('id')
-          .single()
-
-        if (createError) {
-           console.error("Failed to create tag:", tagName, createError)
-           // Try one last time to find it (race condition?)
-           const { data: retryTag } = await supabase
-             .from('tags')
-             .select('id')
-             .eq('name', tagName)
-             .maybeSingle()
-           tagId = retryTag?.id
-        } else {
-           tagId = newTag?.id
-        }
-      }
-
-      if (tagId) {
-        // Insert relationship
-        const { error: insertError } = await supabase
-          .from('post_tags')
-          .upsert({
-            post_id: post.id,
-            tag_id: tagId
-          }, { onConflict: 'post_id, tag_id' })
-
-        if (insertError) {
-          console.error(`[CREATE] Failed to insert post_tags for tag "${tagName}":`, insertError)
-        }
-      } else {
-        console.warn(`[CREATE] Skipping tag "${tagName}" - no tagId available`)
-      }
+    if (error.code === '23505') {
+      return NextResponse.json({ error: '标题已存在' }, { status: 409 })
     }
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
   return NextResponse.json({ post })

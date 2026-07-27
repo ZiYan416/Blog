@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useCallback, useState, useEffect, useRef } from "react"
 import { useInView } from "react-intersection-observer"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { PostGrid } from "./post-grid"
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, Loader2, ArrowUpDown } from "lucide-react"
 import { Post } from "./post-card"
 import { cn } from "@/lib/utils"
+import { isAbortError } from "@/lib/errors"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -136,34 +137,30 @@ export default function PostList({
     };
 
     restoreState();
-  }, []);
+  }, [category, limit, search, tag]);
 
   // Reset state when filters change (category, tag, search)
   useEffect(() => {
     const currentPosts = initialPosts || legacyPosts || []
     const currentTotal = initialTotal || currentPosts.length
 
-    setPosts(currentPosts)
-    setTotal(currentTotal)
-    setPage(1)
-    setHasMore(currentPosts.length < currentTotal)
-    setSort('latest')
+    const timer = window.setTimeout(() => {
+      setPosts(currentPosts)
+      setTotal(currentTotal)
+      setPage(1)
+      setHasMore(currentPosts.length < currentTotal)
+      setSort('latest')
+    }, 0)
 
     return () => {
+      window.clearTimeout(timer)
       if (abortControllerRef.current) {
         abortControllerRef.current.abort()
       }
     }
-  }, [category, tag, search])
+  }, [category, initialPosts, initialTotal, legacyPosts, search, tag])
 
-  // Mobile Infinite Scroll Effect
-  useEffect(() => {
-    if (!isDesktop && inView && hasMore && !loading) {
-      loadMoreMobile()
-    }
-  }, [inView, isDesktop, hasMore, loading])
-
-  const loadMoreMobile = async () => {
+  const loadMoreMobile = useCallback(async () => {
     // Prevent duplicate requests
     if (loading) return
 
@@ -208,9 +205,9 @@ export default function PostList({
       } else {
         setHasMore(false)
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Ignore abort errors which happen on rapid navigation/filtering
-      if (error.name === 'AbortError' || error.message === 'The user aborted a request.') return
+      if (isAbortError(error)) return
 
       console.error("Failed to load posts", error)
       // Only set error state if it's not a cancellation
@@ -221,7 +218,17 @@ export default function PostList({
         setLoading(false)
       }
     }
-  }
+  }, [category, limit, loading, page, posts.length, search, sort, tag])
+
+  // Mobile Infinite Scroll Effect
+  useEffect(() => {
+    if (!isDesktop && inView && hasMore && !loading) {
+      const frame = window.requestAnimationFrame(() => {
+        void loadMoreMobile()
+      })
+      return () => window.cancelAnimationFrame(frame)
+    }
+  }, [hasMore, inView, isDesktop, loadMoreMobile, loading])
 
   const handlePageChange = async (newPage: number) => {
     // Sync search params in browser URL
@@ -239,7 +246,7 @@ export default function PostList({
           pathname: window.location.pathname,
         })
       );
-    } catch (e) {}
+    } catch {}
 
     // Cancel previous request if exists
     if (abortControllerRef.current) {
@@ -275,8 +282,8 @@ export default function PostList({
 
       // Scroll to top of list
       window.scrollTo({ top: 0, behavior: 'smooth' })
-    } catch (error: any) {
-      if (error.name === 'AbortError') return
+    } catch (error: unknown) {
+      if (isAbortError(error)) return
       console.error("Failed to load page", error)
     } finally {
       if (abortControllerRef.current === controller) {
@@ -325,8 +332,8 @@ export default function PostList({
 
       // Scroll to top of list
       window.scrollTo({ top: 0, behavior: 'smooth' })
-    } catch (error: any) {
-      if (error.name === 'AbortError') return
+    } catch (error: unknown) {
+      if (isAbortError(error)) return
       console.error("Failed to load sorted posts", error)
     } finally {
       if (abortControllerRef.current === controller) {

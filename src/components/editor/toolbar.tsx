@@ -16,7 +16,6 @@ import {
   Image as ImageIcon,
   Terminal,
   Eye,
-  Pencil,
   Columns,
   Link as LinkIcon,
   Settings,
@@ -25,6 +24,7 @@ import {
   AlignLeft,
   AlignCenter,
   AlignRight,
+  type LucideIcon,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -57,7 +57,7 @@ interface ToolbarProps {
 }
 
 interface ToolbarItem {
-  icon: any
+  icon: LucideIcon
   title: string
   shortcut?: string
   action: MarkdownAction

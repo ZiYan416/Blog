@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Plus, User, Search, Settings, LayoutDashboard, FileText, Menu, ChevronUp, ChevronDown } from "lucide-react";
@@ -29,6 +29,7 @@ import { LoginModal } from "@/components/auth/login-modal";
 import { Logo } from "@/components/ui/logo";
 
 import { SettingsModal } from "@/components/settings/settings-modal";
+import { SafeImage } from "@/components/ui/safe-image";
 
 const navItems = [
   { href: "/", label: "首页" },
@@ -45,25 +46,10 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isNavbarVisible, setIsNavbarVisible] = useState(true);
-  const [isScrolled, setIsScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   const user = clientUser || initialUser;
   // 优先使用 profile 中的头像 (用户上传的)，其次是 user_metadata (第三方登录的)，最后是 placeholder
   const avatarUrl = profile?.avatar_url || user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
-
-  const isPostDetailPage = pathname.startsWith("/post/") && pathname !== "/post";
-  const isHeroPage = pathname === "/" || pathname === "/about" || isPostDetailPage;
-  const isTransparent = isHeroPage && !isScrolled;
 
   const handleSearch = (e: FormEvent) => {
     e.preventDefault();
@@ -130,9 +116,9 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
                   {user ? (
                     <div className="flex flex-col gap-4">
                       <div className="flex items-center gap-4 px-2 text-left">
-                        <div className="w-12 h-12 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 overflow-hidden border border-black/5 dark:border-white/5">
+                        <div className="relative w-12 h-12 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 overflow-hidden border border-black/5 dark:border-white/5">
                            {avatarUrl ? (
-                             <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                             <SafeImage src={avatarUrl} alt="Avatar" fill sizes="48px" className="object-cover" />
                            ) : (
                              <User className="w-5 h-5 text-neutral-500" />
                            )}
@@ -255,9 +241,9 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="hidden md:flex rounded-full w-11 h-11" suppressHydrationWarning>
-                   <div className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden border bg-neutral-100 dark:bg-neutral-800 border-black/5 dark:border-white/5 transition-colors">
+                   <div className="relative w-9 h-9 rounded-full flex items-center justify-center overflow-hidden border bg-neutral-100 dark:bg-neutral-800 border-black/5 dark:border-white/5 transition-colors">
                       {avatarUrl ? (
-                        <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                        <SafeImage src={avatarUrl} alt="Avatar" fill sizes="36px" className="object-cover" />
                       ) : (
                         <User className="w-4 h-4 text-black dark:text-white" />
                       )}

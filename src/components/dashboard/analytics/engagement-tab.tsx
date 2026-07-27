@@ -35,7 +35,6 @@ export function EngagementTab({
   totalViews,
   commentTrend,
   topCommenters,
-  rangeText = { period: '7天', label: '7日' }
 }: EngagementTabProps) {
   // 使用真实数据或生成模拟数据
   const commentTrendData = commentTrend || generateCommentTrendData();

@@ -26,6 +26,7 @@ import {
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
+import { SafeImage } from '@/components/ui/safe-image'
 
 interface Comment {
   id: string
@@ -34,9 +35,9 @@ interface Comment {
   created_at: string
   user: {
     id: string
-    display_name: string
-    avatar_url?: string
-    email: string
+    display_name: string | null
+    avatar_url: string | null
+    email: string | null
   }
   post: {
     id: string
@@ -108,12 +109,14 @@ export function CommentManagement({ initialComments }: CommentManagementProps) {
       <CardContent className="p-6">
         <div className="flex items-start gap-4">
           {/* User Avatar */}
-          <div className="w-10 h-10 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden flex-shrink-0">
+          <div className="relative w-10 h-10 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden flex-shrink-0">
             {comment.user.avatar_url ? (
-              <img
+              <SafeImage
                 src={comment.user.avatar_url}
-                alt={comment.user.display_name}
-                className="w-full h-full object-cover"
+                alt={comment.user.display_name || '用户头像'}
+                fill
+                sizes="40px"
+                className="object-cover"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">

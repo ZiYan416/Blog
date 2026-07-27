@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { signOutAction } from "@/app/auth/actions";
 import { createClient } from "@/lib/supabase/client";
+import { getErrorMessage } from "@/lib/errors";
 
 interface SignOutButtonProps {
   className?: string;
@@ -43,16 +44,16 @@ export function SignOutButton({ className, variant = "ghost" }: SignOutButtonPro
         // 如果在公开页面，刷新当前页以更新 UI 状态（如 Navbar 变为未登录态）
         window.location.reload();
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // 如果错误消息包含 NEXT_REDIRECT，说明是 Next.js 的正常跳转，不予报错
-      if (error.message?.includes("NEXT_REDIRECT")) {
+      if (getErrorMessage(error).includes("NEXT_REDIRECT")) {
         return;
       }
 
       toast({
         variant: "destructive",
         title: "退出失败",
-        description: error.message || "发生未知错误，请重试。",
+        description: getErrorMessage(error, "发生未知错误，请重试。"),
       });
     }
   };

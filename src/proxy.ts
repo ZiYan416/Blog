@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import type { Database } from '@/lib/types'
 
 export default async function proxy(request: NextRequest) {
   let response = NextResponse.next({
@@ -8,7 +9,7 @@ export default async function proxy(request: NextRequest) {
     },
   })
 
-  const supabase = createServerClient(
+  const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -31,19 +32,18 @@ export default async function proxy(request: NextRequest) {
     }
   )
 
-  const isApi = request.nextUrl.pathname.startsWith('/api')
   const isAuth = request.nextUrl.pathname.startsWith('/auth')
   const isDashboard = request.nextUrl.pathname.startsWith('/dashboard')
   const isProfile = request.nextUrl.pathname.startsWith('/profile')
   const isAdmin = request.nextUrl.pathname.startsWith('/admin')
   const isRegisterPage = request.nextUrl.pathname.startsWith('/register')
 
-  if (isApi || isAuth || isDashboard || isProfile || isAdmin || isRegisterPage) {
+  if (isAuth || isDashboard || isProfile || isAdmin || isRegisterPage) {
     let user = null
     try {
       const { data } = await supabase.auth.getUser()
       user = data.user
-    } catch (error) {
+    } catch {
       // 捕获 "Invalid Refresh Token" 等错误，防止中间件崩溃
       // 视为未登录状态，后续逻辑会处理重定向
     }
@@ -74,13 +74,9 @@ export default async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * 匹配所有路由，除了:
-     * - _next/static (静态文件)
-     * - _next/image (图片优化)
-     * - favicon.ico (浏览器图标)
-     * - 静态资源文件
-     */
-    '/((?!_next/static|_next/image|favicon.ico|public|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // API routes validate/refresh their own sessions. Public pages still pass
+    // through the proxy so the navbar receives a fresh session, while all
+    // static assets (especially large hero videos) bypass Supabase entirely.
+    '/((?!api(?:/|$)|_next/static|_next/image|favicon.ico|.*\\.(?:avif|css|eot|gif|ico|jpeg|jpg|js|map|mp4|ogg|otf|pdf|png|svg|ttf|webm|webp|woff|woff2)$).*)',
   ],
 }

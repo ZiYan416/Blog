@@ -22,15 +22,11 @@ interface StatsCardProps {
   sparklineData?: number[]; // 7天数据
 }
 
-// 根据 label 映射图标
-function getIconForLabel(label: string) {
-  const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-    '总文章': FileText,
-    '总阅读': BarChart3,
-    '总评论': MessageSquare,
-    '注册用户': Users,
-  };
-  return iconMap[label] || FileText;
+function renderIcon(label: string) {
+  if (label === '总阅读') return <BarChart3 className="w-5 h-5" />;
+  if (label === '总评论') return <MessageSquare className="w-5 h-5" />;
+  if (label === '注册用户') return <Users className="w-5 h-5" />;
+  return <FileText className="w-5 h-5" />;
 }
 
 export function StatsCard({
@@ -40,11 +36,10 @@ export function StatsCard({
   trend,
   sparklineData,
 }: StatsCardProps) {
-  const Icon = getIconForLabel(label);
   // 将数据转换为图表格式
   const chartData = sparklineData
     ? sparklineData.map((val, idx) => ({ value: val, index: idx }))
-    : generateMockSparkline();
+    : EMPTY_SPARKLINE;
 
   return (
     <Card className="border-none shadow-sm bg-white dark:bg-neutral-900 rounded-3xl overflow-hidden group hover:shadow-md transition-shadow">
@@ -52,7 +47,7 @@ export function StatsCard({
         {/* 顶部：图标 + 迷你折线图 */}
         <div className="flex items-start justify-between mb-4">
           <div className={`p-2 rounded-xl bg-black/[0.03] dark:bg-white/[0.03] ${color}`}>
-            <Icon className="w-5 h-5" />
+            {renderIcon(label)}
           </div>
           {/* 迷你折线图 - 移到右上角 */}
           <div className="h-10 w-20 opacity-60 group-hover:opacity-100 transition-opacity">
@@ -114,10 +109,4 @@ function getColorFromClass(colorClass: string): string {
   return colorMap[colorClass] || "#8b5cf6";
 }
 
-// 生成模拟的 Sparkline 数据
-function generateMockSparkline(): Array<{ value: number; index: number }> {
-  return Array.from({ length: 7 }, (_, i) => ({
-    value: Math.floor(Math.random() * 50) + 50,
-    index: i,
-  }));
-}
+const EMPTY_SPARKLINE = Array.from({ length: 7 }, (_, index) => ({ value: 0, index }));

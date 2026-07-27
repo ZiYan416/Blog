@@ -26,7 +26,7 @@ function autoDetectLanguage(codeText: string): string | null {
     if (result && result.language && (result.relevance === undefined || result.relevance > 0)) {
       return result.language
     }
-  } catch (err) {
+  } catch {
     // Ignore detection errors
   }
   return null
@@ -46,29 +46,25 @@ export function CodeBlockShell({
   const [canCollapse, setCanCollapse] = useState(false)
   const [contentHeight, setContentHeight] = useState(0)
   const [expandedMaxHeight, setExpandedMaxHeight] = useState(DEFAULT_EXPANDED_MAX_HEIGHT)
-  const [displayLanguage, setDisplayLanguage] = useState(language)
-  const [isAuto, setIsAuto] = useState(false)
+  const [detectedLanguage, setDetectedLanguage] = useState<string | null>(null)
 
   const headerRef = useRef<HTMLDivElement>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const isUnspecified =
-      !language || ['text', 'plaintext', 'raw', 'unknown', 'code'].includes(language.toLowerCase())
+    const frame = window.requestAnimationFrame(() => {
+      const isUnspecified =
+        !language || ['text', 'plaintext', 'raw', 'unknown', 'code'].includes(language.toLowerCase())
 
-    if (isUnspecified && bodyRef.current) {
-      const codeText = bodyRef.current.textContent || ''
-      const detected = autoDetectLanguage(codeText)
-      if (detected) {
-        setDisplayLanguage(detected)
-        setIsAuto(true)
-        return
+      if (isUnspecified && bodyRef.current) {
+        const codeText = bodyRef.current.textContent || ''
+        setDetectedLanguage(autoDetectLanguage(codeText))
+      } else {
+        setDetectedLanguage(null)
       }
-    }
-
-    setDisplayLanguage(language || 'text')
-    setIsAuto(false)
+    })
+    return () => window.cancelAnimationFrame(frame)
   }, [children, language])
 
   useEffect(() => {
@@ -123,6 +119,8 @@ export function CodeBlockShell({
   const viewportHeight = canCollapse
     ? Math.min(contentHeight, expanded ? expandedMaxHeight : COLLAPSED_HEIGHT)
     : contentHeight
+  const displayLanguage = detectedLanguage || language || 'text'
+  const isAuto = Boolean(detectedLanguage)
 
   return (
     <div className={cn('article-code-block group', className)}>

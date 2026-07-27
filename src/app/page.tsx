@@ -4,6 +4,14 @@ import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { getTagStyles } from "@/lib/tag-color";
 import { HomeHero } from "@/components/home/home-hero";
+import type { Metadata } from "next";
+import { toTagNames } from "@/lib/types";
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: "/",
+  },
+};
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -36,8 +44,9 @@ export default async function HomePage() {
             featuredPosts.map((post) => {
               // Try to find a primary tag to display
               let primaryTag = "Featured";
-              if (post.tags && Array.isArray(post.tags) && post.tags.length > 0) {
-                 primaryTag = post.tags[0];
+              const tags = toTagNames(post.tags);
+              if (tags.length > 0) {
+                 primaryTag = tags[0];
               }
 
               const styles = getTagStyles(primaryTag);

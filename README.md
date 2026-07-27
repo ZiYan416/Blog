@@ -65,6 +65,8 @@
 
 ## 🚀 快速开始 (Quick Start)
 
+环境要求：Node.js >= 20.19.0。
+
 ### 1. 克隆项目
 
 ```bash
@@ -82,10 +84,10 @@ npm install
 
 ### 3. 配置环境变量
 
-复制 `.env.example` 到 `.env.local` 并在其中填入你的 Supabase 配置信息：
+复制 `.env.local.example` 到 `.env.local` 并在其中填入你的 Supabase 配置信息：
 
 ```bash
-cp .env.example .env.local
+cp .env.local.example .env.local
 ```
 
 ### 4. 启动开发服务器

@@ -22,9 +22,15 @@ import { createClient } from '@/lib/supabase/client'
 import { v4 as uuidv4 } from 'uuid'
 import { useToast } from '@/hooks/use-toast'
 import { ArticleCodeBlock } from './article-code-block-extension'
+import type { MarkdownStorage } from 'tiptap-markdown'
+import { getErrorMessage } from '@/lib/errors'
 
 // Create lowlight instance with common languages
 const lowlight = createLowlight(common)
+
+function getMarkdown(editor: Editor) {
+  return (editor.storage as unknown as { markdown: MarkdownStorage }).markdown.getMarkdown()
+}
 
 interface RichEditorProps {
   content: string
@@ -57,11 +63,11 @@ export function RichEditor({ content, onChange, onEditorReady, placeholder, clas
         .getPublicUrl(filePath)
 
       return publicUrl
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Image upload failed:', error)
       toast({
         title: "图片上传失败",
-        description: error.message,
+        description: getErrorMessage(error, '图片上传失败'),
         variant: "destructive"
       })
       return null
@@ -145,7 +151,7 @@ export function RichEditor({ content, onChange, onEditorReady, placeholder, clas
         class: className || 'prose prose-neutral dark:prose-invert max-w-none focus:outline-none min-h-[150px]',
         spellcheck: 'false',
       },
-      handlePaste: (view, event, _slice) => {
+      handlePaste: (view, event) => {
         const items = Array.from(event.clipboardData?.items || [])
         const imageItem = items.find(item => item.type.startsWith('image'))
 
@@ -187,7 +193,7 @@ export function RichEditor({ content, onChange, onEditorReady, placeholder, clas
     },
     onUpdate: ({ editor }) => {
       isInternalUpdate.current = true
-      const markdown = (editor.storage as any).markdown.getMarkdown()
+      const markdown = getMarkdown(editor)
       lastInternalContent.current = markdown
       onChange(markdown)
       // Reset flag after render cycle using queueMicrotask for more reliable timing
@@ -211,7 +217,7 @@ export function RichEditor({ content, onChange, onEditorReady, placeholder, clas
     // Skip if this content was just produced internally by the editor
     if (content === lastInternalContent.current) return
 
-    const currentContent = (editor.storage as any).markdown.getMarkdown()
+    const currentContent = getMarkdown(editor)
     if (content !== currentContent) {
       // Save cursor position before resetting content
       const { from, to } = editor.state.selection

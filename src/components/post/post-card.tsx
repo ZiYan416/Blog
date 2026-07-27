@@ -1,8 +1,7 @@
 "use client"
 
 import Link from 'next/link'
-import { Calendar, Tag, Eye, Edit2, ArrowUpRight, Clock, Star, Loader2 } from 'lucide-react'
-import { Card, CardContent } from '@/components/ui/card'
+import { Calendar, Eye, Edit2, ArrowUpRight, Star, Loader2 } from 'lucide-react'
 import { formatDateString } from '@/lib/markdown'
 import { useUser } from '@/hooks/use-auth'
 import { DeletePostButton } from './delete-post-button'
@@ -12,18 +11,20 @@ import { toggleFeaturedStatus } from '@/app/actions/post'
 import { useState } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import { motion } from 'framer-motion'
+import { getErrorMessage } from '@/lib/errors'
+import { SafeImage } from '@/components/ui/safe-image'
 
 export interface Post {
   id: string
   title: string
   slug: string
-  excerpt: string
+  excerpt: string | null
   cover_image: string | null
   published: boolean
   featured: boolean
   created_at: string
   updated_at: string
-  tags: any[]
+  tags: string[]
   category: string | null
   view_count: number
 }
@@ -51,10 +52,10 @@ function FeaturedToggle({ id, isFeatured }: { id: string, isFeatured: boolean })
         title: !featured ? "已设为精选" : "已取消精选",
         description: !featured ? "该文章将在首页精选栏目展示" : "该文章已从首页移除",
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "操作失败",
-        description: error.message,
+        description: getErrorMessage(error, '无法更新精选状态'),
         variant: "destructive"
       })
     } finally {
@@ -183,12 +184,12 @@ export default function PostCard({ post }: PostCardProps) {
         className="block relative w-[35%] md:w-full md:aspect-[16/10] shrink-0 order-last md:order-first border-l md:border-l-0 md:border-b border-black/5 dark:border-white/5"
       >
         {post.cover_image ? (
-          <img
+          <SafeImage
             src={post.cover_image}
             alt={post.title}
-            loading="lazy"
-            decoding="async"
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+            fill
+            sizes="(min-width: 768px) 33vw, 35vw"
+            className="object-cover transition-transform duration-700 group-hover:scale-110"
           />
         ) : (
           <div className="w-full h-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">

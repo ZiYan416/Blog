@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { AccessError, requireAdmin } from '@/lib/server-auth'
 import { NextResponse } from 'next/server'
 
 export async function DELETE(
@@ -8,26 +9,24 @@ export async function DELETE(
   const { slug } = await params
   const supabase = await createClient()
 
-  // Check authentication
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return NextResponse.json({ error: '未授权' }, { status: 401 })
+  try {
+    await requireAdmin(supabase)
+  } catch (error) {
+    if (error instanceof AccessError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.status })
+    }
+    throw error
   }
 
-  // Check if post exists and user is the owner
+  // The shared guard and RLS both enforce administrator-only deletion.
   const { data: post } = await supabase
     .from('posts')
-    .select('author_id, slug')
+    .select('slug')
     .eq('slug', slug)
     .single()
 
   if (!post) {
     return NextResponse.json({ error: '文章不存在' }, { status: 404 })
-  }
-
-  if (post.author_id !== user.id) {
-    return NextResponse.json({ error: '无权删除此文章' }, { status: 403 })
   }
 
   const { error } = await supabase

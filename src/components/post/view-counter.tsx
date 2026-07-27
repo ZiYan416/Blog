@@ -5,14 +5,29 @@ import { incrementViewCount } from '@/app/actions/post'
 
 export function ViewCounter({ slug }: { slug: string }) {
   useEffect(() => {
-    // Increment view count on mount (page load)
-    // We use a timeout to avoid counting immediate bounces or double-fires in React Strict Mode dev
-    const timer = setTimeout(() => {
-      incrementViewCount(slug)
+    const storageKey = `post-viewed:${slug}`
+
+    try {
+      if (sessionStorage.getItem(storageKey)) return
+    } catch {
+      // A blocked sessionStorage should not prevent the page from rendering.
+    }
+
+    // Avoid counting immediate bounces and duplicate React development mounts.
+    const timer = window.setTimeout(async () => {
+      const result = await incrementViewCount(slug)
+
+      if (!result?.error) {
+        try {
+          sessionStorage.setItem(storageKey, '1')
+        } catch {
+          // Ignore storage restrictions after the server accepted the event.
+        }
+      }
     }, 1000)
 
-    return () => clearTimeout(timer)
+    return () => window.clearTimeout(timer)
   }, [slug])
 
-  return null // This component doesn't render anything
+  return null
 }

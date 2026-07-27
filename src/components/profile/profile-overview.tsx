@@ -1,28 +1,19 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { MessageSquare, Calendar, User as UserIcon, Activity, FileText, ArrowUpRight } from "lucide-react";
 import { getCardStyle } from "@/lib/card-styles";
 import { cn } from "@/lib/utils";
 import { type User } from "@supabase/supabase-js";
 import Link from "next/link";
+import type { EditableProfile, ProfileActivity, ProfileStats } from "./types";
+import { SafeImage } from "@/components/ui/safe-image";
 
 interface ProfileOverviewProps {
   user: User;
-  profile: {
-    display_name: string;
-    bio: string;
-    website: string;
-    avatar_url: string;
-    card_bg: string;
-  };
-  stats: {
-    commentsCount: number;
-    activeDays: number;
-    lastActive?: string;
-    joinedDate?: string;
-  };
-  recentActivity: any[]; // Explicit type to be refined later
+  profile: EditableProfile;
+  stats: ProfileStats;
+  recentActivity: ProfileActivity[];
 }
 
 export function ProfileOverview({ user, profile, stats, recentActivity }: ProfileOverviewProps) {
@@ -35,12 +26,14 @@ export function ProfileOverview({ user, profile, stats, recentActivity }: Profil
             <Card className="border-none shadow-sm bg-white dark:bg-neutral-900 rounded-3xl p-0 overflow-hidden md:h-full flex flex-col text-center">
               <div className={cn("h-32 w-full relative transition-all duration-500", getCardStyle(profile.card_bg).class)}>
                 <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-24 h-24">
-                  <div className="w-full h-full bg-neutral-100 dark:bg-neutral-800 rounded-full flex items-center justify-center overflow-hidden border-4 border-white dark:border-neutral-900">
+                  <div className="relative w-full h-full bg-neutral-100 dark:bg-neutral-800 rounded-full flex items-center justify-center overflow-hidden border-4 border-white dark:border-neutral-900">
                     {profile.avatar_url ? (
-                      <img
+                      <SafeImage
                         src={profile.avatar_url}
                         alt="Avatar"
-                        className="w-full h-full object-cover"
+                        fill
+                        sizes="128px"
+                        className="object-cover"
                       />
                     ) : (
                       <UserIcon className="w-10 h-10 text-neutral-400" />
@@ -58,7 +51,7 @@ export function ProfileOverview({ user, profile, stats, recentActivity }: Profil
                 <div className="md:mt-auto pt-6 border-t border-black/5 dark:border-white/5">
                     {profile.bio ? (
                         <p className="text-xs text-neutral-400 leading-relaxed italic">
-                            "{profile.bio}"
+                            &ldquo;{profile.bio}&rdquo;
                         </p>
                     ) : (
                         <p className="text-xs text-neutral-400 italic">
@@ -143,7 +136,7 @@ export function ProfileOverview({ user, profile, stats, recentActivity }: Profil
                                         </span>
                                     </div>
                                     <p className="text-sm text-neutral-700 dark:text-neutral-300 line-clamp-2 leading-relaxed italic">
-                                        "{comment.content}"
+                                        &ldquo;{comment.content}&rdquo;
                                     </p>
                                 </div>
 
@@ -157,10 +150,12 @@ export function ProfileOverview({ user, profile, stats, recentActivity }: Profil
                                         {comment.posts.cover_image ? (
                                             <>
                                                 <div className="absolute inset-0 z-0">
-                                                    <img
+                                                    <SafeImage
                                                         src={comment.posts.cover_image}
                                                         alt=""
-                                                        className="w-full h-full object-cover transition-transform duration-700 group-hover/article:scale-110"
+                                                        fill
+                                                        sizes="(min-width: 768px) 33vw, 100vw"
+                                                        className="object-cover transition-transform duration-700 group-hover/article:scale-110"
                                                     />
                                                     <div className="absolute inset-0 bg-black/50 group-hover/article:bg-black/40 transition-colors" />
                                                 </div>

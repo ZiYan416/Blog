@@ -1,7 +1,7 @@
 'use client'
 
 import { Badge } from '@/components/ui/badge'
-import { AlertCircle, MessageSquare, FileText, ArrowRight } from 'lucide-react'
+import { MessageSquare, FileText, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 
 interface TodoAlertsProps {

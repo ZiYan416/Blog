@@ -18,6 +18,38 @@ interface ContentAnalyticsTabProps {
   }>;
 }
 
+interface TagTooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    name?: string;
+    value?: number;
+    payload?: { name?: string; value?: number };
+  }>;
+}
+
+function TagTooltip({ active, payload }: TagTooltipProps) {
+  if (!active || !payload?.length) return null;
+
+  const item = payload[0];
+  const name = item.payload?.name ?? item.name ?? '';
+  const value = item.payload?.value ?? item.value ?? 0;
+
+  return (
+    <div
+      style={{
+        backgroundColor: "rgba(255, 255, 255, 0.95)",
+        border: "1px solid #e5e5e5",
+        borderRadius: "12px",
+        padding: "8px 12px",
+        fontSize: "12px",
+      }}
+    >
+      <div className="font-medium">{name}</div>
+      <div className="text-neutral-500">{value} 篇</div>
+    </div>
+  );
+}
+
 export function ContentAnalyticsTab({ topPosts, totalPosts, tagData = [] }: ContentAnalyticsTabProps) {
   // 准备柱状图数据
   const chartData = topPosts.slice(0, 5).map((post, index) => ({
@@ -35,28 +67,6 @@ export function ContentAnalyticsTab({ topPosts, totalPosts, tagData = [] }: Cont
   const legendTextSize = tagCount <= 5 ? 'text-sm' : tagCount <= 8 ? 'text-xs' : 'text-[11px]';
   const legendSubTextSize = tagCount <= 5 ? 'text-xs' : tagCount <= 8 ? 'text-[11px]' : 'text-[10px]';
   const legendGap = tagCount <= 6 ? 'space-y-3' : tagCount <= 10 ? 'space-y-2' : 'space-y-1.5';
-
-  // 自定义 Tooltip 内容
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0];
-      return (
-        <div
-          style={{
-            backgroundColor: "rgba(255, 255, 255, 0.95)",
-            border: "1px solid #e5e5e5",
-            borderRadius: "12px",
-            padding: "8px 12px",
-            fontSize: "12px",
-          }}
-        >
-          <div className="font-medium">{data.name}</div>
-          <div className="text-neutral-500">{data.value} 篇</div>
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
     <div className="space-y-6">
@@ -187,7 +197,7 @@ export function ContentAnalyticsTab({ topPosts, totalPosts, tagData = [] }: Cont
                           />
                         ))}
                       </Pie>
-                      <Tooltip content={<CustomTooltip />} />
+                      <Tooltip content={<TagTooltip />} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>

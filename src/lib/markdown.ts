@@ -1,12 +1,5 @@
-import { clsx, type ClassValue } from 'clsx'
-import { twMerge } from 'tailwind-merge'
-import { marked } from 'marked'
 import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
 
 export function formatDateString(dateStr: string): string {
   if (!dateStr) return ''
@@ -83,10 +76,6 @@ export function autoClassifyTags(content: string, existingTags: string[]): strin
   const matches: { tag: string; count: number }[] = []
 
   existingTags.forEach(tag => {
-    // Escape special regex characters in tag
-    const escapedTag = tag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    // Create regex to match whole word if possible, or just the string for Chinese
-    // For simplicity, we'll check for the string existence
     const index = contentLower.indexOf(tag.toLowerCase())
 
     if (index !== -1) {
@@ -98,23 +87,4 @@ export function autoClassifyTags(content: string, existingTags: string[]): strin
 
   // Return all matched tags, maybe limit if too many?
   return matches.map(m => m.tag)
-}
-
-// Custom renderer for markdown
-const renderer = new marked.Renderer()
-
-// Override specific renderer methods if needed
-renderer.link = ({ href, title, tokens }: { href: string; title?: string | null; tokens: any[] }) => {
-  const text = tokens.map((t: any) => t.raw).join('');
-  return `<a href="${href}" title="${title || ''}" class="text-blue-600 dark:text-blue-400 hover:underline" target="_blank" rel="noopener noreferrer">${text}</a>`
-}
-
-marked.setOptions({
-  gfm: true,
-  breaks: true,
-  renderer
-})
-
-export async function renderMarkdown(content: string): Promise<string> {
-  return marked.parse(content)
 }

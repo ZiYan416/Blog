@@ -63,7 +63,7 @@ async function run() {
   }
 
   if (!success) {
-    console.log("Fallback: copying scenery-night.mp4 to night-2.mp4 so it never breaks!");
+    console.log("Fallback: copying night-1.mp4 to night-2.mp4 so it never breaks!");
     fs.copyFileSync(
       path.join(process.cwd(), "public", "videos", "night-1.mp4"),
       dest

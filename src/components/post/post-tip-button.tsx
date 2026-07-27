@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
+import { SafeImage } from '@/components/ui/safe-image'
 
 interface PostTipButtonProps {
   alipayQr?: string | null
@@ -71,14 +72,14 @@ export function PostTipButton({ alipayQr, wechatQr, authorName }: PostTipButtonP
           <div className="bg-neutral-50 dark:bg-neutral-900/50 p-4 rounded-3xl border border-black/5 dark:border-white/5 shadow-inner">
             {activeTab === 'wechat' && wechatQr && (
               <div className="flex flex-col items-center gap-4">
-                <img src={wechatQr} alt="WeChat Pay QR Code" className="w-48 h-48 sm:w-56 sm:h-56 object-contain rounded-xl" />
+                <SafeImage src={wechatQr} alt="微信赞赏码" width={224} height={224} sizes="(min-width: 640px) 224px, 192px" className="w-48 h-48 sm:w-56 sm:h-56 object-contain rounded-xl" />
                 <span className="text-sm font-medium text-green-600 flex items-center gap-1">微信扫一扫，赞赏作者</span>
               </div>
             )}
             
             {activeTab === 'alipay' && alipayQr && (
               <div className="flex flex-col items-center gap-4">
-                <img src={alipayQr} alt="Alipay QR Code" className="w-48 h-48 sm:w-56 sm:h-56 object-contain rounded-xl" />
+                <SafeImage src={alipayQr} alt="支付宝赞赏码" width={224} height={224} sizes="(min-width: 640px) 224px, 192px" className="w-48 h-48 sm:w-56 sm:h-56 object-contain rounded-xl" />
                 <span className="text-sm font-medium text-blue-600 flex items-center gap-1">打开支付宝扫一扫</span>
               </div>
             )}

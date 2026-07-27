@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation'
 import { getCardStyle } from '@/lib/card-styles'
 import { cn } from '@/lib/utils'
 import { LoginModal } from '@/components/auth/login-modal'
+import { SafeImage } from '@/components/ui/safe-image'
 
 interface CommentSectionProps {
   postId: string
@@ -93,7 +94,7 @@ function CommentForm({
         }
         onSuccess?.()
       }
-    } catch (error) {
+    } catch {
       toast({
         title: "出错啦",
         description: "网络请求失败，请稍后重试",
@@ -120,9 +121,9 @@ function CommentForm({
 
       {currentUser && !isReply && (
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden flex-shrink-0">
+          <div className="relative w-10 h-10 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden flex-shrink-0">
             {currentUser.avatar_url ? (
-              <img src={currentUser.avatar_url} alt={currentUser.name} className="w-full h-full object-cover" />
+              <SafeImage src={currentUser.avatar_url} alt={currentUser.name} fill sizes="40px" className="object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-neutral-400">
                 <User className="w-5 h-5" />
@@ -198,9 +199,9 @@ function CommentItem({
       <div className="flex gap-3 md:gap-4 group">
         <Popover>
           <PopoverTrigger asChild>
-            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center shrink-0 overflow-hidden cursor-pointer hover:ring-2 ring-black/5 transition-all">
+            <div className="relative w-8 h-8 md:w-10 md:h-10 rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center shrink-0 overflow-hidden cursor-pointer hover:ring-2 ring-black/5 transition-all">
               {author.avatar_url ? (
-                <img src={author.avatar_url} alt={displayName} className="w-full h-full object-cover" />
+                <SafeImage src={author.avatar_url} alt={displayName} fill sizes="(min-width: 768px) 40px, 32px" className="object-cover" />
               ) : (
                 <span className="text-neutral-500 font-bold text-xs md:text-sm">
                   {displayName[0].toUpperCase()}
@@ -212,7 +213,7 @@ function CommentItem({
             <div className={cn("relative h-24 transition-colors", bgStyle.class)}>
               <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-16 h-16 rounded-full border-4 border-white dark:border-neutral-900 overflow-hidden bg-white dark:bg-black">
                 {author.avatar_url ? (
-                  <img src={author.avatar_url} alt={displayName} className="w-full h-full object-cover" />
+                  <SafeImage src={author.avatar_url} alt={displayName} fill sizes="64px" className="object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-neutral-100 dark:bg-neutral-800 text-neutral-400">
                     <User className="w-8 h-8" />
@@ -233,7 +234,7 @@ function CommentItem({
               </div>
               <div className="pt-6 border-t border-black/5 dark:border-white/5">
                 <p className="text-xs text-neutral-400 italic line-clamp-2">
-                  "{author.bio || '这个人很懒，什么都没写'}"
+                  &ldquo;{author.bio || '这个人很懒，什么都没写'}&rdquo;
                 </p>
               </div>
             </div>

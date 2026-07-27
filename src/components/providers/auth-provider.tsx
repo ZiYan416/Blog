@@ -1,13 +1,14 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
+import type { Profile } from "@/lib/types";
 
 interface AuthState {
   user: User | null;
-  profile: any | null;
+  profile: Profile | null;
   isAdmin: boolean;
   loading: boolean;
 }
@@ -28,29 +29,18 @@ export function AuthProvider({
 }: {
   children: React.ReactNode;
   initialUser: User | null;
-  initialProfile: any | null;
+  initialProfile: Profile | null;
 }) {
-  const [state, setState] = useState<AuthState>({
+  const [sessionState, setSessionState] = useState<AuthState | null>(null);
+  const state = sessionState || {
     user: initialUser,
     profile: initialProfile,
     isAdmin: initialProfile?.is_admin || false,
-    loading: false, // Initial state is loaded from server
-  });
+    loading: false,
+  };
 
   const router = useRouter();
-  const supabase = createClient();
-
-  useEffect(() => {
-    // When router.refresh() updates server components, these props might change.
-    // We need to sync them to our local state to reflect changes (like avatar updates) immediately.
-    if (initialProfile) {
-        setState(prev => ({
-            ...prev,
-            profile: initialProfile,
-            isAdmin: initialProfile?.is_admin || false
-        }));
-    }
-  }, [initialProfile]);
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     // Sync with client-side events
@@ -58,7 +48,7 @@ export function AuthProvider({
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_OUT") {
-        setState({
+        setSessionState({
           user: null,
           profile: null,
           isAdmin: false,
@@ -68,31 +58,29 @@ export function AuthProvider({
         return;
       }
 
-      if (session?.user) {
-        // If the session user is different from current state, update
-        if (session.user.id !== state.user?.id) {
-            // Fetch new profile
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', session.user.id)
-                .single();
+      if (event === "INITIAL_SESSION") return;
 
-            setState({
-                user: session.user,
-                profile,
-                isAdmin: profile?.is_admin || false,
-                loading: false
-            });
-            router.refresh();
-        }
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", session.user.id)
+          .single();
+
+        setSessionState({
+          user: session.user,
+          profile,
+          isAdmin: profile?.is_admin || false,
+          loading: false,
+        });
+        router.refresh();
       }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [state.user?.id, router]);
+  }, [router, supabase]);
 
   return (
     <AuthContext.Provider value={state}>

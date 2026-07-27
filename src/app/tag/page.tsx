@@ -38,9 +38,9 @@ export default async function TagsPage() {
       </div>
 
       {isAdmin ? (
-        <TagManager initialTags={tags as any} />
+        <TagManager initialTags={tags} />
       ) : (
-        <TagList tags={tags as any} />
+        <TagList tags={tags} />
       )}
     </div>
   )

@@ -1,6 +1,7 @@
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { apiError, getErrorMessage } from '@/lib/api-response'
 import { NextResponse } from 'next/server'
+import { AccessError, requireAdmin } from '@/lib/server-auth'
 
 export async function PATCH(
   request: Request,
@@ -10,21 +11,7 @@ export async function PATCH(
   try {
     const supabase = await createServerClient()
 
-    // 验证管理员权限
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return apiError('未授权', 401, 'UNAUTHORIZED')
-    }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('is_admin')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile?.is_admin) {
-      return apiError('需要管理员权限', 403, 'FORBIDDEN')
-    }
+    const user = await requireAdmin(supabase)
 
     // 防止修改自己的管理员状态
     if (params.id === user.id) {
@@ -39,11 +26,13 @@ export async function PATCH(
       return apiError('无效的参数', 400, 'INVALID_ARGUMENT')
     }
 
-    // 更新用户的管理员状态
+    // Role changes go through a SECURITY DEFINER RPC so authenticated users
+    // never receive direct UPDATE privileges for profiles.is_admin.
     const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ is_admin })
-      .eq('id', params.id)
+      .rpc('set_user_admin', {
+        target_user_id: params.id,
+        enabled: is_admin,
+      })
 
     if (updateError) throw updateError
 
@@ -52,6 +41,9 @@ export async function PATCH(
       message: is_admin ? '已设为管理员' : '已取消管理员权限'
     })
   } catch (error) {
+    if (error instanceof AccessError) {
+      return apiError(error.message, error.status, error.code)
+    }
     console.error('更新管理员状态失败:', error)
     return apiError(getErrorMessage(error), 500, 'ROLE_UPDATE_FAILED')
   }

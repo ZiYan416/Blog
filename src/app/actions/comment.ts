@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { commentSubmissionSchema, getValidationMessage } from '@/lib/validation'
 
 export interface Comment {
   id: string
@@ -20,27 +21,32 @@ export interface Comment {
   replies?: Comment[]
 }
 
+interface CommentRow {
+  id: string
+  user_id: string
+  content: string
+  created_at: string
+  approved: boolean
+  parent_id: string | null
+  reply_count: number
+}
+
+interface PublicCommentProfile {
+  id: string
+  display_name: string | null
+  avatar_url: string | null
+  bio: string | null
+  card_bg: string | null
+}
+
 export async function getComments(postId: string) {
   const supabase = await createClient()
 
-  // 获取所有已审核的评论，关联查询用户信息
+  // Public profile data is intentionally read through a restricted projection;
+  // the private profiles table contains email and authorization fields.
   const { data: comments, error } = await supabase
     .from('comments')
-    .select(`
-      id,
-      content,
-      created_at,
-      approved,
-      parent_id,
-      reply_count,
-      profiles:user_id (
-        display_name,
-        avatar_url,
-        bio,
-        email,
-        card_bg
-      )
-    `)
+    .select('id, user_id, content, created_at, approved, parent_id, reply_count')
     .eq('post_id', postId)
     .eq('approved', true)
     .order('created_at', { ascending: false })
@@ -50,7 +56,44 @@ export async function getComments(postId: string) {
     return []
   }
 
-  const flatComments = (comments as unknown as Comment[]) || []
+  const commentRows = (comments || []) as CommentRow[]
+  const userIds = [...new Set(commentRows.map((comment) => comment.user_id))]
+  const { data: profileRows, error: profileError } = userIds.length
+    ? await supabase
+        .from('public_profiles')
+        .select('id, display_name, avatar_url, bio, card_bg')
+        .in('id', userIds)
+    : { data: [] as PublicCommentProfile[], error: null }
+
+  if (profileError) {
+    console.error('Error fetching public comment profiles:', profileError)
+  }
+
+  const profileById = new Map(
+    ((profileRows || []) as PublicCommentProfile[]).map((profile) => [
+      profile.id,
+      profile,
+    ])
+  )
+
+  const flatComments: Comment[] = commentRows.map((comment) => {
+    const profile = profileById.get(comment.user_id)
+
+    return {
+      id: comment.id,
+      content: comment.content,
+      created_at: comment.created_at,
+      approved: comment.approved,
+      parent_id: comment.parent_id,
+      reply_count: comment.reply_count,
+      profiles: {
+        display_name: profile?.display_name || null,
+        avatar_url: profile?.avatar_url || null,
+        bio: profile?.bio || null,
+        card_bg: profile?.card_bg || null,
+      },
+    }
+  })
 
   // 构建评论树结构：将评论分为顶级评论和回复
   const commentMap = new Map<string, Comment>()
@@ -91,12 +134,17 @@ export async function getComments(postId: string) {
 
 export async function submitComment(postId: string, formData: FormData, parentId?: string | null) {
   const supabase = await createClient()
-  const content = formData.get('content') as string
+  const parsedSubmission = commentSubmissionSchema.safeParse({
+    postId,
+    parentId: parentId || null,
+    content: formData.get('content'),
+  })
 
-  if (!content) {
-    return { error: '评论内容不能为空' }
+  if (!parsedSubmission.success) {
+    return { error: getValidationMessage(parsedSubmission.error) }
   }
 
+  const { content, parentId: validatedParentId } = parsedSubmission.data
   // 检查当前用户是否登录
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -123,7 +171,7 @@ export async function submitComment(postId: string, formData: FormData, parentId
       user_id: user.id, // 使用当前登录用户的 ID
       content,
       approved: approved,
-      parent_id: parentId || null
+      parent_id: validatedParentId || null
     })
 
   if (error) {

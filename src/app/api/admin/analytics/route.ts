@@ -2,6 +2,8 @@ import { createClient as createServerClient } from '@/lib/supabase/server'
 import { apiError, getErrorMessage } from '@/lib/api-response'
 import { NextResponse } from 'next/server'
 import { subDays, format } from 'date-fns'
+import { toTagNames } from '@/lib/types'
+import { AccessError, requireAdmin } from '@/lib/server-auth'
 
 interface CommentWithProfile {
   user_id: string
@@ -22,21 +24,7 @@ export async function GET() {
   try {
     const supabase = await createServerClient()
 
-    // 验证管理员权限
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return apiError('未授权', 401, 'UNAUTHORIZED')
-    }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('is_admin')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile?.is_admin) {
-      return apiError('需要管理员权限', 403, 'FORBIDDEN')
-    }
+    await requireAdmin(supabase)
 
     // 获取过去 7 天的统计快照
     const last7DaysDate = subDays(new Date(), 6)
@@ -65,11 +53,9 @@ export async function GET() {
 
     const tagCounts: Record<string, number> = {}
     posts?.forEach((post) => {
-      if (Array.isArray(post.tags)) {
-        post.tags.forEach((tag: string) => {
-          tagCounts[tag] = (tagCounts[tag] || 0) + 1
-        })
-      }
+      toTagNames(post.tags).forEach((tag) => {
+        tagCounts[tag] = (tagCounts[tag] || 0) + 1
+      })
     })
 
     const tagData = Object.entries(tagCounts)
@@ -191,6 +177,9 @@ export async function GET() {
       sparklineData,
     })
   } catch (error) {
+    if (error instanceof AccessError) {
+      return apiError(error.message, error.status, error.code)
+    }
     console.error('Analytics API error:', error)
     return apiError(getErrorMessage(error), 500, 'ANALYTICS_FAILED')
   }

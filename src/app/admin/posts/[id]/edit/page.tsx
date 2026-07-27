@@ -12,10 +12,13 @@ import { PostPreviewModal } from '@/components/post/post-preview-modal'
 import { ArrowLeft, Save, Send, Image as ImageIcon, Type, Loader2, Eye, X } from 'lucide-react'
 import Link from 'next/link'
 import { useToast } from '@/hooks/use-toast'
-import { extractTags, autoClassifyTags, generatePostSlug, getPostExcerpt } from '@/lib/markdown'
-import { getTagNames, ensureTagsExist } from '@/app/actions/tags'
+import { autoClassifyTags, generatePostSlug, getPostExcerpt } from '@/lib/markdown'
+import { getTagNames } from '@/app/actions/tags'
 import { v4 as uuidv4 } from 'uuid'
+import { toTagNames } from '@/lib/types'
 import { BackToTop } from '@/components/ui/back-to-top'
+import { getErrorMessage } from '@/lib/errors'
+import { SafeImage } from '@/components/ui/safe-image'
 
 interface EditPostPageProps {
   params: Promise<{ id: string }>
@@ -55,7 +58,10 @@ export default function EditPostPage({ params }: EditPostPageProps) {
   }
 
   useEffect(() => {
-    fetchAvailableTags()
+    const timer = window.setTimeout(() => {
+      void fetchAvailableTags()
+    }, 0)
+    return () => window.clearTimeout(timer)
   }, [])
 
   useEffect(() => {
@@ -77,12 +83,12 @@ export default function EditPostPage({ params }: EditPostPageProps) {
           setCoverImage(data.cover_image || '')
           setContent(data.content || '')
           setIsPublished(data.published || false)
-          setTags(data.tags || [])
+          setTags(toTagNames(data.tags))
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         toast({
           title: "加载文章失败",
-          description: error.message,
+          description: getErrorMessage(error, '无法加载文章'),
           variant: "destructive",
         })
         router.push('/post')
@@ -121,10 +127,10 @@ export default function EditPostPage({ params }: EditPostPageProps) {
         title: "封面上传成功",
         description: "图片已保存到云端",
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "上传失败",
-        description: error.message,
+        description: getErrorMessage(error, '封面上传失败'),
         variant: "destructive",
       })
     } finally {
@@ -193,10 +199,10 @@ export default function EditPostPage({ params }: EditPostPageProps) {
 
       router.push('/post')
       router.refresh()
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "更新失败",
-        description: error.message,
+        description: getErrorMessage(error, '文章更新失败'),
         variant: "destructive",
       })
     } finally {
@@ -352,7 +358,7 @@ export default function EditPostPage({ params }: EditPostPageProps) {
 
                   {coverImage ? (
                     <div className="relative aspect-video rounded-2xl overflow-hidden border border-black/5 dark:border-white/5 group">
-                      <img src={coverImage} alt="Cover preview" className="w-full h-full object-cover" />
+                      <SafeImage src={coverImage} alt="封面预览" fill sizes="(min-width: 1024px) 320px, 100vw" className="object-cover" />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                         <Button
                           size="sm"

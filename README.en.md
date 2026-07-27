@@ -65,6 +65,8 @@ It is more than just a Content Management System (CMS); it is a digital space fo
 
 ## 🚀 Quick Start
 
+Requirement: Node.js >= 20.19.0.
+
 ### 1. Clone the repository
 
 ```bash
@@ -82,10 +84,10 @@ npm install
 
 ### 3. Configure environment variables
 
-Copy `.env.example` to `.env.local` and fill in your Supabase configuration:
+Copy `.env.local.example` to `.env.local` and fill in your Supabase configuration:
 
 ```bash
-cp .env.example .env.local
+cp .env.local.example .env.local
 ```
 
 ### 4. Start the development server

@@ -1,6 +1,7 @@
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { apiError, getErrorMessage } from '@/lib/api-response'
 import { NextResponse } from 'next/server'
+import { AccessError, requireAdmin } from '@/lib/server-auth'
 
 // 审核评论（批准）
 export async function PATCH(
@@ -11,21 +12,7 @@ export async function PATCH(
   try {
     const supabase = await createServerClient()
 
-    // 验证管理员权限
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return apiError('未授权', 401, 'UNAUTHORIZED')
-    }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('is_admin')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile?.is_admin) {
-      return apiError('需要管理员权限', 403, 'FORBIDDEN')
-    }
+    await requireAdmin(supabase)
 
     // 批准评论
     const { error } = await supabase
@@ -37,6 +24,9 @@ export async function PATCH(
 
     return NextResponse.json({ success: true })
   } catch (error) {
+    if (error instanceof AccessError) {
+      return apiError(error.message, error.status, error.code)
+    }
     console.error('批准评论失败:', error)
     return apiError(getErrorMessage(error), 500, 'COMMENT_APPROVE_FAILED')
   }
@@ -51,21 +41,7 @@ export async function DELETE(
   try {
     const supabase = await createServerClient()
 
-    // 验证管理员权限
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return apiError('未授权', 401, 'UNAUTHORIZED')
-    }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('is_admin')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile?.is_admin) {
-      return apiError('需要管理员权限', 403, 'FORBIDDEN')
-    }
+    await requireAdmin(supabase)
 
     // 删除评论
     const { error } = await supabase
@@ -77,6 +53,9 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error) {
+    if (error instanceof AccessError) {
+      return apiError(error.message, error.status, error.code)
+    }
     console.error('删除评论失败:', error)
     return apiError(getErrorMessage(error), 500, 'COMMENT_DELETE_FAILED')
   }

@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Settings, Tv, Sparkles, MonitorCheck } from "lucide-react";
+import { Settings, Tv } from "lucide-react";
 import { useThemeSettings } from "@/hooks/use-theme-settings";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";

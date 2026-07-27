@@ -7,6 +7,7 @@ import { Calendar, Tag, Clock, User, X } from 'lucide-react'
 import { formatDateString, calculateReadingTime } from '@/lib/markdown'
 import { MarkdownRenderer } from '@/components/post/markdown-renderer'
 import { getTagStyles } from '@/lib/tag-color'
+import { SafeImage } from '@/components/ui/safe-image'
 
 interface PostPreviewModalProps {
   open: boolean
@@ -54,7 +55,7 @@ export function PostPreviewModal({ open, onOpenChange, post }: PostPreviewModalP
             <div className="relative w-full min-h-[320px] bg-neutral-900 dark:bg-black overflow-hidden">
               {post.coverImage && (
                 <div className="absolute inset-0 opacity-60">
-                  <img src={post.coverImage} alt={post.title} className="w-full h-full object-cover" />
+                  <SafeImage src={post.coverImage} alt={post.title} fill sizes="min(56rem, 100vw)" className="object-cover" />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#fafafa] dark:from-[#050505] via-transparent to-transparent" />
                 </div>
               )}

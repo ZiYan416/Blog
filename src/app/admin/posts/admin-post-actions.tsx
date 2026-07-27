@@ -17,6 +17,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { getErrorMessage } from '@/lib/errors'
 
 interface AdminPostActionsProps {
   id: string
@@ -39,10 +40,10 @@ export function AdminPostActions({ id, isFeatured, title, mode }: AdminPostActio
         title: !isFeatured ? "已设为精选" : "已取消精选",
         description: !isFeatured ? "该文章将在首页精选栏目展示" : "该文章已从首页移除",
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "操作失败",
-        description: error.message,
+        description: getErrorMessage(error, '无法更新精选状态'),
         variant: "destructive"
       })
     } finally {
@@ -60,10 +61,10 @@ export function AdminPostActions({ id, isFeatured, title, mode }: AdminPostActio
         title: "删除成功",
         description: "文章已被永久删除",
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "删除失败",
-        description: error.message,
+        description: getErrorMessage(error, '无法删除文章'),
         variant: "destructive"
       })
     } finally {
@@ -104,7 +105,7 @@ export function AdminPostActions({ id, isFeatured, title, mode }: AdminPostActio
           <AlertDialogHeader>
             <AlertDialogTitle>确认删除文章？</AlertDialogTitle>
             <AlertDialogDescription>
-              您正在删除文章 "{title}"。此操作无法撤销，文章将被永久移除。
+              您正在删除文章 &ldquo;{title}&rdquo;。此操作无法撤销，文章将被永久移除。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

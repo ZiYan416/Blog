@@ -1,19 +1,20 @@
 "use client"
 
-import ReactMarkdown from 'react-markdown'
+import ReactMarkdown, { type Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import rehypeRaw from 'rehype-raw'
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'
 import rehypeSlug from 'rehype-slug'
-import { useEffect, useRef } from 'react'
+import { Children, isValidElement, useEffect, useRef, type ComponentPropsWithoutRef } from 'react'
 import { CodeBlockShell, extractCodeBlockLanguage } from '@/components/post/code-block-shell'
+import type { Schema } from 'hast-util-sanitize'
 
 interface MarkdownRendererProps {
   content: string
 }
 
-const markdownSchema: any = {
+const markdownSchema: Schema = {
   ...defaultSchema,
   tagNames: [
     ...(defaultSchema.tagNames || []),
@@ -35,6 +36,13 @@ const markdownSchema: any = {
       ['className', /^hljs-/],
     ],
   },
+}
+
+const markdownComponents: Components & {
+  t: (props: ComponentPropsWithoutRef<'span'>) => React.ReactNode
+} = {
+  pre: PreBlock,
+  t: ({ children }) => <span className="font-mono text-sm">&lt;T&gt;{children}</span>,
 }
 
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
@@ -59,11 +67,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[rehypeRaw, [rehypeSanitize, markdownSchema], rehypeSlug, rehypeHighlight]}
-          components={{
-            pre: PreBlock,
-            // Handle <t> tags (often unescaped generics like <T>)
-            t: ({ children }: any) => <span className="font-mono text-sm">&lt;T&gt;{children}</span>
-          } as any}
+          components={markdownComponents}
         >
           {content}
         </ReactMarkdown>
@@ -407,10 +411,12 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
   )
 }
 
-function PreBlock({ children, ...props }: any) {
+function PreBlock({ children, ...props }: ComponentPropsWithoutRef<'pre'>) {
   const preRef = useRef<HTMLPreElement>(null)
-  const className =
-    children && typeof children === 'object' && 'props' in children ? children.props.className : undefined
+  const codeElement = Children.toArray(children).find(
+    (child) => isValidElement<{ className?: string }>(child),
+  )
+  const className = codeElement?.props.className
   const language = extractCodeBlockLanguage(className)
 
   return (

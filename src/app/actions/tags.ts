@@ -53,10 +53,6 @@ export async function getTagNames() {
   return data.map(tag => tag.name)
 }
 
-function generateSunnyColor() {
-  return ''
-}
-
 export async function createTag(tagName: string) {
   // Check Admin Permission
   const isAdmin = await checkAdmin()
@@ -109,7 +105,6 @@ export async function createTag(tagName: string) {
   revalidatePath('/admin/posts/[id]/edit')
   return { success: true }
 }
-
 export async function deleteTag(id: string) {
   // Check Admin Permission
   const isAdmin = await checkAdmin()
@@ -156,18 +151,4 @@ export async function updateTag(id: string, name: string) {
 
   revalidatePath('/tags')
   return { success: true }
-}
-
-export async function ensureTagsExist(tags: string[]) {
-  // Check Admin Permission
-  const isAdmin = await checkAdmin()
-  if (!isAdmin) {
-    // Silently fail or return false, as this is often called during post creation
-    // But logically, only admins can create posts, so they should be able to create tags.
-    // If a non-admin tries to create a post with new tags, this should fail.
-    return false
-  }
-
-  const results = await Promise.all(tags.map(tag => createTag(tag)))
-  return results.every(r => !r.error)
 }

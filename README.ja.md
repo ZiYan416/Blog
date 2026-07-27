@@ -65,6 +65,8 @@
 
 ## 🚀 クイックスタート (Quick Start)
 
+必要環境：Node.js >= 20.19.0。
+
 ### 1. プロジェクトのクローン
 
 ```bash
@@ -82,10 +84,10 @@ npm install
 
 ### 3. 環境変数の設定
 
-`.env.example` を `.env.local` にコピーし、Supabase の構成情報を入力します：
+`.env.local.example` を `.env.local` にコピーし、Supabase の構成情報を入力します：
 
 ```bash
-cp .env.example .env.local
+cp .env.local.example .env.local
 ```
 
 ### 4. 開発サーバーの起動

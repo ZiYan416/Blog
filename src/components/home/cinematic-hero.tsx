@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 // Swapped Day and Night video groups per user request:
 // Light Mode (Day) plays deep woods & quiet dawn scenery.
@@ -48,30 +49,22 @@ function GroupVideoLoop({
   allowBackgroundPreload,
 }: GroupVideoLoopProps) {
   const [activeIdx, setActiveIdx] = useState(0);
-  // Initial page load ONLY loads video 0 of the primary group; subsequent videos are lazily preloaded in the background
-  const [preloadedIdxs, setPreloadedIdxs] = useState<Set<number>>(new Set(isPrimaryGroup ? [0] : []));
   const isTransitioningRef = useRef(false);
   const hasTriggeredReadyRef = useRef<boolean[]>([false, false]);
 
   const ref0 = useRef<HTMLVideoElement>(null);
   const ref1 = useRef<HTMLVideoElement>(null);
-  const videoRefs = [ref0, ref1];
-
-  // Once initial video is visible, allow the browser to aggressively background-download all other videos
-  useEffect(() => {
-    if (allowBackgroundPreload) {
-      setPreloadedIdxs(new Set([0, 1]));
-    }
-  }, [allowBackgroundPreload]);
+  const getVideo = (idx: number) => (idx === 0 ? ref0.current : ref1.current);
 
   // Strictly control video play/pause
   useEffect(() => {
     if (!isActiveGroup) {
-      videoRefs.forEach((ref) => ref.current?.pause());
+      ref0.current?.pause();
+      ref1.current?.pause();
       return;
     }
 
-    const activeVideo = videoRefs[activeIdx]?.current;
+    const activeVideo = getVideo(activeIdx);
     if (activeVideo) {
       activeVideo.playbackRate = 1.0;
       activeVideo.play().catch(() => {});
@@ -99,8 +92,8 @@ function GroupVideoLoop({
 
     const nextIdx = (currentIdx + 1) % videos.length;
     
-    const nextVideo = videoRefs[nextIdx]?.current;
-    const currVideo = videoRefs[currentIdx]?.current;
+    const nextVideo = getVideo(nextIdx);
+    const currVideo = getVideo(currentIdx);
 
     if (nextVideo) {
       // 1. Reset next video to 0.0s and ensure standard 1.0x native speed
@@ -119,7 +112,7 @@ function GroupVideoLoop({
 
     // 4. Pause previous video after 2.2s (250ms pre-roll + 1500ms opacity transition + buffer safety)
     setTimeout(() => {
-      if (currVideo && currVideo !== videoRefs[nextIdx]?.current) {
+      if (currVideo && currVideo !== getVideo(nextIdx)) {
         currVideo.pause();
       }
       isTransitioningRef.current = false;
@@ -128,7 +121,7 @@ function GroupVideoLoop({
 
   const handleTimeUpdate = (idx: number) => {
     if (!isActiveGroup) return;
-    const video = videoRefs[idx]?.current;
+    const video = getVideo(idx);
     if (!video) return;
 
     // Trigger initial dissolve fade-in as soon as the first video frame is actually rendering (currentTime > 0)
@@ -159,11 +152,12 @@ function GroupVideoLoop({
       )}
     >
       {videos.map((vid, idx) => {
-        const isPreloadAllowed = preloadedIdxs.has(idx);
+        const isPreloadAllowed =
+          allowBackgroundPreload || (isPrimaryGroup && idx === 0);
         return (
           <video
             key={vid.remote}
-            ref={videoRefs[idx]}
+            ref={idx === 0 ? ref0 : ref1}
             autoPlay={idx === 0 && isActiveGroup}
             muted
             playsInline
@@ -207,6 +201,7 @@ export function CinematicHero({
   const [isDark, setIsDark] = useState(false);
   const [initialDark, setInitialDark] = useState<boolean | null>(null);
   const [isInitialVideoLoaded, setIsInitialVideoLoaded] = useState(false);
+  const [videoEnabled, setVideoEnabled] = useState<boolean | null>(null);
 
   useEffect(() => {
     const checkDark = () => {
@@ -225,6 +220,37 @@ export function CinematicHero({
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const connection = (
+      navigator as Navigator & {
+        connection?: {
+          saveData?: boolean;
+          addEventListener?: (type: "change", listener: () => void) => void;
+          removeEventListener?: (type: "change", listener: () => void) => void;
+        };
+      }
+    ).connection;
+
+    const updateVideoPreference = () => {
+      const enabled = !reducedMotion.matches && !connection?.saveData;
+      setVideoEnabled(enabled);
+
+      if (!enabled) {
+        setIsInitialVideoLoaded(true);
+      }
+    };
+
+    updateVideoPreference();
+    reducedMotion.addEventListener("change", updateVideoPreference);
+    connection?.addEventListener?.("change", updateVideoPreference);
+
+    return () => {
+      reducedMotion.removeEventListener("change", updateVideoPreference);
+      connection?.removeEventListener?.("change", updateVideoPreference);
+    };
+  }, []);
+
   return (
     <section className="relative w-full h-[calc(100dvh-4rem)] min-h-[480px] max-h-[1080px] overflow-hidden bg-black flex flex-col justify-between py-4 sm:py-6 md:py-8 px-4 sm:px-6 isolate select-none">
       {/* Container for initial load: pure black until video is ready, then train cabin + video dissolve in TOGETHER */}
@@ -236,21 +262,21 @@ export function CinematicHero({
       >
         {/* Render BOTH Day and Night groups to allow seamless background preloading of all 4 videos */}
         <div className="absolute -inset-1 z-0">
-          {initialDark !== null && (
+          {videoEnabled && initialDark !== null && (
             <>
               <GroupVideoLoop
                 videos={DAY_VIDEOS}
                 isActiveGroup={!isDark}
                 isPrimaryGroup={!initialDark}
                 onPrimaryReady={() => setIsInitialVideoLoaded(true)}
-                allowBackgroundPreload={isInitialVideoLoaded}
+                allowBackgroundPreload={isInitialVideoLoaded && !isDark}
               />
               <GroupVideoLoop
                 videos={NIGHT_VIDEOS}
                 isActiveGroup={isDark}
                 isPrimaryGroup={initialDark}
                 onPrimaryReady={() => setIsInitialVideoLoaded(true)}
-                allowBackgroundPreload={isInitialVideoLoaded}
+                allowBackgroundPreload={isInitialVideoLoaded && isDark}
               />
             </>
           )}
@@ -258,9 +284,12 @@ export function CinematicHero({
 
         {/* Standard Transparent PNG Overlay (z-index 2) - -inset-1 expands the layer to hide Chrome/Safari edge-clamping stretch bugs under backdrop-filter */}
         <div className="absolute -inset-1 z-[2] pointer-events-none overflow-hidden">
-          <img
+          <Image
             src={OVERLAY_IMAGE}
             alt="Train Window Frame"
+            fill
+            priority
+            sizes="100vw"
             className="absolute w-full sm:h-[106%] sm:-top-[6%] sm:translate-y-0 sm:scale-100 max-sm:h-[108%] max-sm:-top-[2%] max-sm:-translate-y-4 max-sm:scale-110 max-sm:object-cover max-sm:object-[center_30%] pointer-events-none animate-train-bob transform-gpu translate-z-0 backface-hidden origin-center"
           />
         </div>

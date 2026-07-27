@@ -12,6 +12,9 @@ import { MarkdownRenderer } from '@/components/post/markdown-renderer'
 import { getTagStyles } from '@/lib/tag-color'
 import { TableOfContents } from '@/components/post/table-of-contents'
 import { PostTipButton } from '@/components/post/post-tip-button'
+import { absoluteSiteUrl, siteConfig } from '@/lib/site-config'
+import Image from 'next/image'
+import { toTagNames } from '@/lib/types'
 
 import { BackToTop } from '@/components/ui/back-to-top'
 import { GoToComments } from '@/components/ui/go-to-comments'
@@ -40,9 +43,12 @@ export async function generateMetadata({
   }
 
   return {
-    title: `${post.title} | My Blog`,
+    title: post.title,
     description: post.excerpt || post.title,
-    authors: [{ name: 'My Blog' }],
+    authors: [{ name: siteConfig.name }],
+    alternates: {
+      canonical: `/post/${encodeURIComponent(post.slug)}`,
+    },
     openGraph: {
       title: post.title,
       description: post.excerpt || post.title,
@@ -82,11 +88,13 @@ export default async function PostPage({
   }
 
   // Fetch author profile - Step 2 (Separate query to avoid join errors)
-  const { data: author } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', post.author_id)
-    .single()
+  const { data: author } = post.author_id
+    ? await supabase
+        .from('public_profiles')
+        .select('id, display_name, avatar_url, bio, website, card_bg, enable_tipping, alipay_qr, wechat_qr')
+        .eq('id', post.author_id)
+        .single()
+    : { data: null }
 
   // No longer blocking the whole page if author fetch fails (it just remains null)
 
@@ -112,9 +120,11 @@ export default async function PostPage({
     }
   }
 
-  const tags = post.tags || extractTags(post.content)
+  const content = post.content || ''
+  const storedTags = toTagNames(post.tags)
+  const tags = storedTags.length > 0 ? storedTags : extractTags(content)
 
-  const readingTime = calculateReadingTime(post.content)
+  const readingTime = calculateReadingTime(content)
   const formattedDate = formatDateString(post.created_at)
 
   const jsonLd = {
@@ -130,7 +140,7 @@ export default async function PostPage({
     image: post.cover_image || undefined,
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `/post/${encodeURIComponent(post.slug)}`,
+      '@id': absoluteSiteUrl(`/post/${encodeURIComponent(post.slug)}`),
     },
   }
 
@@ -142,7 +152,14 @@ export default async function PostPage({
       <div className="relative w-full min-h-[360px] md:min-h-[440px] bg-neutral-900 dark:bg-black overflow-hidden group -mt-16 pt-16">
         {post.cover_image && (
           <div className="absolute inset-0 opacity-60">
-            <img src={post.cover_image} alt={post.title} className="w-full h-full object-cover" />
+            <Image
+              src={post.cover_image}
+              alt={post.title}
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover"
+            />
             <div className="absolute inset-0 bg-gradient-to-t from-[#fafafa] dark:from-[#050505] via-transparent to-transparent" />
           </div>
         )}
@@ -211,7 +228,12 @@ export default async function PostPage({
       </div>
 
       <div className="container max-w-6xl mx-auto px-0 md:px-6 -mt-4 md:-mt-16 relative z-20">
-        <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
+          }}
+        />
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8">
           {/* Main Content */}
           <div className="bg-white dark:bg-neutral-900 rounded-none md:rounded-3xl p-5 md:p-10 shadow-none md:shadow-xl border-none md:border border-black/5 dark:border-white/5 min-h-[50vh]">
@@ -222,11 +244,11 @@ export default async function PostPage({
                 目录
               </h3>
               <div className="max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                <TableOfContents content={post.content} showTitle={false} />
+                <TableOfContents content={content} showTitle={false} />
               </div>
             </div>
 
-            <MarkdownRenderer content={post.content} />
+            <MarkdownRenderer content={content} />
 
             {/* Mobile Author Card */}
             <div className="lg:hidden mt-8 md:mt-12 mb-0 pt-8 border-t border-dashed border-black/10 dark:border-white/10">
@@ -234,7 +256,13 @@ export default async function PostPage({
                 <h3 className="font-bold mb-6 text-sm uppercase tracking-widest text-neutral-700">About Author</h3>
                 <div className="w-16 h-16 rounded-full bg-neutral-100 dark:bg-neutral-800 mb-4 overflow-hidden ring-4 ring-white dark:ring-neutral-900 shadow-sm">
                   {author?.avatar_url ? (
-                    <img src={author.avatar_url} alt={author.display_name} className="w-full h-full object-cover" />
+                    <Image
+                      src={author.avatar_url}
+                      alt={author.display_name || '作者头像'}
+                      width={64}
+                      height={64}
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-neutral-300">
                       <User className="w-8 h-8" />
@@ -242,7 +270,6 @@ export default async function PostPage({
                   )}
                 </div>
                 <h4 className="font-bold text-lg mb-1">{author?.display_name || 'Anonymous'}</h4>
-                <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-4 font-medium">{author?.email}</p>
                 <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed italic max-w-xs mx-auto">
                   &ldquo;{author?.bio || '暂无个人简介'}&rdquo;
                 </p>
@@ -266,7 +293,7 @@ export default async function PostPage({
           {/* Sidebar */}
           <div className="lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)] flex flex-col gap-6 px-4 md:px-0">
             <div className="hidden lg:flex bg-white dark:bg-neutral-900 rounded-3xl shadow-sm border border-black/5 dark:border-white/5 min-h-0 flex-col overflow-hidden">
-              <TableOfContents content={post.content} className="h-full p-4 pl-2 pr-2" />
+              <TableOfContents content={content} className="h-full p-4 pl-2 pr-2" />
             </div>
 
             <div className="hidden lg:block bg-white dark:bg-neutral-900 rounded-3xl p-6 shadow-sm border border-black/5 dark:border-white/5 flex-none">
@@ -274,7 +301,13 @@ export default async function PostPage({
               <div className="flex flex-col items-center text-center">
                 <div className="w-20 h-20 rounded-full bg-neutral-100 dark:bg-neutral-800 mb-4 overflow-hidden">
                   {author?.avatar_url ? (
-                    <img src={author.avatar_url} alt={author.display_name} className="w-full h-full object-cover" />
+                    <Image
+                      src={author.avatar_url}
+                      alt={author.display_name || '作者头像'}
+                      width={80}
+                      height={80}
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-neutral-300">
                       <User className="w-8 h-8" />
@@ -282,7 +315,6 @@ export default async function PostPage({
                   )}
                 </div>
                 <h4 className="font-bold text-lg mb-1">{author?.display_name || 'Anonymous'}</h4>
-                <p className="text-xs text-neutral-500 mb-4">{author?.email}</p>
                 <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed italic">
                   &ldquo;{author?.bio || '暂无个人简介'}&rdquo;
                 </p>

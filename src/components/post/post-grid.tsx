@@ -1,5 +1,4 @@
 import PostCard, { Post } from './post-card'
-import { cn } from '@/lib/utils'
 
 interface PostGridProps {
   posts: Post[]

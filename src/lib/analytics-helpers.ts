@@ -1,8 +1,9 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 import { subDays, format } from 'date-fns'
+import type { Database } from '@/lib/types'
 
 export async function getAnalyticsData(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   days: number | 'all'
 ) {
   // 计算日期范围
@@ -70,7 +71,7 @@ export async function getAnalyticsData(
     lastComment: string
   }> = {}
 
-  commentData?.forEach((comment: any) => {
+  commentData?.forEach((comment) => {
     if (!userCommentCounts[comment.user_id]) {
       userCommentCounts[comment.user_id] = {
         count: 0,

@@ -29,6 +29,9 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
+import { SafeImage } from "@/components/ui/safe-image";
+
+const ACTIVE_SINCE = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
 interface User {
   id: string;
@@ -80,7 +83,7 @@ export function UserManagement({
   const activeUsers = users.filter(
     (u) =>
       u.updated_at &&
-      new Date(u.updated_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      new Date(u.updated_at) > ACTIVE_SINCE
   ).length;
 
   return (
@@ -162,12 +165,14 @@ export function UserManagement({
                   {/* 用户信息 */}
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden flex items-center justify-center shrink-0">
+                      <div className="relative w-10 h-10 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden flex items-center justify-center shrink-0">
                         {user.avatar_url ? (
-                          <img
+                          <SafeImage
                             src={user.avatar_url}
                             alt={user.display_name || user.email}
-                            className="w-full h-full object-cover"
+                            fill
+                            sizes="40px"
+                            className="object-cover"
                           />
                         ) : (
                           <UserCircle className="w-6 h-6 text-neutral-400" />

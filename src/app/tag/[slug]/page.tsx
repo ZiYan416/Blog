@@ -3,6 +3,8 @@ import PostList from '@/components/post/post-list'
 import { Metadata } from 'next'
 import { Tag } from 'lucide-react'
 import { getTagStyles } from '@/lib/tag-color'
+import type { Post } from '@/components/post/post-card'
+import { toTagNames } from '@/lib/types'
 
 async function getTagName(slug: string) {
   const supabase = await createClient()
@@ -51,8 +53,8 @@ export default async function TagPage({
   const supabase = await createClient()
 
   // 优先使用 post_tags 关联表查询
-  let query = supabase.from('posts')
-  let posts: any[] = []
+  const query = supabase.from('posts')
+  let posts: Post[] = []
   let count = 0
 
   if (tag.id !== 'legacy') {
@@ -65,7 +67,10 @@ export default async function TagPage({
       .order('created_at', { ascending: false })
       .range(0, 8)
 
-    posts = data || []
+    posts = (data || []).map(({ post_tags, ...post }) => {
+      void post_tags
+      return { ...post, tags: toTagNames(post.tags) }
+    })
     count = total || 0
   } else {
     // 降级策略：使用数组字段查询 (针对旧数据或未同步的标签)
@@ -77,7 +82,10 @@ export default async function TagPage({
       .order('created_at', { ascending: false })
       .range(0, 8)
 
-    posts = data || []
+    posts = (data || []).map((post) => ({
+      ...post,
+      tags: toTagNames(post.tags),
+    }))
     count = total || 0
   }
 

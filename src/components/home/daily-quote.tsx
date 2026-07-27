@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -194,8 +194,10 @@ const quotes = [
   "陪伴是最长情的告白。",
 ];
 
+const DAILY_QUOTE = quotes[Math.floor(Date.now() / 86_400_000) % quotes.length];
+
 export function DailyQuote({ showLightCone = false }: { showLightCone?: boolean }) {
-  const [quote, setQuote] = useState("");
+  const quote = DAILY_QUOTE;
   const [cardWidth, setCardWidth] = useState(280);
   const [lightConeBottomWidth, setLightConeBottomWidth] = useState(0);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -226,18 +228,14 @@ export function DailyQuote({ showLightCone = false }: { showLightCone?: boolean 
       attributeFilter: ['class'],
     });
 
-    // 初始化检查：如果是暗色模式，直接展开
-    if (document.documentElement.classList.contains('dark')) {
-      setIsExpanded(true);
-    }
+    const initialFrame = window.requestAnimationFrame(() => {
+      setIsExpanded(document.documentElement.classList.contains('dark'));
+    });
 
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    // 随机选择一句
-    const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
-    setQuote(randomQuote);
+    return () => {
+      window.cancelAnimationFrame(initialFrame);
+      observer.disconnect();
+    };
   }, []);
 
   // 智能分行逻辑：基于 Canvas 测量文本宽度，仅在超出容器宽度时分行
@@ -320,7 +318,7 @@ export function DailyQuote({ showLightCone = false }: { showLightCone?: boolean 
         // 6. 兜底策略：如果没有找到合适的分割点（如长中文长句），强制在中间平衡分割
         // 防止出现第一行很满，第二行只有几个字的“孤儿行”
 
-        let forcedSplitIndex = Math.floor(quote.length / 2);
+        const forcedSplitIndex = Math.floor(quote.length / 2);
 
         // 如果是英文（包含空格），尝试寻找离中间最近的空格，避免截断单词
         if (quote.includes(' ')) {
@@ -400,7 +398,7 @@ export function DailyQuote({ showLightCone = false }: { showLightCone?: boolean 
         window.removeEventListener('resize', updateCardWidth);
       };
     }
-  }, [quote, quoteLines.join("\n")]);
+  }, [quote, quoteLines]);
 
   // 避免服务端渲染不匹配
   if (!quote) return (

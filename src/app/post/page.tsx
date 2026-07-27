@@ -3,6 +3,7 @@ import PostList from '@/components/post/post-list';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { toTagNames } from '@/lib/types';
 
 export default async function PostsPage() {
   const supabase = await createClient();
@@ -45,7 +46,10 @@ export default async function PostsPage() {
   return (
     <div className="container max-w-6xl mx-auto px-6 pt-8 md:pt-12 pb-12 md:pb-20">
       <PostList
-        initialPosts={posts || []}
+        initialPosts={(posts || []).map((post) => ({
+          ...post,
+          tags: toTagNames(post.tags),
+        }))}
         initialTotal={count || 0}
         error={error?.message}
         header={

@@ -7,12 +7,13 @@ import { ProfileOverview } from "./profile-overview";
 import { ProfileSettingsForm } from "./profile-settings-form";
 import { motion, AnimatePresence } from "framer-motion";
 import { type User } from "@supabase/supabase-js";
+import type { EditableProfile, ProfileActivity, ProfileStats } from "./types";
 
 interface ProfileTabsProps {
   user: User;
-  profile: any;
-  stats: any;
-  recentActivity: any[];
+  profile: EditableProfile;
+  stats: ProfileStats;
+  recentActivity: ProfileActivity[];
 }
 
 export function ProfileTabs({ user, profile, stats, recentActivity }: ProfileTabsProps) {

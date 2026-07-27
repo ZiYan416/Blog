@@ -1,31 +1,29 @@
 import { createClient } from '@/lib/supabase/server'
+import { buildPostSearchFilter, getValidationMessage, postListQuerySchema } from '@/lib/validation'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient()
   const { searchParams } = new URL(request.url)
-  const { data: { user } } = await supabase.auth.getUser()
 
-  const page = parseInt(searchParams.get('page') || '1')
-  const limit = parseInt(searchParams.get('limit') || '9')
-  const category = searchParams.get('category')
-  const tag = searchParams.get('tag')
-  const search = searchParams.get('search')
-  const featured = searchParams.get('featured')
-  const sort = searchParams.get('sort') || 'latest' // latest, oldest, views
+  const parsedQuery = postListQuerySchema.safeParse({
+    page: searchParams.get('page') || undefined,
+    limit: searchParams.get('limit') || undefined,
+    category: searchParams.get('category') || undefined,
+    tag: searchParams.get('tag') || undefined,
+    search: searchParams.get('search') || undefined,
+    featured: searchParams.get('featured') || undefined,
+    sort: searchParams.get('sort') || undefined,
+  })
 
-  // Check if user is admin
-  let isAdmin = false
-  if (user) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('is_admin')
-      .eq('id', user.id)
-      .single()
-    isAdmin = profile?.is_admin || false
+  if (!parsedQuery.success) {
+    return NextResponse.json(
+      { error: getValidationMessage(parsedQuery.error) },
+      { status: 400 }
+    )
   }
 
-  let query = supabase.from('posts')
+  const { page, limit, category, tag, search, featured, sort } = parsedQuery.data
 
   // Prepare the select statement
   // We need to determine if we are filtering by a relational tag BEFORE starting the query chain
@@ -51,16 +49,10 @@ export async function GET(request: NextRequest) {
 
   // Start the query with the correct select statement
   // Note: We assign it to 'postQuery' to avoid type issues with reassigning 'query'
-  let postQuery = query.select(selectString, { count: 'exact' })
+  let postQuery = supabase.from('posts').select(selectString, { count: 'exact' })
 
-  // Auth/Visibility logic
-  if (!isAdmin) {
-    if (user) {
-      postQuery = postQuery.or(`published.eq.true,author_id.eq.${user.id}`)
-    } else {
-      postQuery = postQuery.eq('published', true)
-    }
-  }
+  // Visibility is enforced by posts RLS: the public sees published posts and
+  // administrators see all posts. Avoid duplicating authorization in filters.
 
   // Apply filters
   if (category) {
@@ -79,7 +71,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (search) {
-    postQuery = postQuery.or(`title.ilike.%${search}%,content.ilike.%${search}%`)
+    postQuery = postQuery.or(buildPostSearchFilter(search))
   }
 
   if (featured === 'true') {

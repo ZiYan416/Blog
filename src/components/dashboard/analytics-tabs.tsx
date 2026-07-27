@@ -59,7 +59,7 @@ interface AnalyticsTabsProps {
 
 const tabOrder = ["overview", "content", "users", "engagement"];
 
-export function AnalyticsTabs({ data, dateRange = '7d', rangeText = { period: '7天', label: '7日' } }: AnalyticsTabsProps) {
+export function AnalyticsTabs({ data, rangeText = { period: '7天', label: '7日' } }: AnalyticsTabsProps) {
   const [activeTab, setActiveTab] = useState("overview");
   const [direction, setDirection] = useState(0);
 

@@ -13,10 +13,12 @@ import { ArrowLeft, Save, Send, Image as ImageIcon, Type, Upload, Eye, Loader2, 
 import Link from 'next/link'
 import { useToast } from '@/hooks/use-toast'
 import { autoClassifyTags, generatePostSlug, getPostExcerpt } from '@/lib/markdown'
-import { ensureTagsExist, getTagNames } from '@/app/actions/tags'
+import { getTagNames } from '@/app/actions/tags'
 import { v4 as uuidv4 } from 'uuid'
 import { useEffect } from 'react'
 import { BackToTop } from '@/components/ui/back-to-top'
+import { getErrorMessage } from '@/lib/errors'
+import { SafeImage } from '@/components/ui/safe-image'
 
 export default function NewPostPage() {
   const router = useRouter()
@@ -50,7 +52,10 @@ export default function NewPostPage() {
   }
 
   useEffect(() => {
-    fetchAvailableTags()
+    const timer = window.setTimeout(() => {
+      void fetchAvailableTags()
+    }, 0)
+    return () => window.clearTimeout(timer)
   }, [])
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -99,10 +104,10 @@ export default function NewPostPage() {
         title: "封面上传成功",
         description: "图片已保存到云端",
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "上传失败",
-        description: error.message,
+        description: getErrorMessage(error, '封面上传失败'),
         variant: "destructive",
       })
     } finally {
@@ -160,10 +165,10 @@ export default function NewPostPage() {
 
       router.push('/post')
       router.refresh()
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "保存失败",
-        description: error.message,
+        description: getErrorMessage(error, '文章保存失败'),
         variant: "destructive",
       })
     } finally {
@@ -326,7 +331,7 @@ export default function NewPostPage() {
 
                   {coverImage ? (
                     <div className="relative aspect-video rounded-2xl overflow-hidden border border-black/5 dark:border-white/5 group">
-                      <img src={coverImage} alt="Cover preview" className="w-full h-full object-cover" />
+                      <SafeImage src={coverImage} alt="封面预览" fill sizes="(min-width: 1024px) 320px, 100vw" className="object-cover" />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                         <Button
                           size="sm"

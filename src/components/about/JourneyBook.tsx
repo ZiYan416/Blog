@@ -133,7 +133,7 @@ export default function JourneyBook() {
                     <ul className="list-disc pl-4 space-y-2 marker:text-amber-500">
                       <li>Expanding into WebGL & 3D</li>
                       <li>Open Source Contributions</li>
-                      <li>Building "OpenClaw"</li>
+                      <li>Building &ldquo;OpenClaw&rdquo;</li>
                     </ul>
                  </div>
               </div>
@@ -182,7 +182,7 @@ export default function JourneyBook() {
             backContent={
                <div className="h-full flex items-center justify-center">
                   <div className="w-full h-full border border-dashed border-neutral-300 dark:border-neutral-700 rounded p-4 flex items-center justify-center">
-                     <p className="font-serif italic text-neutral-400 text-center">"Tools are just extensions of the mind."</p>
+                      <p className="font-serif italic text-neutral-400 text-center">&ldquo;Tools are just extensions of the mind.&rdquo;</p>
                   </div>
                </div>
             }
@@ -198,11 +198,11 @@ export default function JourneyBook() {
                  <div>
                     <h3 className="text-3xl font-serif font-bold mb-4 text-neutral-900 dark:text-white">Philosophy</h3>
                     <p className="text-lg italic text-neutral-500 dark:text-neutral-400 leading-relaxed">
-                      "At the intersection of code and craft."
+                       &ldquo;At the intersection of code and craft.&rdquo;
                     </p>
                  </div>
                  <div className="text-sm text-neutral-600 dark:text-neutral-400">
-                    <p className="mb-4">It's not just about making it work. It's about making it feel right.</p>
+                    <p className="mb-4">It&apos;s not just about making it work. It&apos;s about making it feel right.</p>
                  </div>
               </div>
             }
@@ -245,7 +245,7 @@ export default function JourneyBook() {
                style={{ transform: "rotateY(180deg)", backfaceVisibility: "hidden" }}
              >
                 <p className="font-serif italic text-neutral-500 text-center text-sm">
-                   "A digital artifact documenting the journey of a creator."
+                    &ldquo;A digital artifact documenting the journey of a creator.&rdquo;
                 </p>
                 <div className="mt-8 border-t border-neutral-200 dark:border-neutral-800 pt-4 text-center">
                    <p className="font-mono text-xs text-neutral-400 uppercase">Author: Lycheeling</p>

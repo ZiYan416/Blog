@@ -194,14 +194,3 @@ function generateEmptyData() {
     comments: 0,
   }));
 }
-
-// 保留用于向后兼容
-function generateMockData() {
-  const days = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
-  return days.map((day, index) => ({
-    date: day,
-    posts: Math.floor(Math.random() * 3) + 1,
-    views: Math.floor(Math.random() * 200) + 50,
-    comments: Math.floor(Math.random() * 20) + 5,
-  }));
-}

@@ -44,7 +44,7 @@ export function DeletePostButton({ slug, title }: { slug: string, title: string 
           description: data.error || "未知错误，请稍后重试。",
         });
       }
-    } catch (error) {
+    } catch {
       toast({
         variant: "destructive",
         title: "网络错误",
@@ -73,7 +73,7 @@ export function DeletePostButton({ slug, title }: { slug: string, title: string 
             确认删除文章？
           </DialogTitle>
           <DialogDescription className="pt-2">
-            您即将删除文章 <span className="font-bold text-foreground">"{title}"</span>。
+            您即将删除文章 <span className="font-bold text-foreground">&ldquo;{title}&rdquo;</span>。
             <br />
             此操作<span className="font-bold text-red-500">无法撤销</span>，删除后该文章及其所有数据将永久丢失。
           </DialogDescription>

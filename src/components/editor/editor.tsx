@@ -11,6 +11,7 @@ import type { Editor as TiptapEditor } from '@tiptap/react'
 import { createClient } from '@/lib/supabase/client'
 import { v4 as uuidv4 } from 'uuid'
 import { useToast } from '@/hooks/use-toast'
+import { getErrorMessage } from '@/lib/errors'
 
 interface EditorProps {
   content: string
@@ -22,7 +23,7 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
   const [viewMode, setViewMode] = useState<ViewMode>('rich')
   const [tiptapEditor, setTiptapEditor] = useState<TiptapEditor | null>(null)
   const { toast } = useToast()
-  const [isUploading, setIsUploading] = useState(false)
+  const [, setIsUploading] = useState(false)
 
   // Force re-render when editor state changes (for toolbar active states)
   const [, forceUpdate] = useState(0)
@@ -38,7 +39,6 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
   }, [tiptapEditor])
 
   // Refs for editor instances
-  const sourceEditorRef = useRef<any>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
   // Ensure Prism languages are loaded
@@ -56,7 +56,7 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
     return highlight(code, languages.markdown, 'markdown')
   }, [])
 
-  const handleImageUpload = async (file: File): Promise<string | null> => {
+  const handleImageUpload = useCallback(async (file: File): Promise<string | null> => {
     try {
       setIsUploading(true)
       const supabase = createClient()
@@ -75,18 +75,18 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
         .getPublicUrl(filePath)
 
       return publicUrl
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Image upload failed:', error)
       toast({
         title: "图片上传失败",
-        description: error.message,
+        description: getErrorMessage(error, '图片上传失败'),
         variant: "destructive"
       })
       return null
     } finally {
       setIsUploading(false)
     }
-  }
+  }, [toast])
 
   const handleSourcePaste = useCallback(async (e: React.ClipboardEvent) => {
     const items = Array.from(e.clipboardData.items)
@@ -144,7 +144,7 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
         }
       }
     }
-  }, [content, onChange, containerRef])
+  }, [content, handleImageUpload, onChange])
 
   const handleAction = (action: MarkdownAction) => {
     // If in Rich mode (or Split mode), try Tiptap first
@@ -339,7 +339,6 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
           >
             <div ref={containerRef} className="min-h-full">
               <CodeEditor
-                ref={sourceEditorRef}
                 value={content}
                 onValueChange={onChange}
                 highlight={highlightCode}
@@ -352,7 +351,6 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
                   backgroundColor: 'transparent',
                 }}
                 textareaClassName="focus:outline-none"
-                // @ts-ignore
                 onPaste={handleSourcePaste}
               />
             </div>

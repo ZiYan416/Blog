@@ -2,6 +2,7 @@ import { createClient as createServerClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { apiError, getErrorMessage } from '@/lib/api-response'
 import { NextResponse } from 'next/server'
+import { AccessError, requireAdmin } from '@/lib/server-auth'
 
 export async function DELETE(
   request: Request,
@@ -12,21 +13,7 @@ export async function DELETE(
     const { id } = await params
     const supabase = await createServerClient()
 
-    // 验证管理员权限
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return apiError('未授权', 401, 'UNAUTHORIZED')
-    }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('is_admin')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile?.is_admin) {
-      return apiError('需要管理员权限', 403, 'FORBIDDEN')
-    }
+    const user = await requireAdmin(supabase)
 
     // 防止删除自己
     if (id === user.id) {
@@ -52,6 +39,9 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error) {
+    if (error instanceof AccessError) {
+      return apiError(error.message, error.status, error.code)
+    }
     console.error('删除用户失败:', error)
     return apiError(getErrorMessage(error), 500, 'USER_DELETE_FAILED')
   }

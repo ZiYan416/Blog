@@ -18,6 +18,7 @@ import { StatsCard } from '@/components/dashboard/stats-card'
 import { TodoAlerts } from '@/components/dashboard/todo-alerts'
 import { getAnalyticsData } from '@/lib/analytics-helpers'
 import { getLoginRedirect, getManagedUsers } from '@/lib/admin-data'
+import { SafeImage } from '@/components/ui/safe-image'
 
 export default async function DashboardPage() {
   const supabase = await createServerClient()
@@ -244,7 +245,7 @@ export default async function DashboardPage() {
                     <div key={post.id} className="group flex items-center gap-4 p-4 rounded-3xl bg-white dark:bg-neutral-900 border border-black/[0.03] dark:border-white/[0.03] hover:border-black/10 dark:hover:border-white/10 transition-all">
                       <div className="w-16 h-12 shrink-0 rounded-xl bg-neutral-100 dark:bg-neutral-800 overflow-hidden relative">
                         {post.cover_image ? (
-                          <img src={post.cover_image} alt={post.title} className="w-full h-full object-cover" />
+                          <SafeImage src={post.cover_image} alt={post.title} fill sizes="64px" className="object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-neutral-300">
                             <FileText className="w-6 h-6 opacity-50" />
@@ -288,9 +289,9 @@ export default async function DashboardPage() {
           <div className="space-y-8">
             <Card className="border-none bg-black dark:bg-white text-white dark:text-black rounded-3xl overflow-hidden shadow-2xl">
               <CardContent className="p-6 md:p-8">
-                <div className="w-16 h-16 rounded-full bg-white/10 dark:bg-black/10 mb-6 overflow-hidden flex items-center justify-center">
+                <div className="relative w-16 h-16 rounded-full bg-white/10 dark:bg-black/10 mb-6 overflow-hidden flex items-center justify-center">
                   {profile?.avatar_url ? (
-                    <img src={profile.avatar_url} alt={profile.display_name} className="w-full h-full object-cover" />
+                    <SafeImage src={profile.avatar_url} alt={profile.display_name || '管理员头像'} fill sizes="64px" className="object-cover" />
                   ) : (
                     <UserCircle className="w-10 h-10 opacity-50" />
                   )}

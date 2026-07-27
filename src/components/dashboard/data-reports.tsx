@@ -1,11 +1,18 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { BarChart3, TrendingUp, Users, Hash } from "lucide-react";
+import { BarChart3, TrendingUp, Hash } from "lucide-react";
 
 interface DataReportsProps {
-  topPosts: any[];
-  tagStats?: any[]; // Placeholder for future tag stats
+  topPosts: Array<{
+    id: string;
+    title: string;
+    view_count: number | null;
+  }>;
+  tagStats?: Array<{
+    name: string;
+    post_count: number | null;
+  }>;
 }
 
 export function DataReports({ topPosts }: DataReportsProps) {
