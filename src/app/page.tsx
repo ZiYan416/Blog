@@ -3,8 +3,7 @@ import { ArrowRight, FileText, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { getTagStyles } from "@/lib/tag-color";
-import { CinematicHero } from "@/components/home/cinematic-hero";
-import { DailyQuote } from "@/components/home/daily-quote";
+import { HomeHero } from "@/components/home/home-hero";
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -20,35 +19,8 @@ export default async function HomePage() {
 
   return (
     <div className="flex flex-col items-center w-full overflow-x-hidden">
-      {/* Cinematic Hero Section */}
-      <CinematicHero
-        badgeText={<DailyQuote />}
-        titleLine1="有些故事，"
-        titleLine2="值得被认真记录"
-        subtitle="用心感受生活的温度，用代码构建数字的花园。在这里，我们探讨技术，也分享生活的沉淀与感悟。"
-        ctaNode={
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
-            <Button
-              asChild
-              size="lg"
-              className="w-full sm:w-auto rounded-full px-8 bg-white text-black hover:bg-white/90 font-semibold transition-all shadow-lg"
-            >
-              <Link href="/post">
-                开始阅读文章
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Link>
-            </Button>
-            <Button
-              asChild
-              variant="outline"
-              size="lg"
-              className="w-full sm:w-auto rounded-full px-8 liquid-glass text-white hover:bg-white/15 border-none transition-all"
-            >
-              <Link href="/about">关于作者</Link>
-            </Button>
-          </div>
-        }
-      />
+      {/* Home Hero Section (Toggleable theme via Settings) */}
+      <HomeHero />
 
       {/* Featured Posts Preview */}
       <section className="w-full max-w-6xl mx-auto px-6 pt-12 pb-16 md:pb-24">

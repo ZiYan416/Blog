@@ -28,6 +28,8 @@ import { SignOutButton } from "@/components/auth/sign-out-button";
 import { LoginModal } from "@/components/auth/login-modal";
 import { Logo } from "@/components/ui/logo";
 
+import { SettingsModal } from "@/components/settings/settings-modal";
+
 const navItems = [
   { href: "/", label: "首页" },
   { href: "/post", label: "文章" },
@@ -41,6 +43,7 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
   const [searchQuery, setSearchQuery] = useState("");
   const { user: clientUser, profile, isAdmin } = useUser();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isNavbarVisible, setIsNavbarVisible] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -177,6 +180,16 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
                             </Link>
                           </>
                         )}
+                        <button
+                          onClick={() => {
+                            setIsSheetOpen(false);
+                            setIsSettingsOpen(true);
+                          }}
+                          className="px-4 py-3 text-sm font-medium text-neutral-500 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all flex items-center gap-3 w-full text-left"
+                        >
+                           <Settings className="w-4 h-4" />
+                           偏好设置
+                        </button>
                       </nav>
 
                       <div className="px-2">
@@ -285,6 +298,13 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
                     </DropdownMenuItem>
                   </>
                 )}
+                <DropdownMenuItem
+                  onClick={() => setIsSettingsOpen(true)}
+                  className="cursor-pointer flex items-center w-full"
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  设置
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <SignOutButton
@@ -334,6 +354,9 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
         "transition-all duration-300 ease-in-out",
         isNavbarVisible ? "h-16" : "h-0"
       )} />
+
+      {/* Settings Modal */}
+      <SettingsModal open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
     </>
   );
 }
