@@ -178,7 +178,7 @@ export function CinematicHero({
   }, []);
 
   return (
-    <section className="relative w-full h-[calc(100vh-4rem)] overflow-hidden bg-black flex flex-col justify-between py-6 px-4 sm:px-6 isolate">
+    <section className="relative w-full h-[calc(100vh-4rem)] overflow-hidden bg-black flex flex-col justify-between py-6 px-4 sm:px-6 isolate select-none">
       {/* Container for initial load: pure black until video is ready, then train cabin + video dissolve in TOGETHER */}
       <div
         className={cn(

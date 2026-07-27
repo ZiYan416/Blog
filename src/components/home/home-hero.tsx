@@ -14,7 +14,7 @@ export function HomeHero() {
   // If theme settings loaded and user disabled the Cinematic Hero theme
   if (isLoaded && !cinematicHeroEnabled) {
     return (
-      <section className="relative w-full mx-auto px-6 pt-12 md:pt-24 pb-16 text-center overflow-visible isolate">
+      <section className="relative w-full mx-auto px-6 pt-12 md:pt-24 pb-16 text-center overflow-visible isolate select-none">
         <div className="relative max-w-4xl mx-auto overflow-visible">
           {/* Badge / DailyQuote with Switch Light Cone Beam Animation */}
           <DailyQuote showLightCone={true} />

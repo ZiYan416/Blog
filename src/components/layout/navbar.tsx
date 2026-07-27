@@ -76,7 +76,7 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
   return (
     <>
       <header className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out overflow-hidden",
+        "fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out overflow-hidden select-none",
         isNavbarVisible
           ? "h-16 border-b border-black/5 dark:border-white/5 bg-white/70 dark:bg-black/70 backdrop-blur-xl shadow-sm"
           : "h-0 border-none bg-transparent"

@@ -504,4 +504,16 @@ html, body {
   .dark .article-code-block .hljs-link {
     color: #7dd3fc;
   }
+
+  .select-none, .select-none * {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+
+  .select-none img, .select-none svg {
+    -webkit-user-drag: none;
+    user-drag: none;
+  }
 }
