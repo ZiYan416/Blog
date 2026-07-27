@@ -266,7 +266,10 @@ export function CinematicHero({
         </div>
       </div>
 
-      {/* Hero Main Content (z-index 3) */}
+      {/* Subtle radial vignette behind hero text — ensures legibility against bright video backgrounds like snow/lake scenes */}
+      <div className="absolute inset-0 z-[3] pointer-events-none bg-[radial-gradient(ellipse_80%_70%_at_50%_55%,rgba(0,0,0,0.45)_0%,rgba(0,0,0,0.15)_55%,transparent_100%)]" />
+
+      {/* Hero Main Content (z-index 4) */}
       <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center max-w-5xl mx-auto my-auto py-4 sm:py-8 px-2">
         {/* Badge / DailyQuote */}
         {badgeText && (
@@ -289,17 +292,19 @@ export function CinematicHero({
         {/* Heading with Instrument Serif */}
         <h1
           className={cn(
-            "font-serif-instrument italic text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-[5.25rem] leading-[1.08] tracking-tight max-w-4xl mb-4 sm:mb-6 transition-colors duration-700 drop-shadow-md text-white"
+            "font-serif-instrument italic text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-[5.25rem] leading-[1.08] tracking-tight max-w-4xl mb-4 sm:mb-6 transition-colors duration-700 text-white",
+            "[text-shadow:_0_2px_12px_rgba(0,0,0,0.5),_0_1px_3px_rgba(0,0,0,0.4)]"
           )}
         >
           {titleLine1} <br />
-          <span className="not-italic font-normal text-white/70 drop-shadow-none">{titleLine2}</span>
+          <span className="not-italic font-normal text-white/70 [text-shadow:_0_2px_8px_rgba(0,0,0,0.4)]">{titleLine2}</span>
         </h1>
 
         {/* Subtext */}
         <p
           className={cn(
-            "text-xs sm:text-sm md:text-base lg:text-lg max-w-xs sm:max-w-md md:max-w-xl mx-auto leading-relaxed font-sans transition-colors duration-700 opacity-90 drop-shadow-sm text-white/80"
+            "text-xs sm:text-sm md:text-base lg:text-lg max-w-xs sm:max-w-md md:max-w-xl mx-auto leading-relaxed font-sans transition-colors duration-700 text-white/85",
+            "[text-shadow:_0_1px_6px_rgba(0,0,0,0.4)]"
           )}
         >
           {subtitle}
