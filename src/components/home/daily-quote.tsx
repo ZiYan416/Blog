@@ -193,7 +193,7 @@ const quotes = [
   "陪伴是最长情的告白。",
 ];
 
-export function DailyQuote() {
+export function DailyQuote({ showLightCone = false }: { showLightCone?: boolean }) {
   const [quote, setQuote] = useState("");
   const [cardWidth, setCardWidth] = useState(280);
   const [lightConeBottomWidth, setLightConeBottomWidth] = useState(0);
@@ -402,25 +402,49 @@ export function DailyQuote() {
   );
 
   return (
-    <div
-      ref={cardRef}
-      className="inline-flex items-center gap-2 px-4 py-2 rounded-full liquid-glass border border-white/20 mb-6 md:mb-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 relative z-[100] backdrop-blur-md transition-all shadow-lg"
-    >
-      <Sparkles className="w-3.5 h-3.5 text-amber-300 shrink-0" />
-      <span
-        className="text-xs font-medium font-serif text-white/90 italic text-center leading-relaxed drop-shadow-sm"
-        style={{
-          display: 'inline-block',
-          width: 'fit-content',
-          maxWidth: 'min(82vw, 560px)',
-        }}
+    <div className="relative inline-flex flex-col items-center">
+      {/* Light Cone Beam (扇形光锥) - Only rendered when showLightCone is true in dark mode */}
+      {showLightCone && (
+        <div
+          className={cn(
+            "absolute left-1/2 -top-4 -translate-x-1/2 pointer-events-none transition-all duration-1000 ease-out origin-top z-0",
+            isExpanded ? "opacity-100 scale-100" : "opacity-0 scale-95"
+          )}
+          style={{
+            width: `${lightConeBottomWidth}px`,
+            height: '80vh',
+            background: 'conic-gradient(from 180deg at 50% 0%, transparent 165deg, rgba(251, 191, 36, 0.12) 175deg, rgba(251, 191, 36, 0.25) 180deg, rgba(251, 191, 36, 0.12) 185deg, transparent 195deg)',
+            maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0) 100%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0) 100%)',
+          }}
+        />
+      )}
+
+      <div
+        ref={cardRef}
+        className={cn(
+          "inline-flex items-center gap-2 px-4 py-2 rounded-full border mb-6 md:mb-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 relative z-[10] backdrop-blur-md transition-all shadow-lg",
+          showLightCone
+            ? "bg-black/5 dark:bg-white/10 border-black/10 dark:border-white/20 text-neutral-800 dark:text-white"
+            : "liquid-glass border-white/20 text-white"
+        )}
       >
-        {quoteLines.map((line, i) => (
-          <span key={i} style={{ display: 'block' }}>
-            {line}
-          </span>
-        ))}
-      </span>
+        <Sparkles className="w-3.5 h-3.5 text-amber-500 dark:text-amber-300 shrink-0" />
+        <span
+          className="text-xs font-medium font-serif italic text-center leading-relaxed drop-shadow-sm"
+          style={{
+            display: 'inline-block',
+            width: 'fit-content',
+            maxWidth: 'min(82vw, 560px)',
+          }}
+        >
+          {quoteLines.map((line, i) => (
+            <span key={i} style={{ display: 'block' }}>
+              {line}
+            </span>
+          ))}
+        </span>
+      </div>
     </div>
   );
 }

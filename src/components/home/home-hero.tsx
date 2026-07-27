@@ -16,9 +16,9 @@ export function HomeHero() {
     return (
       <section className="relative w-full py-16 sm:py-24 md:py-32 px-6 flex flex-col items-center justify-center text-center bg-gradient-to-b from-neutral-50/50 via-neutral-100/30 to-transparent dark:from-neutral-900/40 dark:via-neutral-900/20 dark:to-transparent border-b border-black/5 dark:border-white/5 transition-all duration-700">
         <div className="max-w-4xl mx-auto flex flex-col items-center">
-          {/* Badge / DailyQuote */}
+          {/* Badge / DailyQuote with Switch Light Cone Beam Animation */}
           <div className="mb-4 inline-flex items-center justify-center">
-            <DailyQuote />
+            <DailyQuote showLightCone={true} />
           </div>
 
           {/* Heading with Instrument Serif */}
