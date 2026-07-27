@@ -56,7 +56,7 @@ function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopP
 
     const activeVideo = videoRefs[activeIdx]?.current;
     if (activeVideo) {
-      activeVideo.playbackRate = 0.75;
+      activeVideo.playbackRate = 1.0;
       activeVideo.play().catch(() => {});
     }
   }, [activeIdx, isActiveGroup]);
