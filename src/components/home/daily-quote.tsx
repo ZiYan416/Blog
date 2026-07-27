@@ -375,25 +375,32 @@ export function DailyQuote({ showLightCone = false }: { showLightCone?: boolean 
 
 
   useEffect(() => {
-    // 使用 ResizeObserver 实时监听卡片宽度变化
-    if (cardRef.current && quote) {
-      const resizeObserver = new ResizeObserver((entries) => {
-        for (let entry of entries) {
-          if (entry.contentBoxSize) {
-            // 使用 contentBoxSize 获取更精确的宽度
-            const width = entry.contentRect.width;
+    // 监听卡片 DOM 节点实际在页面渲染后的真实外框宽度 (border-box width)
+    if (cardRef.current) {
+      const updateCardWidth = () => {
+        if (cardRef.current) {
+          const width = cardRef.current.offsetWidth || cardRef.current.getBoundingClientRect().width;
+          if (width > 0) {
             setCardWidth(width);
           }
         }
+      };
+
+      updateCardWidth();
+
+      const resizeObserver = new ResizeObserver(() => {
+        updateCardWidth();
       });
 
       resizeObserver.observe(cardRef.current);
+      window.addEventListener('resize', updateCardWidth);
 
       return () => {
         resizeObserver.disconnect();
+        window.removeEventListener('resize', updateCardWidth);
       };
     }
-  }, [quote]);
+  }, [quote, quoteLines]);
 
   // 避免服务端渲染不匹配
   if (!quote) return (
@@ -425,18 +432,17 @@ export function DailyQuote({ showLightCone = false }: { showLightCone?: boolean 
           ))}
         </span>
 
-        {/* Light Cone - Bottom width based on viewport, top matches card */}
+        {/* Light Cone - Top width dynamically matches cardWidth */}
         <div className="hidden dark:block absolute top-full left-1/2 -translate-x-1/2 pointer-events-none overflow-visible z-[-1]">
           {/* Soft cone with smooth edges and center-out animation */}
           <div
             style={{
               width: `${lightConeBottomWidth}px`,
               height: '350px',
-              background: 'linear-gradient(180deg, rgba(251, 191, 36, 0.25) 0%, rgba(251, 191, 36, 0.12) 35%, transparent 100%)',
+              background: 'linear-gradient(180deg, rgba(251, 191, 36, 0.3) 0%, rgba(251, 191, 36, 0.12) 40%, transparent 100%)',
               clipPath: (() => {
-                const topLeftPercent = lightConeBottomWidth > 0
-                  ? ((lightConeBottomWidth - cardWidth) / 2) / lightConeBottomWidth * 100
-                  : 50;
+                if (!lightConeBottomWidth || !cardWidth) return 'polygon(50% 0%, 50% 100%, 50% 100%, 50% 0%)';
+                const topLeftPercent = ((lightConeBottomWidth - cardWidth) / 2) / lightConeBottomWidth * 100;
                 const topRightPercent = 100 - topLeftPercent;
 
                 if (isExpanded) {
@@ -444,23 +450,23 @@ export function DailyQuote({ showLightCone = false }: { showLightCone?: boolean 
                 }
                 return `polygon(50% 0%, 50% 100%, 50% 100%, 50% 0%)`;
               })(),
-              maskImage: 'linear-gradient(to right, transparent, black 15%, black 85%, transparent)',
-              WebkitMaskImage: 'linear-gradient(to right, transparent, black 15%, black 85%, transparent)',
-              filter: 'blur(35px)',
+              maskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)',
+              WebkitMaskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)',
+              filter: 'blur(24px)',
               opacity: isExpanded ? 1 : 0,
               transition: 'clip-path 1.5s ease-out, opacity 1s ease-in',
               transformOrigin: 'top center',
             }}
           />
 
-          {/* Core Beam - Stronger center light */}
+          {/* Core Beam - Stronger center light matching card width */}
           <div
              className="absolute top-0 left-1/2 -translate-x-1/2"
              style={{
-               width: `${cardWidth * 0.8}px`,
+               width: `${cardWidth}px`,
                height: '280px',
-               background: 'linear-gradient(180deg, rgba(251, 191, 36, 0.2) 0%, transparent 85%)',
-               filter: 'blur(20px)',
+               background: 'linear-gradient(180deg, rgba(251, 191, 36, 0.25) 0%, transparent 85%)',
+               filter: 'blur(16px)',
                opacity: isExpanded ? 1 : 0,
                transition: 'opacity 1.5s ease-out 0.2s',
              }}
