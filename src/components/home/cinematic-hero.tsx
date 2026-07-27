@@ -199,12 +199,12 @@ export function CinematicHero({
           onVideoReady={() => setIsInitialVideoLoaded(true)}
         />
 
-        {/* Standard Transparent PNG Overlay (z-index 2) - object-cover object-top pins cabin roof directly under navbar */}
+        {/* Standard Transparent PNG Overlay (z-index 2) - object-cover object-center vertically centers window frame with equal top & bottom margins */}
         <div className="absolute inset-0 z-[2] pointer-events-none overflow-hidden">
           <img
             src={OVERLAY_IMAGE}
             alt="Train Window Frame"
-            className="w-full h-full object-cover object-top pointer-events-none animate-train-bob"
+            className="w-full h-full object-cover object-center pointer-events-none animate-train-bob"
           />
         </div>
       </div>

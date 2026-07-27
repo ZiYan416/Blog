@@ -91,7 +91,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
             onClick={() => onOpenChange(false)}
             className="px-5 py-2 text-xs font-bold rounded-full bg-black dark:bg-white text-white dark:text-black hover:opacity-90 transition-opacity"
           >
-            完成
+            保存
           </button>
         </div>
       </DialogContent>
