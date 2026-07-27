@@ -404,19 +404,20 @@ export function DailyQuote({ showLightCone = false }: { showLightCone?: boolean 
 
   return (
     <div className="relative inline-flex flex-col items-center">
-      {/* Light Cone Beam (扇形光锥) - Only rendered when showLightCone is true in dark mode */}
+      {/* Light Cone Beam (扇形光锥 - 核心开关灯动画) */}
       {showLightCone && (
         <div
           className={cn(
-            "absolute left-1/2 -top-12 -translate-x-1/2 pointer-events-none transition-all duration-1000 ease-out origin-top z-0",
-            isExpanded ? "opacity-100 scale-100" : "opacity-0 scale-95"
+            "absolute left-1/2 -top-10 -translate-x-1/2 pointer-events-none transition-all duration-1000 ease-out origin-top z-0",
+            isExpanded ? "opacity-100 scale-y-100 scale-x-100" : "opacity-0 scale-y-0 scale-x-75"
           )}
           style={{
-            width: `${lightConeBottomWidth || 800}px`,
-            height: '750px',
-            background: 'conic-gradient(from 180deg at 50% 0%, transparent 162deg, rgba(251, 191, 36, 0.16) 174deg, rgba(251, 191, 36, 0.38) 180deg, rgba(251, 191, 36, 0.16) 186deg, transparent 198deg)',
-            maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0) 100%)',
-            WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0) 100%)',
+            width: `${lightConeBottomWidth || 750}px`,
+            height: '700px',
+            background: 'conic-gradient(from 180deg at 50% 0%, transparent 155deg, rgba(251, 191, 36, 0.15) 170deg, rgba(251, 191, 36, 0.45) 180deg, rgba(251, 191, 36, 0.15) 190deg, transparent 205deg)',
+            filter: 'drop-shadow(0 0 25px rgba(251, 191, 36, 0.35))',
+            maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 50%, rgba(0,0,0,0) 100%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 50%, rgba(0,0,0,0) 100%)',
           }}
         />
       )}

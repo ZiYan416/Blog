@@ -18,7 +18,7 @@ export default async function HomePage() {
     .limit(4);
 
   return (
-    <div className="flex flex-col items-center w-full overflow-x-hidden">
+    <div className="flex flex-col items-center w-full min-h-screen">
       {/* Home Hero Section (Toggleable theme via Settings) */}
       <HomeHero />
 
