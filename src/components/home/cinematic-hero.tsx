@@ -70,9 +70,9 @@ function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopP
     const currVideo = videoRefs[currentIdx]?.current;
 
     if (nextVideo) {
-      // 1. Reset next video to 0.0s
+      // 1. Reset next video to 0.0s and ensure standard 1.0x native speed
       nextVideo.currentTime = 0;
-      nextVideo.playbackRate = 0.75;
+      nextVideo.playbackRate = 1.0;
       // 2. Start decoding and playing nextVideo while invisible (opacity-0)
       nextVideo.play().catch(() => {});
 
@@ -125,7 +125,7 @@ function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopP
           muted
           playsInline
           onCanPlayThrough={(e) => {
-            e.currentTarget.playbackRate = 0.75;
+            e.currentTarget.playbackRate = 1.0;
             if (idx === 0 && onVideoReady) onVideoReady();
           }}
           onTimeUpdate={() => handleTimeUpdate(idx)}
