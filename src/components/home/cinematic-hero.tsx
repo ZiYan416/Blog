@@ -227,7 +227,7 @@ export function CinematicHero({
           <img
             src={OVERLAY_IMAGE}
             alt="Train Window Frame"
-            className="w-full h-full object-cover object-top md:object-center pointer-events-none animate-train-bob transform-gpu translate-z-0 backface-hidden"
+            className="w-full h-full object-cover object-[center_18%] md:object-center pointer-events-none animate-train-bob transform-gpu translate-z-0 backface-hidden"
           />
         </div>
       </div>
