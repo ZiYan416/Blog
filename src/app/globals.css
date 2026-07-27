@@ -39,15 +39,17 @@ html, body {
 
 @keyframes trainBob {
   0%, 100% {
-    transform: scale(1.03) translateY(0px);
+    transform: translate3d(0, 0px, 0) scale(1.03);
   }
   50% {
-    transform: scale(1.03) translateY(-6px);
+    transform: translate3d(0, -6px, 0) scale(1.03);
   }
 }
 
 .animate-train-bob {
   animation: trainBob 3s ease-in-out infinite;
+  will-change: transform;
+  backface-visibility: hidden;
 }
 
 @layer base {
