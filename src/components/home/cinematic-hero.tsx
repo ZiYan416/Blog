@@ -225,10 +225,10 @@ export function CinematicHero({
       attributeFilter: ["class"],
     });
 
-    // Mobile safety timer fallback: guarantees 1.5s initial dissolve fade-in triggers on all mobile WebKit devices
+    // Mobile safety timer fallback: guarantees 1.5s initial dissolve fade-in triggers after video starts buffering
     const safetyTimer = setTimeout(() => {
       setIsInitialVideoLoaded(true);
-    }, 500);
+    }, 1500);
 
     return () => {
       observer.disconnect();
@@ -265,12 +265,12 @@ export function CinematicHero({
           onPrimaryReady={() => setIsPrimaryReady(true)}
         />
 
-        {/* Standard Transparent PNG Overlay (z-index 2) - h-[108%] + scale-110 guarantees bottom edge never leaks video during bobbing */}
+        {/* Standard Transparent PNG Overlay (z-index 2) - PC uses sm:h-full sm:top-0 for 1:1 pixel-perfect equal top & bottom margins */}
         <div className="absolute inset-0 z-[2] pointer-events-none overflow-hidden">
           <img
             src={OVERLAY_IMAGE}
             alt="Train Window Frame"
-            className="w-full h-[108%] -top-[2%] object-cover object-[center_30%] sm:object-center pointer-events-none animate-train-bob transform-gpu translate-z-0 backface-hidden max-sm:-translate-y-4 max-sm:scale-110 origin-center"
+            className="w-full sm:h-full sm:top-0 sm:object-center sm:translate-y-0 sm:scale-100 max-sm:h-[108%] max-sm:-top-[2%] max-sm:object-[center_30%] max-sm:-translate-y-4 max-sm:scale-110 pointer-events-none animate-train-bob transform-gpu translate-z-0 backface-hidden origin-center"
           />
         </div>
       </div>
