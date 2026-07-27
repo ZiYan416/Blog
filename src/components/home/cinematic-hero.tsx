@@ -72,9 +72,7 @@ function GroupVideoLoop({
     }
   }, [activeIdx, isActiveGroup]);
 
-  // When primary video 0 is ready/playing (handles iOS/Android mobile WebKit event differences), lazy-trigger preloading
-  const handleCanPlay = (idx: number, e: React.SyntheticEvent<HTMLVideoElement>) => {
-    e.currentTarget.playbackRate = 1.0;
+  const markVideoReady = (idx: number) => {
     if (idx === 0) {
       if (!hasTriggeredReadyRef.current[idx]) {
         hasTriggeredReadyRef.current[idx] = true;
@@ -90,6 +88,12 @@ function GroupVideoLoop({
         return next;
       });
     }
+  };
+
+  // When primary video 0 is ready/playing (handles iOS/Android mobile WebKit event differences), lazy-trigger preloading
+  const handleCanPlay = (idx: number, e: React.SyntheticEvent<HTMLVideoElement>) => {
+    e.currentTarget.playbackRate = 1.0;
+    markVideoReady(idx);
   };
 
   const triggerNext = (currentIdx: number) => {
@@ -134,9 +138,17 @@ function GroupVideoLoop({
   };
 
   const handleTimeUpdate = (idx: number) => {
-    if (idx !== activeIdx || !isActiveGroup) return;
+    if (!isActiveGroup) return;
     const video = videoRefs[idx]?.current;
-    if (!video || !video.duration || video.duration < 1) return;
+    if (!video) return;
+
+    // Trigger initial dissolve fade-in as soon as the first video frame is actually rendering (currentTime > 0)
+    if (idx === 0 && isPrimaryGroup && video.currentTime > 0) {
+      markVideoReady(0);
+    }
+
+    if (idx !== activeIdx) return;
+    if (!video.duration || video.duration < 1) return;
 
     const remainingTime = video.duration - video.currentTime;
     // Trigger pre-roll when current video has 2.0s remaining (250ms pre-roll + 1.5s crossfade)
@@ -225,15 +237,7 @@ export function CinematicHero({
       attributeFilter: ["class"],
     });
 
-    // Mobile safety timer fallback: guarantees 1.5s initial dissolve fade-in triggers after video starts buffering
-    const safetyTimer = setTimeout(() => {
-      setIsInitialVideoLoaded(true);
-    }, 1500);
-
-    return () => {
-      observer.disconnect();
-      clearTimeout(safetyTimer);
-    };
+    return () => observer.disconnect();
   }, []);
 
   return (
@@ -265,12 +269,12 @@ export function CinematicHero({
           onPrimaryReady={() => setIsPrimaryReady(true)}
         />
 
-        {/* Standard Transparent PNG Overlay (z-index 2) - PC uses sm:h-full sm:top-0 for 1:1 pixel-perfect equal top & bottom margins */}
+        {/* Standard Transparent PNG Overlay (z-index 2) - 100% pixel-perfect equal top/bottom margins on PC matching original design */}
         <div className="absolute inset-0 z-[2] pointer-events-none overflow-hidden">
           <img
             src={OVERLAY_IMAGE}
             alt="Train Window Frame"
-            className="w-full sm:h-full sm:top-0 sm:object-center sm:translate-y-0 sm:scale-100 max-sm:h-[108%] max-sm:-top-[2%] max-sm:object-[center_30%] max-sm:-translate-y-4 max-sm:scale-110 pointer-events-none animate-train-bob transform-gpu translate-z-0 backface-hidden origin-center"
+            className="w-full h-full object-cover object-center pointer-events-none animate-train-bob transform-gpu translate-z-0 backface-hidden"
           />
         </div>
       </div>
