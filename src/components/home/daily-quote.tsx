@@ -414,11 +414,22 @@ export function DailyQuote({ showLightCone = false }: { showLightCone?: boolean 
       {/* Quote Card */}
       <div
         ref={cardRef}
-        className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-black/[0.03] dark:bg-black/40 border border-black/[0.05] dark:border-amber-200/40 mb-6 md:mb-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 relative z-[100] dark:shadow-[0_0_20px_2px_rgba(251,191,36,0.3)] backdrop-blur-sm transition-all"
+        className={cn(
+          "inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 md:mb-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 relative z-[100] backdrop-blur-md transition-all shadow-lg",
+          showLightCone
+            ? "bg-black/[0.03] dark:bg-black/40 border border-black/[0.05] dark:border-amber-200/40 dark:shadow-[0_0_20px_2px_rgba(251,191,36,0.3)] text-neutral-600 dark:text-amber-100/90"
+            : "bg-black/40 border border-white/20 text-white shadow-xl"
+        )}
       >
-        <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0 dark:text-amber-300" />
+        <Sparkles className={cn(
+          "w-3.5 h-3.5 shrink-0",
+          showLightCone ? "text-amber-500 dark:text-amber-300" : "text-amber-300"
+        )} />
         <span
-          className="text-xs font-medium font-serif text-neutral-600 dark:text-amber-100/90 italic text-center leading-relaxed"
+          className={cn(
+            "text-xs font-medium font-serif italic text-center leading-relaxed",
+            showLightCone ? "text-neutral-600 dark:text-amber-100/90" : "text-white drop-shadow-sm"
+          )}
           style={{
             display: 'inline-block',
             width: 'fit-content',
@@ -432,46 +443,48 @@ export function DailyQuote({ showLightCone = false }: { showLightCone?: boolean 
           ))}
         </span>
 
-        {/* Light Cone - Top width dynamically matches cardWidth */}
-        <div className="hidden dark:block absolute top-full left-1/2 -translate-x-1/2 pointer-events-none overflow-visible z-[-1]">
-          {/* Soft cone with smooth edges and center-out animation */}
-          <div
-            style={{
-              width: `${lightConeBottomWidth}px`,
-              height: '350px',
-              background: 'linear-gradient(180deg, rgba(251, 191, 36, 0.3) 0%, rgba(251, 191, 36, 0.12) 40%, transparent 100%)',
-              clipPath: (() => {
-                if (!lightConeBottomWidth || !cardWidth) return 'polygon(50% 0%, 50% 100%, 50% 100%, 50% 0%)';
-                const topLeftPercent = ((lightConeBottomWidth - cardWidth) / 2) / lightConeBottomWidth * 100;
-                const topRightPercent = 100 - topLeftPercent;
+        {/* Light Cone - ONLY rendered when showLightCone is true in default hero */}
+        {showLightCone && (
+          <div className="hidden dark:block absolute top-full left-1/2 -translate-x-1/2 pointer-events-none overflow-visible z-[-1]">
+            {/* Soft cone with smooth edges and center-out animation */}
+            <div
+              style={{
+                width: `${lightConeBottomWidth}px`,
+                height: '350px',
+                background: 'linear-gradient(180deg, rgba(251, 191, 36, 0.3) 0%, rgba(251, 191, 36, 0.12) 40%, transparent 100%)',
+                clipPath: (() => {
+                  if (!lightConeBottomWidth || !cardWidth) return 'polygon(50% 0%, 50% 100%, 50% 100%, 50% 0%)';
+                  const topLeftPercent = ((lightConeBottomWidth - cardWidth) / 2) / lightConeBottomWidth * 100;
+                  const topRightPercent = 100 - topLeftPercent;
 
-                if (isExpanded) {
-                  return `polygon(${topLeftPercent}% 0%, 0% 100%, 100% 100%, ${topRightPercent}% 0%)`;
-                }
-                return `polygon(50% 0%, 50% 100%, 50% 100%, 50% 0%)`;
-              })(),
-              maskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)',
-              WebkitMaskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)',
-              filter: 'blur(24px)',
-              opacity: isExpanded ? 1 : 0,
-              transition: 'clip-path 1.5s ease-out, opacity 1s ease-in',
-              transformOrigin: 'top center',
-            }}
-          />
+                  if (isExpanded) {
+                    return `polygon(${topLeftPercent}% 0%, 0% 100%, 100% 100%, ${topRightPercent}% 0%)`;
+                  }
+                  return `polygon(50% 0%, 50% 100%, 50% 100%, 50% 0%)`;
+                })(),
+                maskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)',
+                WebkitMaskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)',
+                filter: 'blur(24px)',
+                opacity: isExpanded ? 1 : 0,
+                transition: 'clip-path 1.5s ease-out, opacity 1s ease-in',
+                transformOrigin: 'top center',
+              }}
+            />
 
-          {/* Core Beam - Stronger center light matching card width */}
-          <div
-             className="absolute top-0 left-1/2 -translate-x-1/2"
-             style={{
-               width: `${cardWidth}px`,
-               height: '280px',
-               background: 'linear-gradient(180deg, rgba(251, 191, 36, 0.25) 0%, transparent 85%)',
-               filter: 'blur(16px)',
-               opacity: isExpanded ? 1 : 0,
-               transition: 'opacity 1.5s ease-out 0.2s',
-             }}
-          />
-        </div>
+            {/* Core Beam - Stronger center light matching card width */}
+            <div
+               className="absolute top-0 left-1/2 -translate-x-1/2"
+               style={{
+                 width: `${cardWidth}px`,
+                 height: '280px',
+                 background: 'linear-gradient(180deg, rgba(251, 191, 36, 0.25) 0%, transparent 85%)',
+                 filter: 'blur(16px)',
+                 opacity: isExpanded ? 1 : 0,
+                 transition: 'opacity 1.5s ease-out 0.2s',
+               }}
+            />
+          </div>
+        )}
       </div>
     </>
   );
