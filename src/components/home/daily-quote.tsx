@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useMemo } from "react";
 import { Sparkles } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const quotes = [
   // --- 加缪 (Albert Camus) ---
