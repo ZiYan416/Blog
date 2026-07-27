@@ -403,37 +403,15 @@ export function DailyQuote({ showLightCone = false }: { showLightCone?: boolean 
   );
 
   return (
-    <div className="relative inline-flex flex-col items-center">
-      {/* Light Cone Beam (扇形光锥 - 核心开关灯动画) */}
-      {showLightCone && (
-        <div
-          className={cn(
-            "absolute left-1/2 -top-10 -translate-x-1/2 pointer-events-none transition-all duration-1000 ease-out origin-top z-0",
-            isExpanded ? "opacity-100 scale-y-100 scale-x-100" : "opacity-0 scale-y-0 scale-x-75"
-          )}
-          style={{
-            width: `${lightConeBottomWidth || 750}px`,
-            height: '700px',
-            background: 'conic-gradient(from 180deg at 50% 0%, transparent 155deg, rgba(251, 191, 36, 0.15) 170deg, rgba(251, 191, 36, 0.45) 180deg, rgba(251, 191, 36, 0.15) 190deg, transparent 205deg)',
-            filter: 'drop-shadow(0 0 25px rgba(251, 191, 36, 0.35))',
-            maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 50%, rgba(0,0,0,0) 100%)',
-            WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 50%, rgba(0,0,0,0) 100%)',
-          }}
-        />
-      )}
-
+    <>
+      {/* Quote Card */}
       <div
         ref={cardRef}
-        className={cn(
-          "inline-flex items-center gap-2 px-4 py-2 rounded-full border mb-6 md:mb-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 relative z-[10] backdrop-blur-md transition-all shadow-lg",
-          showLightCone
-            ? "bg-black/5 dark:bg-white/10 border-black/10 dark:border-white/20 text-neutral-800 dark:text-white"
-            : "liquid-glass border-white/20 text-white"
-        )}
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-black/[0.03] dark:bg-black/40 border border-black/[0.05] dark:border-amber-200/40 mb-6 md:mb-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 relative z-[100] dark:shadow-[0_0_20px_2px_rgba(251,191,36,0.3)] backdrop-blur-sm transition-all"
       >
-        <Sparkles className="w-3.5 h-3.5 text-amber-500 dark:text-amber-300 shrink-0" />
+        <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0 dark:text-amber-300" />
         <span
-          className="text-xs font-medium font-serif italic text-center leading-relaxed drop-shadow-sm"
+          className="text-xs font-medium font-serif text-neutral-600 dark:text-amber-100/90 italic text-center leading-relaxed"
           style={{
             display: 'inline-block',
             width: 'fit-content',
@@ -446,7 +424,49 @@ export function DailyQuote({ showLightCone = false }: { showLightCone?: boolean 
             </span>
           ))}
         </span>
+
+        {/* Light Cone - Bottom width based on viewport, top matches card */}
+        <div className="hidden dark:block absolute top-full left-1/2 -translate-x-1/2 pointer-events-none overflow-visible z-[-1]">
+          {/* Soft cone with smooth edges and center-out animation */}
+          <div
+            style={{
+              width: `${lightConeBottomWidth}px`,
+              height: '350px',
+              background: 'linear-gradient(180deg, rgba(251, 191, 36, 0.25) 0%, rgba(251, 191, 36, 0.12) 35%, transparent 100%)',
+              clipPath: (() => {
+                const topLeftPercent = lightConeBottomWidth > 0
+                  ? ((lightConeBottomWidth - cardWidth) / 2) / lightConeBottomWidth * 100
+                  : 50;
+                const topRightPercent = 100 - topLeftPercent;
+
+                if (isExpanded) {
+                  return `polygon(${topLeftPercent}% 0%, 0% 100%, 100% 100%, ${topRightPercent}% 0%)`;
+                }
+                return `polygon(50% 0%, 50% 100%, 50% 100%, 50% 0%)`;
+              })(),
+              maskImage: 'linear-gradient(to right, transparent, black 15%, black 85%, transparent)',
+              WebkitMaskImage: 'linear-gradient(to right, transparent, black 15%, black 85%, transparent)',
+              filter: 'blur(35px)',
+              opacity: isExpanded ? 1 : 0,
+              transition: 'clip-path 1.5s ease-out, opacity 1s ease-in',
+              transformOrigin: 'top center',
+            }}
+          />
+
+          {/* Core Beam - Stronger center light */}
+          <div
+             className="absolute top-0 left-1/2 -translate-x-1/2"
+             style={{
+               width: `${cardWidth * 0.8}px`,
+               height: '280px',
+               background: 'linear-gradient(180deg, rgba(251, 191, 36, 0.2) 0%, transparent 85%)',
+               filter: 'blur(20px)',
+               opacity: isExpanded ? 1 : 0,
+               transition: 'opacity 1.5s ease-out 0.2s',
+             }}
+          />
+        </div>
       </div>
-    </div>
+    </>
   );
 }

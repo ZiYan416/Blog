@@ -35,7 +35,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-white/95 dark:bg-neutral-900/95 backdrop-blur-2xl border border-black/10 dark:border-white/10 rounded-[2.5rem] p-7 shadow-2xl overflow-hidden">
+      <DialogContent className="sm:max-w-md bg-white/95 dark:bg-neutral-900/95 backdrop-blur-2xl border border-black/10 dark:border-white/10 rounded-[2.25rem] sm:rounded-[2.5rem] p-7 shadow-2xl overflow-hidden">
         <DialogHeader className="pb-4 border-b border-black/5 dark:border-white/5">
           <DialogTitle className="flex items-center gap-3 text-xl font-bold tracking-tight">
             <div className="w-10 h-10 rounded-2xl bg-black/5 dark:bg-white/5 flex items-center justify-center text-black dark:text-white">
