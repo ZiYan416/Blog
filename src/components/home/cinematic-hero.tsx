@@ -34,13 +34,22 @@ const OVERLAY_IMAGE = "/images/hero-overlay.png";
 interface GroupVideoLoopProps {
   videos: { local: string; remote: string }[];
   isActiveGroup: boolean;
+  isPrimaryGroup: boolean;
+  allowDeferredPreload: boolean;
   onVideoReady?: () => void;
+  onPrimaryReady?: () => void;
 }
 
 // Seamless 100% duration-triggered video player engine with progressive lazy-preloading
-function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopProps) {
+function GroupVideoLoop({
+  videos,
+  isActiveGroup,
+  isPrimaryGroup,
+  allowDeferredPreload,
+  onVideoReady,
+  onPrimaryReady,
+}: GroupVideoLoopProps) {
   const [activeIdx, setActiveIdx] = useState(0);
-  // Initial page load ONLY loads video 0; subsequent videos are lazily preloaded in the background
   const [preloadedIdxs, setPreloadedIdxs] = useState<Set<number>>(new Set([0]));
   const isTransitioningRef = useRef(false);
 
@@ -62,11 +71,14 @@ function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopP
     }
   }, [activeIdx, isActiveGroup]);
 
-  // When video 0 is ready/playing, lazy-trigger preloading for video 1 in the background
+  // When primary video 0 is ready/playing, lazy-trigger preloading for all deferred videos in the background
   const handleCanPlay = (idx: number, e: React.SyntheticEvent<HTMLVideoElement>) => {
     e.currentTarget.playbackRate = 1.0;
     if (idx === 0) {
       if (onVideoReady) onVideoReady();
+      if (isPrimaryGroup && onPrimaryReady) {
+        onPrimaryReady();
+      }
       setPreloadedIdxs((prev) => {
         if (prev.has(1)) return prev;
         const next = new Set(prev);
@@ -81,7 +93,7 @@ function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopP
     isTransitioningRef.current = true;
 
     const nextIdx = (currentIdx + 1) % videos.length;
-    
+
     // Ensure target next video is allowed to preload/decode before activation
     setPreloadedIdxs((prev) => {
       if (prev.has(nextIdx)) return prev;
@@ -142,12 +154,15 @@ function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopP
       )}
     >
       {videos.map((vid, idx) => {
-        const isPreloadAllowed = preloadedIdxs.has(idx);
+        // Video 0 of Primary group loads immediately; all other videos load after primary video 0 is ready
+        const isPreloadAllowed =
+          (isPrimaryGroup && idx === 0) || allowDeferredPreload || preloadedIdxs.has(idx);
+
         return (
           <video
             key={vid.remote}
             ref={videoRefs[idx]}
-            autoPlay={idx === 0}
+            autoPlay={isPrimaryGroup && idx === 0}
             muted
             playsInline
             preload={isPreloadAllowed ? "auto" : "none"}
@@ -188,6 +203,7 @@ export function CinematicHero({
   ctaNode,
 }: CinematicHeroProps) {
   const [isDark, setIsDark] = useState(false);
+  const [isPrimaryReady, setIsPrimaryReady] = useState(false);
   const [isInitialVideoLoaded, setIsInitialVideoLoaded] = useState(false);
 
   useEffect(() => {
@@ -214,12 +230,24 @@ export function CinematicHero({
           isInitialVideoLoaded ? "opacity-100" : "opacity-0"
         )}
       >
-        {/* Active Scenery Group (only mount active group to cut VRAM and decoder pipelines in half) */}
+        {/* Daytime Scenery Group - Persistent DOM mounting for instant theme switching */}
         <GroupVideoLoop
-          key={isDark ? "night" : "day"}
-          videos={isDark ? NIGHT_VIDEOS : DAY_VIDEOS}
-          isActiveGroup={true}
+          videos={DAY_VIDEOS}
+          isActiveGroup={!isDark}
+          isPrimaryGroup={!isDark}
+          allowDeferredPreload={isPrimaryReady}
           onVideoReady={() => setIsInitialVideoLoaded(true)}
+          onPrimaryReady={() => setIsPrimaryReady(true)}
+        />
+
+        {/* Nighttime Scenery Group - Persistent DOM mounting for instant theme switching */}
+        <GroupVideoLoop
+          videos={NIGHT_VIDEOS}
+          isActiveGroup={isDark}
+          isPrimaryGroup={isDark}
+          allowDeferredPreload={isPrimaryReady}
+          onVideoReady={() => setIsInitialVideoLoaded(true)}
+          onPrimaryReady={() => setIsPrimaryReady(true)}
         />
 
         {/* Standard Transparent PNG Overlay (z-index 2) - h-[108%] + scale-110 guarantees bottom edge never leaks video during bobbing */}
