@@ -124,6 +124,7 @@ function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopP
           autoPlay
           muted
           playsInline
+          preload="auto"
           onCanPlayThrough={(e) => {
             e.currentTarget.playbackRate = 1.0;
             if (idx === 0 && onVideoReady) onVideoReady();
@@ -131,7 +132,7 @@ function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopP
           onTimeUpdate={() => handleTimeUpdate(idx)}
           onEnded={() => handleEnded(idx)}
           className={cn(
-            "absolute inset-0 w-full h-full object-cover transition-opacity duration-1500 ease-in-out",
+            "absolute inset-0 w-full h-full object-cover transition-opacity duration-1500 ease-in-out transform-gpu translate-z-0 backface-hidden will-change-transform",
             activeIdx === idx ? "opacity-100" : "opacity-0"
           )}
         >
@@ -185,26 +186,20 @@ export function CinematicHero({
           isInitialVideoLoaded ? "opacity-100" : "opacity-0"
         )}
       >
-        {/* Daytime Scenery Group */}
+        {/* Active Scenery Group (only mount active group to cut VRAM and decoder pipelines in half) */}
         <GroupVideoLoop
-          videos={DAY_VIDEOS}
-          isActiveGroup={!isDark}
+          key={isDark ? "night" : "day"}
+          videos={isDark ? NIGHT_VIDEOS : DAY_VIDEOS}
+          isActiveGroup={true}
           onVideoReady={() => setIsInitialVideoLoaded(true)}
         />
 
-        {/* Nighttime Scenery Group */}
-        <GroupVideoLoop
-          videos={NIGHT_VIDEOS}
-          isActiveGroup={isDark}
-          onVideoReady={() => setIsInitialVideoLoaded(true)}
-        />
-
-        {/* Standard Transparent PNG Overlay (z-index 2) - object-cover object-center ensures pixel-perfect equal top & bottom metallic margins */}
+        {/* Standard Transparent PNG Overlay (z-index 2) - transform-gpu ensures 60fps hardware compositing */}
         <div className="absolute inset-0 z-[2] pointer-events-none overflow-hidden">
           <img
             src={OVERLAY_IMAGE}
             alt="Train Window Frame"
-            className="w-full h-full object-cover object-center pointer-events-none animate-train-bob"
+            className="w-full h-full object-cover object-center pointer-events-none transform-gpu translate-z-0 backface-hidden"
           />
         </div>
       </div>
