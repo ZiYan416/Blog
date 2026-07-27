@@ -222,12 +222,12 @@ export function CinematicHero({
           onVideoReady={() => setIsInitialVideoLoaded(true)}
         />
 
-        {/* Standard Transparent PNG Overlay (z-index 2) - transform-gpu ensures 60fps hardware compositing */}
+        {/* Standard Transparent PNG Overlay (z-index 2) - h-[108%] + scale-110 guarantees bottom edge never leaks video during bobbing */}
         <div className="absolute inset-0 z-[2] pointer-events-none overflow-hidden">
           <img
             src={OVERLAY_IMAGE}
             alt="Train Window Frame"
-            className="w-full h-full object-cover object-[center_30%] sm:object-center pointer-events-none animate-train-bob transform-gpu translate-z-0 backface-hidden max-sm:-translate-y-6 max-sm:scale-105"
+            className="w-full h-[108%] -top-[2%] object-cover object-[center_30%] sm:object-center pointer-events-none animate-train-bob transform-gpu translate-z-0 backface-hidden max-sm:-translate-y-4 max-sm:scale-110 origin-center"
           />
         </div>
       </div>
