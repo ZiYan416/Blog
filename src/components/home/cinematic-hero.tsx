@@ -37,9 +37,11 @@ interface GroupVideoLoopProps {
   onVideoReady?: () => void;
 }
 
-// Seamless 100% duration-triggered video player engine
+// Seamless 100% duration-triggered video player engine with progressive lazy-preloading
 function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopProps) {
   const [activeIdx, setActiveIdx] = useState(0);
+  // Initial page load ONLY loads video 0; subsequent videos are lazily preloaded in the background
+  const [preloadedIdxs, setPreloadedIdxs] = useState<Set<number>>(new Set([0]));
   const isTransitioningRef = useRef(false);
 
   const ref0 = useRef<HTMLVideoElement>(null);
@@ -47,7 +49,6 @@ function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopP
   const videoRefs = [ref0, ref1];
 
   // Strictly control video play/pause & reset currentTime to 0.0s on activation
-  // Control initial play/pause state for active group
   useEffect(() => {
     if (!isActiveGroup) {
       videoRefs.forEach((ref) => ref.current?.pause());
@@ -61,11 +62,34 @@ function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopP
     }
   }, [activeIdx, isActiveGroup]);
 
+  // When video 0 is ready/playing, lazy-trigger preloading for video 1 in the background
+  const handleCanPlay = (idx: number, e: React.SyntheticEvent<HTMLVideoElement>) => {
+    e.currentTarget.playbackRate = 1.0;
+    if (idx === 0) {
+      if (onVideoReady) onVideoReady();
+      setPreloadedIdxs((prev) => {
+        if (prev.has(1)) return prev;
+        const next = new Set(prev);
+        next.add(1);
+        return next;
+      });
+    }
+  };
+
   const triggerNext = (currentIdx: number) => {
     if (currentIdx !== activeIdx || isTransitioningRef.current) return;
     isTransitioningRef.current = true;
 
     const nextIdx = (currentIdx + 1) % videos.length;
+    
+    // Ensure target next video is allowed to preload/decode before activation
+    setPreloadedIdxs((prev) => {
+      if (prev.has(nextIdx)) return prev;
+      const next = new Set(prev);
+      next.add(nextIdx);
+      return next;
+    });
+
     const nextVideo = videoRefs[nextIdx]?.current;
     const currVideo = videoRefs[currentIdx]?.current;
 
@@ -117,29 +141,33 @@ function GroupVideoLoop({ videos, isActiveGroup, onVideoReady }: GroupVideoLoopP
         isActiveGroup ? "opacity-100" : "opacity-0"
       )}
     >
-      {videos.map((vid, idx) => (
-        <video
-          key={vid.remote}
-          ref={videoRefs[idx]}
-          autoPlay
-          muted
-          playsInline
-          preload="auto"
-          onCanPlayThrough={(e) => {
-            e.currentTarget.playbackRate = 1.0;
-            if (idx === 0 && onVideoReady) onVideoReady();
-          }}
-          onTimeUpdate={() => handleTimeUpdate(idx)}
-          onEnded={() => handleEnded(idx)}
-          className={cn(
-            "absolute inset-0 w-full h-full object-cover transition-opacity duration-1500 ease-in-out transform-gpu translate-z-0 backface-hidden will-change-transform",
-            activeIdx === idx ? "opacity-100" : "opacity-0"
-          )}
-        >
-          <source src={vid.local} type="video/mp4" />
-          <source src={vid.remote} type="video/mp4" />
-        </video>
-      ))}
+      {videos.map((vid, idx) => {
+        const isPreloadAllowed = preloadedIdxs.has(idx);
+        return (
+          <video
+            key={vid.remote}
+            ref={videoRefs[idx]}
+            autoPlay={idx === 0}
+            muted
+            playsInline
+            preload={isPreloadAllowed ? "auto" : "none"}
+            onCanPlayThrough={(e) => handleCanPlay(idx, e)}
+            onTimeUpdate={() => handleTimeUpdate(idx)}
+            onEnded={() => handleEnded(idx)}
+            className={cn(
+              "absolute inset-0 w-full h-full object-cover transition-opacity duration-1500 ease-in-out transform-gpu translate-z-0 backface-hidden will-change-transform",
+              activeIdx === idx ? "opacity-100" : "opacity-0"
+            )}
+          >
+            {isPreloadAllowed && (
+              <>
+                <source src={vid.local} type="video/mp4" />
+                <source src={vid.remote} type="video/mp4" />
+              </>
+            )}
+          </video>
+        );
+      })}
     </div>
   );
 }
@@ -178,7 +206,7 @@ export function CinematicHero({
   }, []);
 
   return (
-    <section className="relative w-full h-[calc(100vh-4rem)] overflow-hidden bg-black flex flex-col justify-between py-6 px-4 sm:px-6 isolate select-none">
+    <section className="relative w-full h-[calc(100dvh-4rem)] min-h-[480px] max-h-[1080px] overflow-hidden bg-black flex flex-col justify-between py-4 sm:py-6 md:py-8 px-4 sm:px-6 isolate select-none">
       {/* Container for initial load: pure black until video is ready, then train cabin + video dissolve in TOGETHER */}
       <div
         className={cn(
@@ -205,10 +233,10 @@ export function CinematicHero({
       </div>
 
       {/* Hero Main Content (z-index 3) */}
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center max-w-5xl mx-auto my-auto py-8">
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center max-w-5xl mx-auto my-auto py-4 sm:py-8 px-2">
         {/* Badge / DailyQuote */}
         {badgeText && (
-          <div className="mb-2 inline-flex items-center justify-center">
+          <div className="mb-2 sm:mb-4 inline-flex items-center justify-center">
             {typeof badgeText === "string" ? (
               <div
                 className={cn(
@@ -227,7 +255,7 @@ export function CinematicHero({
         {/* Heading with Instrument Serif */}
         <h1
           className={cn(
-            "font-serif-instrument italic text-4xl sm:text-6xl md:text-7xl lg:text-[5.5rem] leading-[1.05] tracking-tight max-w-4xl mb-6 transition-colors duration-700 drop-shadow-md text-white"
+            "font-serif-instrument italic text-3xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-[5.25rem] leading-[1.08] tracking-tight max-w-4xl mb-4 sm:mb-6 transition-colors duration-700 drop-shadow-md text-white"
           )}
         >
           {titleLine1} <br className="hidden sm:inline" />
@@ -237,7 +265,7 @@ export function CinematicHero({
         {/* Subtext */}
         <p
           className={cn(
-            "text-sm sm:text-base md:text-lg max-w-xl mx-auto leading-relaxed font-sans transition-colors duration-700 opacity-90 drop-shadow-sm text-white/80"
+            "text-xs sm:text-sm md:text-base lg:text-lg max-w-xs sm:max-w-md md:max-w-xl mx-auto leading-relaxed font-sans transition-colors duration-700 opacity-90 drop-shadow-sm text-white/80"
           )}
         >
           {subtitle}
@@ -245,7 +273,7 @@ export function CinematicHero({
 
         {/* CTA Node */}
         {ctaNode && (
-          <div className="mt-6 w-full flex justify-center">{ctaNode}</div>
+          <div className="mt-4 sm:mt-6 w-full flex justify-center">{ctaNode}</div>
         )}
       </div>
     </section>

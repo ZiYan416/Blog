@@ -186,6 +186,8 @@ export default function PostCard({ post }: PostCardProps) {
           <img
             src={post.cover_image}
             alt={post.title}
+            loading="lazy"
+            decoding="async"
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
         ) : (
