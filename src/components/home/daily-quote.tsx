@@ -400,7 +400,7 @@ export function DailyQuote({ showLightCone = false }: { showLightCone?: boolean 
         window.removeEventListener('resize', updateCardWidth);
       };
     }
-  }, [quote, quoteLines]);
+  }, [quote, quoteLines.join("\n")]);
 
   // 避免服务端渲染不匹配
   if (!quote) return (

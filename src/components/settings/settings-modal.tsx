@@ -35,10 +35,10 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-white/95 dark:bg-neutral-900/95 backdrop-blur-2xl border border-black/10 dark:border-white/10 rounded-[2.25rem] sm:rounded-[2.5rem] p-7 shadow-2xl overflow-hidden">
+      <DialogContent className="sm:max-w-md bg-white/95 dark:bg-neutral-900/95 backdrop-blur-2xl border border-black/10 dark:border-white/10 rounded-2xl sm:rounded-3xl p-6 shadow-2xl overflow-hidden">
         <DialogHeader className="pb-4 border-b border-black/5 dark:border-white/5">
           <DialogTitle className="flex items-center gap-3 text-xl font-bold tracking-tight">
-            <div className="w-10 h-10 rounded-2xl bg-black/5 dark:bg-white/5 flex items-center justify-center text-black dark:text-white">
+            <div className="w-10 h-10 rounded-xl bg-black/5 dark:bg-white/5 flex items-center justify-center text-black dark:text-white">
               <Settings className="w-5 h-5" />
             </div>
             <span>偏好设置</span>
@@ -49,7 +49,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
         </DialogHeader>
 
         <div className="py-4 space-y-4">
-          <div className="flex items-start justify-between p-4 sm:p-5 rounded-[1.5rem] bg-neutral-50 dark:bg-neutral-800/60 border border-black/5 dark:border-white/5 transition-all hover:border-black/10 dark:hover:border-white/10">
+          <div className="flex items-start justify-between p-4 sm:p-5 rounded-2xl bg-neutral-50 dark:bg-neutral-800/60 border border-black/5 dark:border-white/5 transition-all hover:border-black/10 dark:hover:border-white/10">
             <div className="flex gap-3.5 min-w-0 pr-4">
               <div className={cn(
                 "w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 transition-colors",
