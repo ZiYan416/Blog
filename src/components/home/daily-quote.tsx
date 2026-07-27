@@ -408,13 +408,13 @@ export function DailyQuote({ showLightCone = false }: { showLightCone?: boolean 
       {showLightCone && (
         <div
           className={cn(
-            "absolute left-1/2 -top-4 -translate-x-1/2 pointer-events-none transition-all duration-1000 ease-out origin-top z-0",
+            "absolute left-1/2 -top-12 -translate-x-1/2 pointer-events-none transition-all duration-1000 ease-out origin-top z-0",
             isExpanded ? "opacity-100 scale-100" : "opacity-0 scale-95"
           )}
           style={{
-            width: `${lightConeBottomWidth}px`,
-            height: '80vh',
-            background: 'conic-gradient(from 180deg at 50% 0%, transparent 165deg, rgba(251, 191, 36, 0.12) 175deg, rgba(251, 191, 36, 0.25) 180deg, rgba(251, 191, 36, 0.12) 185deg, transparent 195deg)',
+            width: `${lightConeBottomWidth || 800}px`,
+            height: '750px',
+            background: 'conic-gradient(from 180deg at 50% 0%, transparent 162deg, rgba(251, 191, 36, 0.16) 174deg, rgba(251, 191, 36, 0.38) 180deg, rgba(251, 191, 36, 0.16) 186deg, transparent 198deg)',
             maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0) 100%)',
             WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0) 100%)',
           }}
