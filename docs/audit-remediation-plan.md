@@ -2,7 +2,7 @@
 
 > 建立日期：2026-07-27
 >
-> 适用分支：`codex/complete-audit-plan`
+> 适用分支：`master`
 >
 > 状态说明：`待处理`、`进行中`、`已完成`、`受阻`
 
@@ -45,14 +45,14 @@
 
 ### 第二轮完成情况（2026-07-28）
 
-- 公开首页、文章、标签、搜索、作者与评论查询迁移到只读仓储和 5 分钟缓存；公开布局不再为每次请求读取登录态，写操作会按 `posts`、`tags`、`comments` 标签精确失效。
+- 公开首页、文章详情、标签、搜索、作者与评论查询迁移到只读仓储和 5 分钟缓存；公开布局不再为每次请求读取登录态，写操作会按 `posts`、`tags`、`comments` 标签精确失效。
 - 首页 Hero 改为优先流式渲染：Logo 加载动画等待第一个主视频达到 `canplay`，`canplaythrough` 后才解锁其余视频预载；保留全部原有转场、循环和列车浮动动画。
 - 四组视频新增约 4.3 MiB 的移动端 H.264、约 3.7 MiB 的 AV1 WebM 及四张 poster；Chromium 桌面和移动端均验证首屏交接。
 - `posts.tags` JSON 的应用读写依赖、本地 schema 与远端兼容列均已移除，`post_tags` 成为唯一事实来源；远端列删除采用应用先行、数据库后置的无中断发布顺序。
 - 新建/编辑文章、编辑器、资料设置与文章列表已拆为 `features/` 下的表单、Hook、模型和组件；数据库类型迁移到 `db/`，公开查询迁移到 `server/repositories/`。
-- 测试增至 7 个 Vitest 文件、24 个单元/组件测试；Playwright 覆盖桌面/移动首屏、公开导航，以及文章发布、评论审核、权限切换的匿名拒绝边界。
+- 测试增至 8 个 Vitest 文件、25 个单元/组件测试；Playwright 覆盖桌面/移动首屏、车窗内容居中、公开导航，以及文章发布、评论审核、权限切换的匿名拒绝边界。
 - 新增 GitHub Actions：执行 lint、类型检查、Vitest、生产构建、Chromium E2E，并在本地 Supabase 容器执行权威 schema 与 pgTAP RLS 测试。
-- 生产构建固定使用 Next.js webpack 后端，23 个页面生成成功；公开首页与文章列表恢复为 5 分钟静态缓存。
+- 生产构建固定使用 Next.js webpack 后端，23 个页面生成成功；公开首页保留 5 分钟静态缓存，文章列表按请求动态渲染以保证管理员首屏与分页使用一致的 RLS 可见性。
 - Vercel 确认提交 `780ca9a` 部署成功后，通过 Supabase 插件应用后置迁移 `20260728023305`：删除旧 JSON 列和索引，并精确清理 30 条已确认的虚假快照。
 - 远端最终验证：15 篇文章、23 条标签关系、172 条有效快照、目标虚假快照剩余 0；实时生成类型确认 RPC 与 `posts` 均不再包含 JSON 标签字段。
 
@@ -172,6 +172,7 @@
 - [x] Proxy 排除 API、静态图片、字体与视频等资源。
 - [x] 静态图片、字体、视频不经过 Supabase 鉴权。
 - [x] 将公开站点与认证/管理鉴权范围拆分，恢复公开页面缓存能力。
+- [x] 文章列表首屏使用请求态服务端客户端且不进入公共缓存，与分页 API 共用 posts RLS，避免管理员刷新时丢失草稿。
 - [x] 消除文章元数据和正文的重复查询，并行获取作者与评论。
 
 ### P1-6 首页媒体
@@ -269,7 +270,7 @@ npm run build
 
 数据库变更还需要：
 
-- CI 使用本地 Supabase 容器完整执行 `supabase/schema.sql`，并运行 `supabase test db`；本机未安装 Supabase CLI，因此本地未重复运行该容器步骤。
+- CI 使用本地 Supabase 容器完整执行 `supabase/schema.sql`，并运行 `supabase test db`；本机可通过 npx 调用 Supabase CLI，但未安装 Docker/Podman，因此容器步骤由 CI 完成。
 - 已完成远端结构、RLS、表/列权限、函数执行权、存储策略和迁移记录的只读验证。
 - 已完成 Supabase Security Advisor 与 Performance Advisor 复查。
 

@@ -7,6 +7,7 @@ import {
   POST_DETAIL_SELECT,
 } from "@/features/posts/model"
 import { createPublicClient } from "@/lib/supabase/public"
+import { createClient as createServerClient } from "@/lib/supabase/server"
 import { buildPostSearchFilter } from "@/lib/validation"
 
 const CACHE_SECONDS = 300
@@ -38,12 +39,11 @@ async function queryPublishedPost(slug: string) {
   return data ? mapPostTags(data) : null
 }
 
-async function queryPublishedPostCards(limit: number) {
-  const supabase = createPublicClient()
+export async function getVisiblePostCards(limit: number) {
+  const supabase = await createServerClient()
   const { data, error, count } = await supabase
     .from("posts")
     .select(POST_CARD_SELECT, { count: "exact" })
-    .eq("published", true)
     .order("featured", { ascending: false })
     .order("created_at", { ascending: false })
     .range(0, Math.max(0, limit - 1))
@@ -115,12 +115,6 @@ export const getFeaturedPosts = unstable_cache(
 export const getPublishedPost = unstable_cache(
   queryPublishedPost,
   ["published-post"],
-  { revalidate: CACHE_SECONDS, tags: ["posts"] }
-)
-
-export const getPublishedPostCards = unstable_cache(
-  queryPublishedPostCards,
-  ["published-post-cards"],
   { revalidate: CACHE_SECONDS, tags: ["posts"] }
 )
 

@@ -1,9 +1,9 @@
 import PostList from '@/components/post/post-list';
-import { getPublishedPostCards } from '@/server/repositories/posts';
+import { getVisiblePostCards } from '@/server/repositories/posts';
 import { CreatePostButton } from '@/features/posts/components/create-post-button';
 
 export default async function PostsPage() {
-  const { posts, total } = await getPublishedPostCards(9);
+  const { posts, total } = await getVisiblePostCards(9);
 
   return (
     <div className="container max-w-6xl mx-auto px-6 pt-8 md:pt-12 pb-12 md:pb-20">
