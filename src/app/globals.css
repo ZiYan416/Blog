@@ -46,6 +46,43 @@ html, body {
   }
 }
 
+@keyframes brandedLoaderHalo {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.2;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes brandedLoaderDot {
+  0%, 100% {
+    opacity: 0.4;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-6px);
+  }
+}
+
+.branded-loader__halo {
+  animation: brandedLoaderHalo 2s ease-in-out infinite;
+}
+
+.branded-loader__dot {
+  animation: brandedLoaderDot 1s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .branded-loader__halo,
+  .branded-loader__dot {
+    animation: none;
+  }
+}
+
 .animate-train-bob {
   animation: trainBob 3s ease-in-out infinite;
   will-change: transform;

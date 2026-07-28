@@ -19,8 +19,18 @@ export function extractCodeBlockLanguage(className?: string | null) {
   return match?.[1]?.toLowerCase() || 'text'
 }
 
+function hasPowerShellSignature(codeText: string) {
+  return (
+    /(?:^|\n)\s*(?:pwsh|powershell|winget)\b/im.test(codeText) ||
+    /(?:^|\n)\s*(?:Get|Set|New|Remove|Start|Stop|Write|Where|ForEach)-[A-Za-z]+\b/m.test(codeText) ||
+    /(?:^|[^\w])\$[A-Za-z_][\w:]*/.test(codeText) ||
+    /\s-(?:eq|ne|gt|ge|lt|le|like|match|contains|not)\b/i.test(codeText)
+  )
+}
+
 export function detectCodeLanguage(codeText: string): string | null {
   if (!codeText || codeText.trim().length < 3) return null
+  if (hasPowerShellSignature(codeText)) return 'powershell'
   try {
     const result = hljs.highlightAuto(codeText)
     if (result && result.language && (result.relevance === undefined || result.relevance > 0)) {
@@ -54,12 +64,18 @@ export function CodeBlockShell({
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
+      const normalizedLanguage = language?.toLowerCase()
       const isUnspecified =
-        !language || ['text', 'plaintext', 'raw', 'unknown', 'code'].includes(language.toLowerCase())
+        !normalizedLanguage ||
+        ['text', 'plaintext', 'raw', 'unknown', 'code'].includes(normalizedLanguage)
+      const canCorrectLegacyDefault = normalizedLanguage === 'javascript'
 
-      if (isUnspecified && bodyRef.current) {
+      if ((isUnspecified || canCorrectLegacyDefault) && bodyRef.current) {
         const codeText = bodyRef.current.textContent || ''
-        setDetectedLanguage(detectCodeLanguage(codeText))
+        const detected = detectCodeLanguage(codeText)
+        setDetectedLanguage(
+          isUnspecified || detected === 'powershell' ? detected : null,
+        )
       } else {
         setDetectedLanguage(null)
       }

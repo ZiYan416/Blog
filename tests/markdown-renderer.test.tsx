@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { MarkdownRenderer } from '../src/components/post/markdown-renderer'
 
@@ -34,5 +34,17 @@ describe('MarkdownRenderer', () => {
     expect(container.querySelector('code.language-pwsh')).not.toBeNull()
     expect(container.querySelector('.article-code-block__language')?.textContent).toBe('pwsh')
     expect(container.querySelector('.hljs-built_in, .hljs-keyword, .hljs-variable')).not.toBeNull()
+  })
+
+  it('corrects legacy JavaScript labels on PowerShell command blocks', async () => {
+    const content = "```javascript\nwinget search --id Microsoft.PowerShell --exact\n```"
+    const { container } = render(<MarkdownRenderer content={content} />)
+
+    await waitFor(() => {
+      expect(container.querySelector('.article-code-block__language')?.textContent).toBe(
+        'powershell',
+      )
+    })
+    expect(container.querySelector('.article-code-block [title="自动识别的代码语言"]')).not.toBeNull()
   })
 })

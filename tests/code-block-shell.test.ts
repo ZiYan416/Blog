@@ -19,4 +19,10 @@ describe('code block language helpers', () => {
 
     expect(detectCodeLanguage(code)).toBe('powershell')
   })
+
+  it('treats winget commands as PowerShell instead of generic stylesheet syntax', () => {
+    expect(
+      detectCodeLanguage('winget install --id Microsoft.PowerShell --source winget'),
+    ).toBe('powershell')
+  })
 })
