@@ -17,6 +17,7 @@ import { Underline } from '@tiptap/extension-underline'
 import { TextAlign } from '@tiptap/extension-text-align'
 import { Typography } from '@tiptap/extension-typography'
 import { common, createLowlight } from 'lowlight'
+import powershell from 'highlight.js/lib/languages/powershell'
 import { useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { v4 as uuidv4 } from 'uuid'
@@ -27,6 +28,8 @@ import { getErrorMessage } from '@/lib/errors'
 
 // Create lowlight instance with common languages
 const lowlight = createLowlight(common)
+lowlight.register('powershell', powershell)
+lowlight.registerAlias('powershell', ['pwsh', 'ps1'])
 
 function getMarkdown(editor: Editor) {
   return (editor.storage as unknown as { markdown: MarkdownStorage }).markdown.getMarkdown()
@@ -92,7 +95,7 @@ export function RichEditor({ content, onChange, onEditorReady, placeholder, clas
       // Code block with syntax highlighting
       ArticleCodeBlock.configure({
         lowlight,
-        defaultLanguage: 'javascript',
+        defaultLanguage: null,
         HTMLAttributes: {
           class: 'hljs',
         },

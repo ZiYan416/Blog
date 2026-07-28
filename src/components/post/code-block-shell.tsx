@@ -19,7 +19,7 @@ export function extractCodeBlockLanguage(className?: string | null) {
   return match?.[1]?.toLowerCase() || 'text'
 }
 
-function autoDetectLanguage(codeText: string): string | null {
+export function detectCodeLanguage(codeText: string): string | null {
   if (!codeText || codeText.trim().length < 3) return null
   try {
     const result = hljs.highlightAuto(codeText)
@@ -59,7 +59,7 @@ export function CodeBlockShell({
 
       if (isUnspecified && bodyRef.current) {
         const codeText = bodyRef.current.textContent || ''
-        setDetectedLanguage(autoDetectLanguage(codeText))
+        setDetectedLanguage(detectCodeLanguage(codeText))
       } else {
         setDetectedLanguage(null)
       }

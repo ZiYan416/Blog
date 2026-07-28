@@ -746,7 +746,7 @@ SET search_path = public, pg_temp
 AS $$
 DECLARE
   tag_index INTEGER;
-  tag_id UUID;
+  resolved_tag_id UUID;
   tag_name TEXT;
   tag_slug TEXT;
 BEGIN
@@ -776,27 +776,27 @@ BEGIN
       INSERT INTO public.tags (name, slug)
       VALUES (tag_name, tag_slug)
       ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
-      RETURNING id INTO tag_id;
+      RETURNING id INTO resolved_tag_id;
     EXCEPTION
       WHEN unique_violation THEN
         SELECT existing_tag.id
-        INTO tag_id
+        INTO resolved_tag_id
         FROM public.tags AS existing_tag
         WHERE existing_tag.name = tag_name;
 
-        IF tag_id IS NULL THEN
+        IF resolved_tag_id IS NULL THEN
           INSERT INTO public.tags (name, slug)
           VALUES (
             tag_name,
             tag_slug || '-' || SUBSTRING(MD5(tag_name) FROM 1 FOR 8)
           )
           ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
-          RETURNING id INTO tag_id;
+          RETURNING id INTO resolved_tag_id;
         END IF;
     END;
 
     INSERT INTO public.post_tags (post_id, tag_id)
-    VALUES (target_post_id, tag_id)
+    VALUES (target_post_id, resolved_tag_id)
     ON CONFLICT (post_id, tag_id) DO NOTHING;
   END LOOP;
 END;

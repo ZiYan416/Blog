@@ -6,6 +6,9 @@ import { isAbortError } from "@/lib/errors"
 
 export type PostSort = "latest" | "oldest" | "views"
 
+const POST_LIST_RETURN_STATE_KEY = "post_list_return_state_v2"
+const LEGACY_POST_LIST_STATE_KEY = "post_list_state"
+
 interface PostListFilters {
   category?: string
   tag?: string
@@ -103,12 +106,28 @@ export function usePostList({
 
   useEffect(() => {
     const rememberListState = (event: MouseEvent) => {
-      const target = event.target as HTMLElement
+      if (
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
+      ) {
+        return
+      }
+
+      const target = event.target
+      if (!(target instanceof Element)) return
       const anchor = target.closest("a")
-      if (!anchor?.getAttribute("href")?.startsWith("/post/")) return
+      if (
+        !anchor?.getAttribute("href")?.startsWith("/post/") ||
+        anchor.target === "_blank"
+      ) {
+        return
+      }
 
       sessionStorage.setItem(
-        "post_list_state",
+        POST_LIST_RETURN_STATE_KEY,
         JSON.stringify({
           page,
           sort,
@@ -125,8 +144,10 @@ export function usePostList({
   useEffect(() => {
     const restore = async () => {
       try {
-        const raw = sessionStorage.getItem("post_list_state")
+        sessionStorage.removeItem(LEGACY_POST_LIST_STATE_KEY)
+        const raw = sessionStorage.getItem(POST_LIST_RETURN_STATE_KEY)
         if (!raw) return
+        sessionStorage.removeItem(POST_LIST_RETURN_STATE_KEY)
         const saved = JSON.parse(raw) as {
           page?: number
           sort?: PostSort

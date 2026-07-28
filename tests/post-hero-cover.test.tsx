@@ -10,11 +10,14 @@ describe("PostHeroCover", () => {
   it("passes arbitrary external cover URLs through without Next optimization", () => {
     const coverImage = "https://images.example.com/article-cover.jpg"
 
-    render(<PostHeroCover coverImage={coverImage} title="External cover" />)
+    const { container } = render(
+      <PostHeroCover coverImage={coverImage} title="External cover" />
+    )
 
     expect(
       screen.getByRole("img", { name: "External cover" }).getAttribute("src")
     ).toBe(coverImage)
+    expect(container.firstElementChild?.classList.contains("top-16")).toBe(true)
   })
 
   it("renders no image when the article has no cover", () => {

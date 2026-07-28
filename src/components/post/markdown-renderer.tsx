@@ -9,6 +9,9 @@ import rehypeSlug from 'rehype-slug'
 import { Children, isValidElement, useEffect, useRef, type ComponentPropsWithoutRef } from 'react'
 import { CodeBlockShell, extractCodeBlockLanguage } from '@/components/post/code-block-shell'
 import type { Schema } from 'hast-util-sanitize'
+import { ArrowUpRight, Link2 } from 'lucide-react'
+import { common } from 'lowlight'
+import powershell from 'highlight.js/lib/languages/powershell'
 
 interface MarkdownRendererProps {
   content: string
@@ -42,7 +45,13 @@ const markdownComponents: Components & {
   t: (props: ComponentPropsWithoutRef<'span'>) => React.ReactNode
 } = {
   pre: PreBlock,
+  a: MarkdownLink,
   t: ({ children }) => <span className="font-mono text-sm">&lt;T&gt;{children}</span>,
+}
+
+const articleHighlightLanguages = {
+  ...common,
+  powershell,
 }
 
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
@@ -63,10 +72,21 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
 
   return (
     <>
-      <article className="markdown-article prose prose-neutral dark:prose-invert max-w-none break-words prose-headings:font-bold prose-headings:tracking-tight prose-headings:leading-tight prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg md:prose-h1:text-3xl md:prose-h2:text-2xl md:prose-h3:text-xl prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-img:rounded-2xl prose-pre:bg-transparent prose-pre:p-0 prose-pre:border-none">
+      <article className="markdown-article prose prose-neutral dark:prose-invert max-w-none break-words prose-headings:font-bold prose-headings:tracking-tight prose-headings:leading-tight prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg md:prose-h1:text-3xl md:prose-h2:text-2xl md:prose-h3:text-xl prose-img:rounded-2xl prose-pre:bg-transparent prose-pre:p-0 prose-pre:border-none">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
-          rehypePlugins={[rehypeRaw, [rehypeSanitize, markdownSchema], rehypeSlug, rehypeHighlight]}
+          rehypePlugins={[
+            rehypeRaw,
+            [rehypeSanitize, markdownSchema],
+            rehypeSlug,
+            [rehypeHighlight, {
+              aliases: {
+                powershell: ['pwsh', 'ps1'],
+              },
+              detect: true,
+              languages: articleHighlightLanguages,
+            }],
+          ]}
           components={markdownComponents}
         >
           {content}
@@ -262,11 +282,39 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
 
         /* === Links === */
         .markdown-article a {
-          transition: all 0.15s ease;
-          border-bottom: 1px solid transparent;
+          color: #9a5b13;
+          font-weight: 600;
+          text-decoration: none !important;
+          border-radius: 0.3em;
+          margin: 0 -0.1em;
+          padding: 0.05em 0.1em;
+          transition: color 0.15s ease, background-color 0.15s ease;
         }
         .markdown-article a:hover {
-          border-bottom-color: currentColor;
+          color: #b45309;
+          background-color: rgba(180, 83, 9, 0.08);
+          text-decoration: none !important;
+        }
+        .dark .markdown-article a {
+          color: #e6b86f;
+        }
+        .dark .markdown-article a:hover {
+          color: #f6c875;
+          background-color: rgba(246, 200, 117, 0.1);
+        }
+        .markdown-article .markdown-link__icon {
+          display: inline-block;
+          width: 0.82em;
+          height: 0.82em;
+          margin-left: 0.22em;
+          opacity: 0.72;
+          vertical-align: -0.04em;
+          stroke-width: 2.25;
+          transition: opacity 0.15s ease, transform 0.15s ease;
+        }
+        .markdown-article a:hover .markdown-link__icon {
+          opacity: 1;
+          transform: translate(1px, -1px);
         }
 
         /* === Horizontal Rule === */
@@ -408,6 +456,32 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
         }
       `}</style>
     </>
+  )
+}
+
+function MarkdownLink({
+  node: _node,
+  href = '',
+  children,
+  ...props
+}: ComponentPropsWithoutRef<'a'> & { node?: unknown }) {
+  void _node
+  const isExternal = /^(?:https?:)?\/\//i.test(href)
+  const hasImage = Children.toArray(children).some(
+    (child) => isValidElement(child) && child.type === 'img',
+  )
+  const LinkIcon = isExternal ? ArrowUpRight : Link2
+
+  return (
+    <a
+      {...props}
+      href={href}
+      target={isExternal ? '_blank' : props.target}
+      rel={isExternal ? 'noopener noreferrer' : props.rel}
+    >
+      {children}
+      {!hasImage ? <LinkIcon className="markdown-link__icon" aria-hidden="true" /> : null}
+    </a>
   )
 }
 

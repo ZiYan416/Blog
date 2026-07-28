@@ -12,7 +12,7 @@ export function PostHeroCover({
   if (!coverImage) return null
 
   return (
-    <div className="absolute inset-0 opacity-60">
+    <div className="absolute inset-x-0 top-16 bottom-0 opacity-60">
       <SafeImage
         src={coverImage}
         alt={title}

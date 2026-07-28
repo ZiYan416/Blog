@@ -1,0 +1,22 @@
+import { describe, expect, it } from 'vitest'
+import {
+  detectCodeLanguage,
+  extractCodeBlockLanguage,
+} from '../src/components/post/code-block-shell'
+
+describe('code block language helpers', () => {
+  it('extracts an explicit language from a Markdown code class', () => {
+    expect(extractCodeBlockLanguage('hljs language-pwsh')).toBe('pwsh')
+  })
+
+  it('auto-detects characteristic PowerShell syntax', () => {
+    const code = [
+      "$service = Get-Service -Name 'Spooler'",
+      "if ($service.Status -ne 'Running') {",
+      '  Start-Service $service.Name',
+      '}',
+    ].join('\n')
+
+    expect(detectCodeLanguage(code)).toBe('powershell')
+  })
+})
