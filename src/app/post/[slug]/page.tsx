@@ -13,7 +13,7 @@ import { TableOfContents } from '@/components/post/table-of-contents'
 import { PostTipButton } from '@/components/post/post-tip-button'
 import { absoluteSiteUrl, siteConfig } from '@/lib/site-config'
 import Image from 'next/image'
-import { getPublishedPost } from '@/server/repositories/posts'
+import { getVisiblePost } from '@/server/repositories/posts'
 import { getPublicProfile } from '@/server/repositories/profiles'
 import { PostHeroCover } from '@/components/post/post-hero-cover'
 
@@ -27,7 +27,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params
   const decodedSlug = decodeURIComponent(slug)
-  const post = await getPublishedPost(decodedSlug)
+  const post = await getVisiblePost(decodedSlug)
 
   if (!post) {
     return {
@@ -65,7 +65,7 @@ export default async function PostPage({
 }) {
   const { slug } = await params
   const decodedSlug = decodeURIComponent(slug)
-  const post = await getPublishedPost(decodedSlug)
+  const post = await getVisiblePost(decodedSlug)
   if (!post) notFound()
 
   const [author, comments] = await Promise.all([

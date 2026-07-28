@@ -26,19 +26,6 @@ async function queryFeaturedPosts() {
   return (data || []).map(mapPostTags)
 }
 
-async function queryPublishedPost(slug: string) {
-  const supabase = createPublicClient()
-  const { data, error } = await supabase
-    .from("posts")
-    .select(POST_DETAIL_SELECT)
-    .eq("slug", slug)
-    .eq("published", true)
-    .maybeSingle()
-
-  if (error) throw error
-  return data ? mapPostTags(data) : null
-}
-
 export async function getVisiblePostCards(limit: number) {
   const supabase = await createServerClient()
   const { data, error, count } = await supabase
@@ -53,6 +40,18 @@ export async function getVisiblePostCards(limit: number) {
     posts: (data || []).map(mapPostTags),
     total: count || 0,
   }
+}
+
+export async function getVisiblePost(slug: string) {
+  const supabase = await createServerClient()
+  const { data, error } = await supabase
+    .from("posts")
+    .select(POST_DETAIL_SELECT)
+    .eq("slug", slug)
+    .maybeSingle()
+
+  if (error) throw error
+  return data ? mapPostTags(data) : null
 }
 
 async function queryTag(slug: string) {
@@ -109,12 +108,6 @@ async function querySearchResults(search: string, limit: number) {
 export const getFeaturedPosts = unstable_cache(
   queryFeaturedPosts,
   ["featured-posts"],
-  { revalidate: CACHE_SECONDS, tags: ["posts"] }
-)
-
-export const getPublishedPost = unstable_cache(
-  queryPublishedPost,
-  ["published-post"],
   { revalidate: CACHE_SECONDS, tags: ["posts"] }
 )
 

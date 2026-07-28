@@ -74,3 +74,27 @@ test("public article navigation remains available without authentication", async
     await expect(page.getByRole("navigation", { name: "主导航" })).toBeVisible()
   }
 })
+
+test("published article detail pages render without server errors", async ({
+  page,
+  request,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "chromium")
+  test.setTimeout(180_000)
+  const listResponse = await request.get("/api/posts?page=1&limit=50&sort=latest")
+  expect(listResponse.ok()).toBe(true)
+  const { posts } = (await listResponse.json()) as {
+    posts: Array<{ slug: string; title: string }>
+  }
+
+  for (const post of posts) {
+    const response = await page.goto(
+      `/post/${encodeURIComponent(post.slug)}`
+    )
+    expect(response?.status(), post.title).toBeLessThan(500)
+    await expect(
+      page.locator("[data-post-hero]"),
+      post.title
+    ).toBeVisible()
+  }
+})

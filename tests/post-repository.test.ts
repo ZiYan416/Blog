@@ -13,7 +13,10 @@ vi.mock("@/lib/supabase/server", () => ({
 
 import { createPublicClient } from "@/lib/supabase/public"
 import { createClient as createServerClient } from "@/lib/supabase/server"
-import { getVisiblePostCards } from "@/server/repositories/posts"
+import {
+  getVisiblePost,
+  getVisiblePostCards,
+} from "@/server/repositories/posts"
 
 describe("post repository visibility", () => {
   beforeEach(() => {
@@ -59,6 +62,44 @@ describe("post repository visibility", () => {
         },
       ],
       total: 1,
+    })
+  })
+
+  it("uses request RLS when loading a draft detail", async () => {
+    const draft = {
+      id: "draft-1",
+      title: "Draft",
+      slug: "draft",
+      published: false,
+      content: "Draft content",
+      post_tags: [],
+    }
+    const query = {
+      select: vi.fn(),
+      eq: vi.fn(),
+      maybeSingle: vi.fn(),
+    }
+    query.select.mockReturnValue(query)
+    query.eq.mockReturnValue(query)
+    query.maybeSingle.mockResolvedValue({
+      data: draft,
+      error: null,
+    })
+    vi.mocked(createServerClient).mockResolvedValue({
+      from: vi.fn().mockReturnValue(query),
+    } as never)
+
+    const result = await getVisiblePost("draft")
+
+    expect(createServerClient).toHaveBeenCalledOnce()
+    expect(createPublicClient).not.toHaveBeenCalled()
+    expect(result).toEqual({
+      id: "draft-1",
+      title: "Draft",
+      slug: "draft",
+      published: false,
+      content: "Draft content",
+      tags: [],
     })
   })
 })
