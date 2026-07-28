@@ -15,6 +15,7 @@ import { absoluteSiteUrl, siteConfig } from '@/lib/site-config'
 import Image from 'next/image'
 import { getPublishedPost } from '@/server/repositories/posts'
 import { getPublicProfile } from '@/server/repositories/profiles'
+import { PostHeroCover } from '@/components/post/post-hero-cover'
 
 import { BackToTop } from '@/components/ui/back-to-top'
 import { GoToComments } from '@/components/ui/go-to-comments'
@@ -100,20 +101,14 @@ export default async function PostPage({
       <ViewCounter slug={post.slug} />
 
       {/* Hero Header */}
-      <div className="relative w-full min-h-[360px] md:min-h-[440px] bg-neutral-900 dark:bg-black overflow-hidden group -mt-16 pt-16">
-        {post.cover_image && (
-          <div className="absolute inset-0 opacity-60">
-            <Image
-              src={post.cover_image}
-              alt={post.title}
-              fill
-              priority
-              sizes="100vw"
-              className="object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#fafafa] dark:from-[#050505] via-transparent to-transparent" />
-          </div>
-        )}
+      <div
+        data-post-hero
+        className="relative w-full min-h-[360px] md:min-h-[440px] bg-neutral-900 dark:bg-black overflow-hidden group -mt-16 pt-16"
+      >
+        <PostHeroCover
+          coverImage={post.cover_image}
+          title={post.title}
+        />
 
         <div className="container max-w-6xl mx-auto px-6 relative z-10">
           <div className="flex min-h-[320px] md:min-h-[380px] items-end pt-10 pb-16 md:pt-14 md:pb-24">
