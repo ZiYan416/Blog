@@ -1,6 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
 import { buildPostSearchFilter, getValidationMessage, postListQuerySchema } from '@/lib/validation'
 import { NextResponse, type NextRequest } from 'next/server'
+import {
+  mapPostTags,
+  POST_CARD_SELECT,
+  type PostWithTagRelations,
+} from '@/features/posts/model'
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient()
@@ -45,7 +50,9 @@ export async function GET(request: NextRequest) {
 
   // Build the main query
   // If we have a valid tagId, we need to join with post_tags
-  const selectString = tagId ? '*, post_tags!inner(tag_id)' : '*'
+  const selectString = tagId
+    ? `${POST_CARD_SELECT}, matching_tags:post_tags!inner(tag_id)`
+    : POST_CARD_SELECT
 
   // Start the query with the correct select statement
   // Note: We assign it to 'postQuery' to avoid type issues with reassigning 'query'
@@ -63,10 +70,15 @@ export async function GET(request: NextRequest) {
     if (tagId) {
       // 使用 post_tags 关联表进行精确查询
       // selectString 已经在上面设置为 '*, post_tags!inner(tag_id)'
-      postQuery = postQuery.eq('post_tags.tag_id', tagId)
+      postQuery = postQuery.eq('matching_tags.tag_id', tagId)
     } else {
-      // 如果找不到 tagId (可能是旧数据)，回退到数组查询
-      postQuery = postQuery.contains('tags', [tag])
+      return NextResponse.json({
+        posts: [],
+        total: 0,
+        page,
+        limit,
+        totalPages: 0,
+      })
     }
   }
 
@@ -108,8 +120,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
+  const posts = (data || []).map((row) => {
+    const { matching_tags: _matchingTags, ...post } = row as unknown as
+      PostWithTagRelations & { matching_tags?: { tag_id: string }[] }
+    void _matchingTags
+    return mapPostTags(post)
+  })
+
   return NextResponse.json({
-    posts: data || [],
+    posts,
     total: count || 0,
     page,
     limit,

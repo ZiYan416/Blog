@@ -230,6 +230,7 @@ export function UserManagement({
                         <Button
                           variant="ghost"
                           size="icon"
+                          aria-label={`管理用户 ${user.display_name || user.email || user.id}`}
                           className="rounded-full"
                         >
                           <MoreVertical className="w-4 h-4" />

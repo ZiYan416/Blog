@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,12 @@ import { useThemeSettings } from "@/hooks/use-theme-settings";
 
 export function HomeHero() {
   const { cinematicHeroEnabled, isLoaded } = useThemeSettings();
+
+  useEffect(() => {
+    if (!isLoaded || cinematicHeroEnabled) return
+    document.documentElement.dataset.heroReady = "true"
+    window.dispatchEvent(new Event("site-critical-ready"))
+  }, [cinematicHeroEnabled, isLoaded])
 
   // If theme settings loaded and user disabled the Cinematic Hero theme
   if (isLoaded && !cinematicHeroEnabled) {

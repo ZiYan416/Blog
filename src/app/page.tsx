@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { ArrowRight, FileText, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { createClient } from "@/lib/supabase/server";
 import { getTagStyles } from "@/lib/tag-color";
 import { HomeHero } from "@/components/home/home-hero";
 import type { Metadata } from "next";
-import { toTagNames } from "@/lib/types";
+import { getFeaturedPosts } from "@/server/repositories/posts";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   alternates: {
@@ -13,25 +13,11 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function HomePage() {
-  const supabase = await createClient();
-
-  // Fetch featured posts (published = true AND featured = true)
-  const { data: featuredPosts } = await supabase
-    .from("posts")
-    .select("*")
-    .eq("published", true)
-    .eq("featured", true)
-    .order("created_at", { ascending: false })
-    .limit(4);
+async function FeaturedPostsSection() {
+  const featuredPosts = await getFeaturedPosts();
 
   return (
-    <div className="flex flex-col items-center w-full min-h-screen">
-      {/* Home Hero Section (Toggleable theme via Settings) */}
-      <HomeHero />
-
-      {/* Featured Posts Preview */}
-      <section className="w-full max-w-6xl mx-auto px-6 pt-12 pb-16 md:pb-24">
+    <section className="w-full max-w-6xl mx-auto px-6 pt-12 pb-16 md:pb-24">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-semibold">精选文章</h2>
           <Link href="/post" className="text-sm font-medium text-neutral-500 hover:text-black dark:hover:text-white transition-colors">
@@ -44,7 +30,7 @@ export default async function HomePage() {
             featuredPosts.map((post) => {
               // Try to find a primary tag to display
               let primaryTag = "Featured";
-              const tags = toTagNames(post.tags);
+              const tags = post.tags;
               if (tags.length > 0) {
                  primaryTag = tags[0];
               }
@@ -103,7 +89,26 @@ export default async function HomePage() {
             </div>
           )}
         </div>
-      </section>
+    </section>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <div className="flex flex-col items-center w-full min-h-screen">
+      {/* The hero streams immediately so its primary video can load while
+          lower-page data is fetched independently. */}
+      <HomeHero />
+      <Suspense
+        fallback={
+          <div
+            className="w-full max-w-6xl h-80 mx-auto px-6 py-12"
+            aria-label="精选文章加载中"
+          />
+        }
+      >
+        <FeaturedPostsSection />
+      </Suspense>
 
       {/* Modern Features Grid */}
       <section className="w-full bg-black/[0.02] dark:bg-white/[0.02] py-16 md:py-24">

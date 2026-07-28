@@ -4,10 +4,10 @@ import "./globals.css";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Toaster } from "@/components/ui/toaster";
-import { createClient } from "@/lib/supabase/server";
-import { AuthProvider } from "@/components/providers/auth-provider";
+import { AppProviders } from "@/components/providers/app-providers";
 import { cn } from "@/lib/utils";
 import { siteConfig } from "@/lib/site-config";
+import { SiteLoader } from "@/components/layout/site-loader";
 
 const instrumentSerif = Instrument_Serif({
   weight: ["400"],
@@ -43,40 +43,26 @@ export const viewport: Viewport = {
   ],
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  let profile = null;
-  if (user) {
-    const { data } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single();
-    profile = data;
-  }
-
   return (
     <html lang="zh-CN" suppressHydrationWarning>
       <body className={cn(
         "min-h-screen bg-[#fafafa] dark:bg-[#050505] text-neutral-900 dark:text-neutral-100 selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black antialiased flex flex-col font-sans",
         instrumentSerif.variable
       )}>
-        <AuthProvider initialUser={user} initialProfile={profile}>
-          <Navbar user={user} />
+        <SiteLoader />
+        <AppProviders>
+          <Navbar />
           <main className="flex-1 flex flex-col">
             {children}
           </main>
           <Footer />
           <Toaster />
-        </AuthProvider>
+        </AppProviders>
       </body>
     </html>
   );

@@ -20,6 +20,7 @@ import {
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -78,6 +79,7 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
               <Button
                 variant="ghost"
                 size="icon"
+                aria-label="打开移动导航菜单"
                 className="md:hidden -ml-3 text-neutral-500 hover:text-black dark:hover:text-white transition-colors"
                 suppressHydrationWarning
               >
@@ -90,11 +92,14 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
                   <Logo className="w-8 h-8" />
                   <span className="text-lg font-bold tracking-tight font-serif italic">Blog</span>
                 </SheetTitle>
+                <SheetDescription className="sr-only">
+                  站点页面、搜索、账户和管理入口
+                </SheetDescription>
               </SheetHeader>
               <div className="flex flex-col gap-6 p-6 pt-2">
 
                 {/* Mobile Nav Links */}
-                <nav className="flex flex-col gap-2">
+                <nav aria-label="移动端主导航" className="flex flex-col gap-2">
                   {navItems.map((item) => (
                     <Link
                       key={item.href}
@@ -118,7 +123,7 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
                       <div className="flex items-center gap-4 px-2 text-left">
                         <div className="relative w-12 h-12 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 overflow-hidden border border-black/5 dark:border-white/5">
                            {avatarUrl ? (
-                             <SafeImage src={avatarUrl} alt="Avatar" fill sizes="48px" className="object-cover" />
+                              <SafeImage src={avatarUrl} alt="当前用户头像" fill sizes="48px" className="object-cover" />
                            ) : (
                              <User className="w-5 h-5 text-neutral-500" />
                            )}
@@ -129,7 +134,7 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
                         </div>
                       </div>
 
-                      <nav className="flex flex-col gap-1">
+                      <nav aria-label="移动端管理导航" className="flex flex-col gap-1">
                         <Link
                           href="/profile"
                           onClick={() => setIsSheetOpen(false)}
@@ -204,7 +209,7 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
             <span className="text-xl font-bold tracking-tight font-serif italic text-neutral-900 dark:text-neutral-100 transition-colors">Blog</span>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-1">
+          <nav aria-label="主导航" className="hidden md:flex items-center gap-1">
             {navItems.map((item) => (
               <Link
                 key={item.href}
@@ -227,6 +232,7 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
             <Search className="absolute left-3 w-4 h-4 text-neutral-400 pointer-events-none transition-colors" />
             <input
               type="search"
+              aria-label="搜索文章"
               enterKeyHint="search"
               placeholder="搜索..."
               value={searchQuery}
@@ -240,10 +246,16 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="hidden md:flex rounded-full w-11 h-11" suppressHydrationWarning>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="打开用户菜单"
+                  className="hidden md:flex rounded-full w-11 h-11"
+                  suppressHydrationWarning
+                >
                    <div className="relative w-9 h-9 rounded-full flex items-center justify-center overflow-hidden border bg-neutral-100 dark:bg-neutral-800 border-black/5 dark:border-white/5 transition-colors">
                       {avatarUrl ? (
-                        <SafeImage src={avatarUrl} alt="Avatar" fill sizes="36px" className="object-cover" />
+                         <SafeImage src={avatarUrl} alt="当前用户头像" fill sizes="36px" className="object-cover" />
                       ) : (
                         <User className="w-4 h-4 text-black dark:text-white" />
                       )}
@@ -302,7 +314,12 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
             </DropdownMenu>
           ) : (
             <LoginModal>
-              <Button variant="ghost" size="icon" className="hidden md:flex rounded-full">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="登录或注册"
+                className="hidden md:flex rounded-full"
+              >
                 <User className="w-5 h-5" />
               </Button>
             </LoginModal>
@@ -325,6 +342,8 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
       <Button
         variant="ghost"
         size="icon"
+        aria-label={isNavbarVisible ? "收起导航栏" : "展开导航栏"}
+        aria-expanded={isNavbarVisible}
         className="fixed top-3 right-2 z-[60] md:hidden rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-500 transition-colors"
         onClick={() => setIsNavbarVisible(!isNavbarVisible)}
       >

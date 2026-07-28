@@ -2,7 +2,6 @@ import { createClient as createServerClient } from '@/lib/supabase/server'
 import { apiError, getErrorMessage } from '@/lib/api-response'
 import { NextResponse } from 'next/server'
 import { subDays, format } from 'date-fns'
-import { toTagNames } from '@/lib/types'
 import { AccessError, requireAdmin } from '@/lib/server-auth'
 
 interface CommentWithProfile {
@@ -45,27 +44,19 @@ export async function GET() {
     }))
 
     // 获取标签分布
-    const { data: posts } = await supabase
-      .from('posts')
-      .select('tags')
-      .eq('published', true)
-      .not('tags', 'is', null)
+    const { data: tags } = await supabase
+      .from('tags')
+      .select('name, post_count')
+      .gt('post_count', 0)
+      .order('post_count', { ascending: false })
+      .limit(5)
 
-    const tagCounts: Record<string, number> = {}
-    posts?.forEach((post) => {
-      toTagNames(post.tags).forEach((tag) => {
-        tagCounts[tag] = (tagCounts[tag] || 0) + 1
-      })
-    })
-
-    const tagData = Object.entries(tagCounts)
-      .map(([name, value]) => ({
-        name,
-        value,
-        color: getColorForTag(name)
+    const tagData = (tags || [])
+      .map((tag) => ({
+        name: tag.name,
+        value: tag.post_count,
+        color: getColorForTag(tag.name)
       }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 5)
 
     // 获取高频评论者
     const { data: commentData } = await supabase

@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import type { Database } from '@/lib/types'
 
-export default async function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -64,9 +64,6 @@ export default async function proxy(request: NextRequest) {
       url.pathname = '/dashboard'
       return NextResponse.redirect(url)
     }
-  } else {
-    // 非保护路由也刷新 session，确保 auth token 持续有效
-    await supabase.auth.getUser()
   }
 
   return response
@@ -74,9 +71,10 @@ export default async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // API routes validate/refresh their own sessions. Public pages still pass
-    // through the proxy so the navbar receives a fresh session, while all
-    // static assets (especially large hero videos) bypass Supabase entirely.
-    '/((?!api(?:/|$)|_next/static|_next/image|favicon.ico|.*\\.(?:avif|css|eot|gif|ico|jpeg|jpg|js|map|mp4|ogg|otf|pdf|png|svg|ttf|webm|webp|woff|woff2)$).*)',
+    '/auth/:path*',
+    '/dashboard/:path*',
+    '/profile/:path*',
+    '/admin/:path*',
+    '/register/:path*',
   ],
 }

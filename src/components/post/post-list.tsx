@@ -1,14 +1,13 @@
 "use client"
 
-import { useCallback, useState, useEffect, useRef } from "react"
+import { useEffect } from "react"
 import { useInView } from "react-intersection-observer"
-import { useMediaQuery } from "@/hooks/use-media-query"
+import { ArrowUpDown, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { PostGrid } from "./post-grid"
+import type { Post } from "./post-card"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight, Loader2, ArrowUpDown } from "lucide-react"
-import { Post } from "./post-card"
+import { useMediaQuery } from "@/hooks/use-media-query"
 import { cn } from "@/lib/utils"
-import { isAbortError } from "@/lib/errors"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,10 +16,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { usePostList } from "@/features/posts/hooks/use-post-list"
 
 interface PostListProps {
-  // Support both old prop (posts) for backward compatibility if needed,
-  // but we should migrate to initialPosts
   posts?: Post[]
   initialPosts?: Post[]
   initialTotal?: number
@@ -31,7 +29,7 @@ interface PostListProps {
   error?: string
   header?: React.ReactNode
   extraActions?: React.ReactNode
-  alignment?: 'start' | 'between' | 'end'
+  alignment?: "start" | "between" | "end"
 }
 
 export default function PostList({
@@ -45,303 +43,24 @@ export default function PostList({
   error,
   header,
   extraActions,
-  alignment = 'between'
+  alignment = "between",
 }: PostListProps) {
-  // Use initialPosts if available, otherwise fall back to legacy posts
   const startPosts = initialPosts || legacyPosts || []
   const startTotal = initialTotal || startPosts.length
-
-  const [posts, setPosts] = useState<Post[]>(startPosts)
-  const [page, setPage] = useState(1)
-  const [total, setTotal] = useState(startTotal)
-  const [loading, setLoading] = useState(false)
-  const [sort, setSort] = useState<'latest' | 'oldest' | 'views'>('latest')
-
-  // AbortController ref to handle race conditions and unmounts
-  const abortControllerRef = useRef<AbortController | null>(null)
-
-  // For mobile infinite scroll
-  const [hasMore, setHasMore] = useState(startPosts.length < startTotal)
-
+  const list = usePostList({
+    initialPosts: startPosts,
+    initialTotal: startTotal,
+    filters: { category, tag, search, limit },
+  })
   const isDesktop = useMediaQuery("(min-width: 768px)")
   const { ref, inView } = useInView()
+  const { hasMore, loading, loadMore } = list
 
-  // Save current list state (page, sort, scrollY) before navigating to a post detail page
   useEffect(() => {
-    const handleGlobalClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      const anchor = target.closest("a");
-      if (anchor && anchor.getAttribute("href")?.startsWith("/post/")) {
-        sessionStorage.setItem(
-          "post_list_state",
-          JSON.stringify({
-            page,
-            sort,
-            scrollY: window.scrollY,
-            pathname: window.location.pathname,
-          })
-        );
-      }
-    };
-
-    document.addEventListener("click", handleGlobalClick);
-    return () => document.removeEventListener("click", handleGlobalClick);
-  }, [page, sort]);
-
-  // Restore pagination & scroll position if returning from post detail page
-  useEffect(() => {
-    const restoreState = async () => {
-      try {
-        const savedRaw = sessionStorage.getItem("post_list_state");
-        if (!savedRaw) return;
-
-        const saved = JSON.parse(savedRaw);
-        if (saved.pathname !== window.location.pathname) return;
-
-        const targetPage = saved.page || 1;
-        const targetSort = saved.sort || "latest";
-
-        if (targetPage > 1 || targetSort !== "latest") {
-          setLoading(true);
-          const params = new URLSearchParams({
-            page: targetPage.toString(),
-            limit: limit.toString(),
-            sort: targetSort,
-          });
-          if (category) params.append("category", category);
-          if (tag) params.append("tag", tag);
-          if (search) params.append("search", search);
-
-          const res = await fetch(`/api/posts?${params.toString()}`);
-          const data = await res.json();
-
-          if (data.posts && data.posts.length > 0) {
-            setPosts(data.posts);
-            setPage(targetPage);
-            setSort(targetSort);
-            setTotal(data.total || 0);
-            setHasMore(data.posts.length < (data.total || 0));
-          }
-          setLoading(false);
-        }
-
-        // Restore exact scroll position
-        if (saved.scrollY && saved.scrollY > 0) {
-          setTimeout(() => {
-            window.scrollTo({ top: saved.scrollY, behavior: "instant" });
-          }, 150);
-        }
-      } catch (err) {
-        console.error("Error restoring post list state:", err);
-      }
-    };
-
-    restoreState();
-  }, [category, limit, search, tag]);
-
-  // Reset state when filters change (category, tag, search)
-  useEffect(() => {
-    const currentPosts = initialPosts || legacyPosts || []
-    const currentTotal = initialTotal || currentPosts.length
-
-    const timer = window.setTimeout(() => {
-      setPosts(currentPosts)
-      setTotal(currentTotal)
-      setPage(1)
-      setHasMore(currentPosts.length < currentTotal)
-      setSort('latest')
-    }, 0)
-
-    return () => {
-      window.clearTimeout(timer)
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort()
-      }
-    }
-  }, [category, initialPosts, initialTotal, legacyPosts, search, tag])
-
-  const loadMoreMobile = useCallback(async () => {
-    // Prevent duplicate requests
-    if (loading) return
-
-    setLoading(true)
-
-    // Cancel previous request if exists
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort()
-    }
-    const controller = new AbortController()
-    abortControllerRef.current = controller
-
-    const nextPage = page + 1
-    const params = new URLSearchParams({
-      page: nextPage.toString(),
-      limit: limit.toString(),
-      sort,
-    })
-
-    if (category) params.append("category", category)
-    if (tag) params.append("tag", tag)
-    if (search) params.append("search", search)
-
-    try {
-      const res = await fetch(`/api/posts?${params.toString()}`, {
-        signal: controller.signal
-      })
-      const data = await res.json()
-
-      if (data.error) throw new Error(data.error)
-
-      if (data.posts && data.posts.length > 0) {
-        setPosts(prev => {
-           // Filter out duplicates just in case
-           const existingIds = new Set(prev.map(p => p.id))
-           const newPosts = data.posts.filter((p: Post) => !existingIds.has(p.id))
-           return [...prev, ...newPosts]
-        })
-        setPage(nextPage)
-        setTotal(data.total || 0)
-        setHasMore((posts.length + data.posts.length) < (data.total || 0))
-      } else {
-        setHasMore(false)
-      }
-    } catch (error: unknown) {
-      // Ignore abort errors which happen on rapid navigation/filtering
-      if (isAbortError(error)) return
-
-      console.error("Failed to load posts", error)
-      // Only set error state if it's not a cancellation
-      // setHasMore(false) // Optional: stop trying?
-    } finally {
-      if (abortControllerRef.current === controller) {
-        abortControllerRef.current = null
-        setLoading(false)
-      }
-    }
-  }, [category, limit, loading, page, posts.length, search, sort, tag])
-
-  // Mobile Infinite Scroll Effect
-  useEffect(() => {
-    if (!isDesktop && inView && hasMore && !loading) {
-      const frame = window.requestAnimationFrame(() => {
-        void loadMoreMobile()
-      })
-      return () => window.cancelAnimationFrame(frame)
-    }
-  }, [hasMore, inView, isDesktop, loadMoreMobile, loading])
-
-  const handlePageChange = async (newPage: number) => {
-    // Sync search params in browser URL
-    try {
-      const newUrl = new URL(window.location.href);
-      newUrl.searchParams.set("page", newPage.toString());
-      window.history.replaceState(null, "", newUrl.toString());
-
-      sessionStorage.setItem(
-        "post_list_state",
-        JSON.stringify({
-          page: newPage,
-          sort,
-          scrollY: 0,
-          pathname: window.location.pathname,
-        })
-      );
-    } catch {}
-
-    // Cancel previous request if exists
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort()
-    }
-    const controller = new AbortController()
-    abortControllerRef.current = controller
-
-    setLoading(true)
-    const params = new URLSearchParams({
-      page: newPage.toString(),
-      limit: limit.toString(),
-      sort,
-    })
-
-    if (category) params.append("category", category)
-    if (tag) params.append("tag", tag)
-    if (search) params.append("search", search)
-
-    try {
-      const res = await fetch(`/api/posts?${params.toString()}`, {
-        signal: controller.signal
-      })
-      const data = await res.json()
-
-      if (data.error) throw new Error(data.error)
-      const newPosts = data.posts || []
-
-      setPosts(newPosts)
-      setPage(newPage)
-      setTotal(data.total || 0)
-      setHasMore(newPosts.length === limit)
-
-      // Scroll to top of list
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-    } catch (error: unknown) {
-      if (isAbortError(error)) return
-      console.error("Failed to load page", error)
-    } finally {
-      if (abortControllerRef.current === controller) {
-        abortControllerRef.current = null
-        setLoading(false)
-      }
-    }
-  }
-
-  const handleSortChange = async (newSort: 'latest' | 'oldest' | 'views') => {
-    if (sort === newSort) return
-
-    // Cancel previous request if exists
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort()
-    }
-    const controller = new AbortController()
-    abortControllerRef.current = controller
-
-    setSort(newSort)
-    setLoading(true)
-
-    const params = new URLSearchParams({
-      page: "1",
-      limit: limit.toString(),
-      sort: newSort,
-    })
-
-    if (category) params.append("category", category)
-    if (tag) params.append("tag", tag)
-    if (search) params.append("search", search)
-
-    try {
-      const res = await fetch(`/api/posts?${params.toString()}`, {
-        signal: controller.signal
-      })
-      const data = await res.json()
-
-      if (data.error) throw new Error(data.error)
-      const newPosts = data.posts || []
-
-      setPosts(newPosts)
-      setPage(1)
-      setTotal(data.total || 0)
-      setHasMore(newPosts.length < (data.total || 0))
-
-      // Scroll to top of list
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-    } catch (error: unknown) {
-      if (isAbortError(error)) return
-      console.error("Failed to load sorted posts", error)
-    } finally {
-      if (abortControllerRef.current === controller) {
-        abortControllerRef.current = null
-        setLoading(false)
-      }
-    }
-  }
+    if (isDesktop || !inView || !hasMore || loading) return
+    const frame = window.requestAnimationFrame(() => void loadMore())
+    return () => window.cancelAnimationFrame(frame)
+  }, [hasMore, inView, isDesktop, loadMore, loading])
 
   if (error) {
     return (
@@ -351,39 +70,41 @@ export default function PostList({
     )
   }
 
-  const totalPages = Math.ceil(total / limit)
+  const totalPages = Math.ceil(list.total / limit)
 
   return (
     <div className="space-y-8">
-      {/* Header & Controls Section */}
-      <div className={cn(
-        "flex flex-col md:flex-row md:items-end gap-4",
-        alignment === 'between' ? "justify-between" :
-        alignment === 'start' ? "justify-start" : "justify-end"
-      )}>
+      <div
+        className={cn(
+          "flex flex-col md:flex-row md:items-end gap-4",
+          alignment === "between"
+            ? "justify-between"
+            : alignment === "start"
+              ? "justify-start"
+              : "justify-end"
+        )}
+      >
         {header && (
-          <div className={cn(
-            "w-full md:w-auto",
-            alignment === 'between' && "flex-1"
-          )}>
+          <div
+            className={cn(
+              "w-full md:w-auto",
+              alignment === "between" && "flex-1"
+            )}
+          >
             {header}
           </div>
         )}
 
-        <div className={cn(
-          "flex items-center gap-3",
-          (header && alignment === 'between') ? "w-full md:w-auto" :
-          (!header && alignment === 'between') ? "w-full justify-end" : ""
-        )}>
-          {/* Extra Actions (e.g., New Post Button) */}
-          <div className="flex-1 md:flex-none flex">
-            {extraActions}
-          </div>
-
-           {/* Sort Dropdown */}
+        <div className="flex items-center gap-3">
+          <div className="flex-1 md:flex-none flex">{extraActions}</div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2 rounded-full border-black/10 dark:border-white/10 h-9 md:h-10">
+              <Button
+                variant="outline"
+                size="sm"
+                aria-label="选择文章排序方式"
+                className="gap-2 rounded-full h-9 md:h-10"
+              >
                 <ArrowUpDown className="w-4 h-4" />
                 <span className="hidden sm:inline">排序</span>
               </Button>
@@ -391,13 +112,13 @@ export default function PostList({
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>排序方式</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => handleSortChange('latest')}>
+              <DropdownMenuItem onClick={() => void list.changeSort("latest")}>
                 最新发布
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSortChange('oldest')}>
+              <DropdownMenuItem onClick={() => void list.changeSort("oldest")}>
                 最早发布
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSortChange('views')}>
+              <DropdownMenuItem onClick={() => void list.changeSort("views")}>
                 最多浏览
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -405,53 +126,52 @@ export default function PostList({
         </div>
       </div>
 
-      <PostGrid posts={posts} isLoading={loading && isDesktop} />
+      <PostGrid posts={list.posts} isLoading={list.loading && isDesktop} />
 
-      {/* Mobile Loading Trigger (Infinite Scroll) */}
       {!isDesktop && (
-        <div className="flex justify-center py-8">
-           {hasMore ? (
-             <div ref={ref} className="flex items-center gap-2 text-neutral-500 bg-white dark:bg-neutral-900 px-4 py-2 rounded-full border border-black/5 dark:border-white/5 shadow-sm">
-               <Loader2 className="w-4 h-4 animate-spin" />
-               <span className="text-sm font-medium">加载更多...</span>
-             </div>
-           ) : (
-             posts.length > 0 && (
-               <p className="text-xs text-neutral-400 font-medium uppercase tracking-widest">
-                 没有更多啦
-               </p>
-             )
-           )}
+        <div className="flex justify-center py-8" aria-live="polite">
+          {list.hasMore ? (
+            <div ref={ref} className="flex items-center gap-2 text-neutral-500">
+              <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+              <span className="text-sm font-medium">加载更多...</span>
+            </div>
+          ) : (
+            list.posts.length > 0 && (
+              <p className="text-xs text-neutral-400">没有更多啦</p>
+            )
+          )}
         </div>
       )}
 
-      {/* Desktop Pagination */}
       {isDesktop && totalPages > 1 && (
-        <div className="flex justify-center items-center gap-4 py-8 mt-8 border-t border-black/5 dark:border-white/5 pt-8">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => handlePageChange(page - 1)}
-              disabled={page === 1 || loading}
-              className="rounded-full w-10 h-10 border-black/10 dark:border-white/10"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-
-            <span className="flex items-center px-4 font-mono text-sm text-neutral-500">
-               Page <span className="text-black dark:text-white font-bold mx-2">{page}</span> of {totalPages}
-            </span>
-
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => handlePageChange(page + 1)}
-              disabled={page === totalPages || loading}
-              className="rounded-full w-10 h-10 border-black/10 dark:border-white/10"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-        </div>
+        <nav
+          aria-label="文章分页"
+          className="flex justify-center items-center gap-4 py-8 mt-8 border-t"
+        >
+          <Button
+            variant="outline"
+            size="icon"
+            aria-label="上一页"
+            onClick={() => void list.changePage(list.page - 1)}
+            disabled={list.page === 1 || list.loading}
+            className="rounded-full"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <span className="font-mono text-sm text-neutral-500">
+            第 <strong>{list.page}</strong> 页，共 {totalPages} 页
+          </span>
+          <Button
+            variant="outline"
+            size="icon"
+            aria-label="下一页"
+            onClick={() => void list.changePage(list.page + 1)}
+            disabled={list.page === totalPages || list.loading}
+            className="rounded-full"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </nav>
       )}
     </div>
   )

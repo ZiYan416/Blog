@@ -62,7 +62,6 @@ CREATE TABLE IF NOT EXISTS public.posts (
   featured BOOLEAN NOT NULL DEFAULT false,
   view_count INTEGER NOT NULL DEFAULT 0,
   category TEXT,
-  tags JSONB NOT NULL DEFAULT '[]'::JSONB,
   author_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -78,7 +77,6 @@ ALTER TABLE public.posts
   ADD COLUMN IF NOT EXISTS featured BOOLEAN DEFAULT false,
   ADD COLUMN IF NOT EXISTS view_count INTEGER DEFAULT 0,
   ADD COLUMN IF NOT EXISTS category TEXT,
-  ADD COLUMN IF NOT EXISTS tags JSONB DEFAULT '[]'::JSONB,
   ADD COLUMN IF NOT EXISTS author_id UUID,
   ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW(),
   ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
@@ -837,7 +835,6 @@ BEGIN
     content,
     excerpt,
     cover_image,
-    tags,
     category,
     published,
     author_id
@@ -848,7 +845,6 @@ BEGIN
     p_content,
     p_excerpt,
     p_cover_image,
-    TO_JSONB(COALESCE(p_tag_names, ARRAY[]::TEXT[])),
     p_category,
     p_published,
     auth.uid()
@@ -904,7 +900,6 @@ BEGIN
     content = p_content,
     excerpt = p_excerpt,
     cover_image = p_cover_image,
-    tags = TO_JSONB(COALESCE(p_tag_names, ARRAY[]::TEXT[])),
     category = p_category,
     published = p_published,
     updated_at = NOW()
@@ -1346,9 +1341,6 @@ CREATE INDEX IF NOT EXISTS idx_posts_public_listing
 CREATE INDEX IF NOT EXISTS idx_posts_public_category
   ON public.posts (category, created_at DESC)
   WHERE published = true;
-
-CREATE INDEX IF NOT EXISTS idx_posts_tags
-  ON public.posts USING GIN (tags);
 
 CREATE INDEX IF NOT EXISTS idx_tags_popularity
   ON public.tags (post_count DESC, name);

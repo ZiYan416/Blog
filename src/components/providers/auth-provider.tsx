@@ -24,60 +24,70 @@ export const useAuth = () => useContext(AuthContext);
 
 export function AuthProvider({
   children,
-  initialUser,
-  initialProfile,
+  initialUser = null,
+  initialProfile = null,
 }: {
   children: React.ReactNode;
-  initialUser: User | null;
-  initialProfile: Profile | null;
+  initialUser?: User | null;
+  initialProfile?: Profile | null;
 }) {
   const [sessionState, setSessionState] = useState<AuthState | null>(null);
   const state = sessionState || {
     user: initialUser,
     profile: initialProfile,
     isAdmin: initialProfile?.is_admin || false,
-    loading: false,
+    loading: !initialUser && !initialProfile,
   };
 
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
-    // Sync with client-side events
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === "SIGNED_OUT") {
+    let active = true;
+
+    const syncSession = async (user: User | null) => {
+      if (!active) return;
+
+      if (!user) {
         setSessionState({
           user: null,
           profile: null,
           isAdmin: false,
           loading: false,
         });
-        router.refresh();
         return;
       }
 
-      if (event === "INITIAL_SESSION") return;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
 
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", session.user.id)
-          .single();
+      if (!active) return;
+      setSessionState({
+        user,
+        profile,
+        isAdmin: profile?.is_admin || false,
+        loading: false,
+      });
+    };
 
-        setSessionState({
-          user: session.user,
-          profile,
-          isAdmin: profile?.is_admin || false,
-          loading: false,
-        });
-        router.refresh();
-      }
+    void supabase.auth.getSession().then(({ data }) => {
+      void syncSession(data.session?.user || null);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      window.setTimeout(() => {
+        void syncSession(session?.user || null);
+        if (event !== "INITIAL_SESSION") router.refresh();
+      }, 0);
     });
 
     return () => {
+      active = false;
       subscription.unsubscribe();
     };
   }, [router, supabase]);

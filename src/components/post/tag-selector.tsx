@@ -48,6 +48,7 @@ export function TagSelector({ value, onChange, availableTags, loading = false, o
           size="icon"
           className="h-6 w-6"
           onClick={onRefresh}
+          aria-label="刷新标签列表"
           title="刷新标签列表"
         >
           <RefreshCcw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
@@ -65,6 +66,8 @@ export function TagSelector({ value, onChange, availableTags, loading = false, o
             >
               {tag}
               <button
+                type="button"
+                aria-label={`移除标签 ${tag}`}
                 onClick={(e) => {
                   e.stopPropagation()
                   toggleTag(tag)
@@ -100,6 +103,8 @@ export function TagSelector({ value, onChange, availableTags, loading = false, o
                 const isSelected = value.includes(tag)
                 return (
                   <button
+                    type="button"
+                    aria-pressed={isSelected}
                     key={tag}
                     onClick={() => toggleTag(tag)}
                     className={`

@@ -1,33 +1,12 @@
-import { createClient } from '@/lib/supabase/server'
 import PostList from '@/components/post/post-list'
 import { Metadata } from 'next'
 import { Tag } from 'lucide-react'
 import { getTagStyles } from '@/lib/tag-color'
-import type { Post } from '@/components/post/post-card'
-import { toTagNames } from '@/lib/types'
-
-async function getTagName(slug: string) {
-  const supabase = await createClient()
-
-  // Try to find tag by slug
-  const { data: tag } = await supabase
-    .from('tags')
-    .select('*')
-    .eq('slug', slug)
-    .maybeSingle()
-
-  if (tag) return tag
-
-  // Fallback: decode slug as it might be a name (legacy support)
-  // Construct a fake tag object for legacy support
-  const name = decodeURIComponent(slug)
-  return {
-    id: 'legacy',
-    name: name,
-    slug: slug,
-    color: null
-  }
-}
+import { notFound } from 'next/navigation'
+import {
+  getPublishedPostsByTag,
+  getTagBySlug,
+} from '@/server/repositories/posts'
 
 export async function generateMetadata({
   params,
@@ -35,7 +14,8 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>
 }): Promise<Metadata> {
   const { slug } = await params
-  const tag = await getTagName(slug)
+  const tag = await getTagBySlug(slug)
+  if (!tag) return { title: '标签不存在' }
 
   return {
     title: `#${tag.name} - 文章标签`,
@@ -49,47 +29,9 @@ export default async function TagPage({
   params: Promise<{ slug: string }>
 }) {
   const { slug } = await params
-  const tag = await getTagName(slug)
-  const supabase = await createClient()
-
-  // 优先使用 post_tags 关联表查询
-  const query = supabase.from('posts')
-  let posts: Post[] = []
-  let count = 0
-
-  if (tag.id !== 'legacy') {
-    // 使用关联表查询
-    const { data, count: total } = await query
-      .select('*, post_tags!inner(tag_id)', { count: 'exact' })
-      .eq('post_tags.tag_id', tag.id)
-      .eq('published', true)
-      .order('featured', { ascending: false })
-      .order('created_at', { ascending: false })
-      .range(0, 8)
-
-    posts = (data || []).map(({ post_tags, ...post }) => {
-      void post_tags
-      return { ...post, tags: toTagNames(post.tags) }
-    })
-    count = total || 0
-  } else {
-    // 降级策略：使用数组字段查询 (针对旧数据或未同步的标签)
-    const { data, count: total } = await query
-      .select('*', { count: 'exact' })
-      .contains('tags', [tag.name])
-      .eq('published', true)
-      .order('featured', { ascending: false })
-      .order('created_at', { ascending: false })
-      .range(0, 8)
-
-    posts = (data || []).map((post) => ({
-      ...post,
-      tags: toTagNames(post.tags),
-    }))
-    count = total || 0
-  }
-
-  const safePosts = posts || []
+  const tag = await getTagBySlug(slug)
+  if (!tag) notFound()
+  const { posts, total } = await getPublishedPostsByTag(tag.id, 9)
   const styles = getTagStyles(tag.name)
 
   return (
@@ -112,7 +54,7 @@ export default async function TagPage({
             #{tag.name}
           </h1>
           <p className="mt-3 md:mt-4 text-sm md:text-base text-neutral-700 dark:text-neutral-300 font-medium">
-            共找到 {count} 篇相关文章
+            共找到 {total} 篇相关文章
           </p>
         </div>
       </div>
@@ -120,8 +62,8 @@ export default async function TagPage({
       {/* Content */}
       <div className="container max-w-6xl mx-auto px-6">
         <PostList
-          initialPosts={safePosts}
-          initialTotal={count}
+          initialPosts={posts}
+          initialTotal={total}
           tag={tag.name}
         />
       </div>

@@ -245,6 +245,7 @@ export function TagManager({ initialTags }: TagManagerProps) {
                   <Button
                     variant="secondary"
                     size="icon"
+                    aria-label={`编辑标签 ${tag.name}`}
                     className="h-8 w-8 rounded-full shadow-lg bg-white dark:bg-neutral-800 border border-black/5 hover:bg-blue-50 hover:text-blue-600"
                     onClick={(e) => {
                       e.stopPropagation()
@@ -256,6 +257,7 @@ export function TagManager({ initialTags }: TagManagerProps) {
                   <Button
                     variant="secondary"
                     size="icon"
+                    aria-label={`删除标签 ${tag.name}`}
                     className="h-8 w-8 rounded-full shadow-lg bg-white dark:bg-neutral-800 border border-black/5 hover:bg-red-50 hover:text-red-600"
                     onClick={(e) => {
                       e.stopPropagation()

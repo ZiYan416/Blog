@@ -97,7 +97,12 @@ export function AdminPostActions({ id, isFeatured, title, mode }: AdminPostActio
     return (
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-neutral-400 hover:text-red-600 hover:bg-red-50">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="删除文章"
+            className="h-8 w-8 text-neutral-400 hover:text-red-600 hover:bg-red-50"
+          >
             <Trash2 className="w-4 h-4" />
           </Button>
         </AlertDialogTrigger>

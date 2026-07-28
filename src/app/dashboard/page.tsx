@@ -268,7 +268,10 @@ export default async function DashboardPage() {
                       </div>
 
                       <Button asChild variant="ghost" size="icon" className="rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Link href={`/admin/posts/${post.id}/edit`}>
+                        <Link
+                          href={`/admin/posts/${post.id}/edit`}
+                          aria-label={`编辑文章 ${post.title}`}
+                        >
                           <ArrowRight className="w-4 h-4" />
                         </Link>
                       </Button>

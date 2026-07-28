@@ -2,6 +2,7 @@ import { createClient as createServerClient } from '@/lib/supabase/server'
 import { apiError, getErrorMessage } from '@/lib/api-response'
 import { NextResponse } from 'next/server'
 import { AccessError, requireAdmin } from '@/lib/server-auth'
+import { invalidatePublishedComments } from '@/server/cache'
 
 // 审核评论（批准）
 export async function PATCH(
@@ -22,6 +23,7 @@ export async function PATCH(
 
     if (error) throw error
 
+    invalidatePublishedComments()
     return NextResponse.json({ success: true })
   } catch (error) {
     if (error instanceof AccessError) {
@@ -51,6 +53,7 @@ export async function DELETE(
 
     if (error) throw error
 
+    invalidatePublishedComments()
     return NextResponse.json({ success: true })
   } catch (error) {
     if (error instanceof AccessError) {

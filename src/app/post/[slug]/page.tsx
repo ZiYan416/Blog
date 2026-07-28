@@ -1,26 +1,23 @@
-import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowLeft, Calendar, Tag, Eye, Clock, User } from 'lucide-react'
-import { extractTags, calculateReadingTime, formatDateString, generatePostSlug } from '@/lib/markdown'
+import { calculateReadingTime, formatDateString, generatePostSlug } from '@/lib/markdown'
 import { Button } from '@/components/ui/button'
 import { ViewCounter } from '@/components/post/view-counter'
 import { CommentSection } from '@/components/post/comment-section'
-import { getComments } from '@/app/actions/comment'
+import { getComments } from '@/server/repositories/comments'
 import { MarkdownRenderer } from '@/components/post/markdown-renderer'
 import { getTagStyles } from '@/lib/tag-color'
 import { TableOfContents } from '@/components/post/table-of-contents'
 import { PostTipButton } from '@/components/post/post-tip-button'
 import { absoluteSiteUrl, siteConfig } from '@/lib/site-config'
 import Image from 'next/image'
-import { toTagNames } from '@/lib/types'
+import { getPublishedPost } from '@/server/repositories/posts'
+import { getPublicProfile } from '@/server/repositories/profiles'
 
 import { BackToTop } from '@/components/ui/back-to-top'
 import { GoToComments } from '@/components/ui/go-to-comments'
-
-// Force dynamic rendering since we use searchParams or cookies implicitly via headers in layout
-export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({
   params,
@@ -29,12 +26,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params
   const decodedSlug = decodeURIComponent(slug)
-  const supabase = await createClient()
-  const { data: post } = await supabase
-    .from('posts')
-    .select('title, slug, excerpt, cover_image')
-    .eq('slug', decodedSlug)
-    .single()
+  const post = await getPublishedPost(decodedSlug)
 
   if (!post) {
     return {
@@ -72,57 +64,16 @@ export default async function PostPage({
 }) {
   const { slug } = await params
   const decodedSlug = decodeURIComponent(slug)
-  const supabase = await createClient()
+  const post = await getPublishedPost(decodedSlug)
+  if (!post) notFound()
 
-  const { data: post, error } = await supabase
-    .from('posts')
-    .select('*')
-    .eq('slug', decodedSlug)
-    .single()
-
-  if (error || !post) {
-    if (error && error.code !== 'PGRST116') {
-      console.error('Supabase Error:', error)
-    }
-    notFound()
-  }
-
-  // Fetch author profile - Step 2 (Separate query to avoid join errors)
-  const { data: author } = post.author_id
-    ? await supabase
-        .from('public_profiles')
-        .select('id, display_name, avatar_url, bio, website, card_bg, enable_tipping, alipay_qr, wechat_qr')
-        .eq('id', post.author_id)
-        .single()
-    : { data: null }
-
-  // No longer blocking the whole page if author fetch fails (it just remains null)
-
-  const comments = await getComments(post.id)
-
-  // 获取当前登录用户用于评论区预填充
-  const { data: { user } } = await supabase.auth.getUser()
-  let currentUser = null
-
-  if (user) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single()
-
-    currentUser = {
-      id: user.id,
-      name: profile?.display_name || user.email?.split('@')[0] || 'User',
-      email: user.email || '',
-      avatar_url: profile?.avatar_url,
-      card_bg: profile?.card_bg || 'default'
-    }
-  }
+  const [author, comments] = await Promise.all([
+    post.author_id ? getPublicProfile(post.author_id) : Promise.resolve(null),
+    getComments(post.id),
+  ])
 
   const content = post.content || ''
-  const storedTags = toTagNames(post.tags)
-  const tags = storedTags.length > 0 ? storedTags : extractTags(content)
+  const tags = post.tags
 
   const readingTime = calculateReadingTime(content)
   const formattedDate = formatDateString(post.created_at)
@@ -286,7 +237,6 @@ export default async function PostPage({
             <CommentSection
               postId={post.id}
               initialComments={comments}
-              currentUser={currentUser}
             />
           </div>
 

@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Comment, submitComment } from '@/app/actions/comment'
+import { submitComment } from '@/app/actions/comment'
+import type { Comment } from '@/server/repositories/comments'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
@@ -12,6 +13,7 @@ import { getCardStyle } from '@/lib/card-styles'
 import { cn } from '@/lib/utils'
 import { LoginModal } from '@/components/auth/login-modal'
 import { SafeImage } from '@/components/ui/safe-image'
+import { useAuth } from '@/components/providers/auth-provider'
 
 interface CommentSectionProps {
   postId: string
@@ -304,6 +306,17 @@ function CommentItem({
 }
 
 export function CommentSection({ postId, initialComments, currentUser }: CommentSectionProps) {
+  const { user, profile } = useAuth()
+  const resolvedUser = currentUser || (user
+    ? {
+        id: user.id,
+        name: profile?.display_name || user.email?.split('@')[0] || 'User',
+        email: user.email || '',
+        avatar_url: profile?.avatar_url,
+        card_bg: profile?.card_bg || 'default',
+      }
+    : null)
+
   // 计算总评论数（包括所有回复）
   const countComments = (comments: Comment[]): number => {
     return comments.reduce((total, comment) => {
@@ -322,7 +335,7 @@ export function CommentSection({ postId, initialComments, currentUser }: Comment
 
       {/* 主评论表单 */}
       <div className="mb-8 md:mb-12">
-        <CommentForm postId={postId} currentUser={currentUser} />
+        <CommentForm postId={postId} currentUser={resolvedUser} />
       </div>
 
       {/* 评论列表 */}
@@ -337,7 +350,7 @@ export function CommentSection({ postId, initialComments, currentUser }: Comment
               key={comment.id}
               comment={comment}
               postId={postId}
-              currentUser={currentUser}
+              currentUser={resolvedUser}
             />
           ))
         )}

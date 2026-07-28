@@ -43,6 +43,7 @@ export function PostPreviewModal({ open, onOpenChange, post }: PostPreviewModalP
         <Button
           variant="ghost"
           size="icon"
+          aria-label="关闭文章预览"
           className="absolute top-4 right-4 z-50 rounded-full bg-black/10 hover:bg-black/20 dark:bg-white/10 dark:hover:bg-white/20 backdrop-blur-md"
           onClick={() => onOpenChange(false)}
         >

@@ -1,17 +1,12 @@
 "use client"
 
-import { useState, useRef, useEffect, useCallback } from 'react'
-import CodeEditor from 'react-simple-code-editor'
-import { highlight, languages } from 'prismjs'
-import 'prismjs/components/prism-markdown'
+import { useState, useRef, useEffect } from 'react'
 import { Toolbar, ViewMode, MarkdownAction } from './toolbar'
 import { cn } from '@/lib/utils'
 import { RichEditor } from './rich-editor'
 import type { Editor as TiptapEditor } from '@tiptap/react'
-import { createClient } from '@/lib/supabase/client'
-import { v4 as uuidv4 } from 'uuid'
-import { useToast } from '@/hooks/use-toast'
-import { getErrorMessage } from '@/lib/errors'
+import { applyMarkdownAction } from '@/features/posts/editor/markdown-actions'
+import { SourceMarkdownEditor } from '@/features/posts/editor/source-markdown-editor'
 
 interface EditorProps {
   content: string
@@ -22,9 +17,6 @@ interface EditorProps {
 export default function Editor({ content, onChange, placeholder = '开始创作吧...' }: EditorProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('rich')
   const [tiptapEditor, setTiptapEditor] = useState<TiptapEditor | null>(null)
-  const { toast } = useToast()
-  const [, setIsUploading] = useState(false)
-
   // Force re-render when editor state changes (for toolbar active states)
   const [, forceUpdate] = useState(0)
   useEffect(() => {
@@ -40,111 +32,6 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
 
   // Refs for editor instances
   const containerRef = useRef<HTMLDivElement>(null)
-
-  // Ensure Prism languages are loaded
-  useEffect(() => {
-    import('prismjs/components/prism-markdown')
-    import('prismjs/components/prism-javascript')
-    import('prismjs/components/prism-typescript')
-    import('prismjs/components/prism-css')
-    import('prismjs/components/prism-json')
-    import('prismjs/components/prism-bash')
-  }, [])
-
-  // Memoize highlight function
-  const highlightCode = useCallback((code: string) => {
-    return highlight(code, languages.markdown, 'markdown')
-  }, [])
-
-  const handleImageUpload = useCallback(async (file: File): Promise<string | null> => {
-    try {
-      setIsUploading(true)
-      const supabase = createClient()
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${uuidv4()}.${fileExt}`
-      const filePath = `${fileName}`
-
-      const { error: uploadError } = await supabase.storage
-        .from('blog-images')
-        .upload(filePath, file)
-
-      if (uploadError) throw uploadError
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('blog-images')
-        .getPublicUrl(filePath)
-
-      return publicUrl
-    } catch (error: unknown) {
-      console.error('Image upload failed:', error)
-      toast({
-        title: "图片上传失败",
-        description: getErrorMessage(error, '图片上传失败'),
-        variant: "destructive"
-      })
-      return null
-    } finally {
-      setIsUploading(false)
-    }
-  }, [toast])
-
-  const handleSourcePaste = useCallback(async (e: React.ClipboardEvent) => {
-    const items = Array.from(e.clipboardData.items)
-    const imageItem = items.find(item => item.type.startsWith('image'))
-
-    if (imageItem) {
-      e.preventDefault()
-      const file = imageItem.getAsFile()
-      if (file) {
-        const textarea = containerRef.current?.querySelector('textarea')
-        if (!textarea) return
-
-        const start = textarea.selectionStart
-        const end = textarea.selectionEnd
-
-        const placeholderText = `![Uploading ${file.name}...]()`
-        const beforeCursor = content.substring(0, start)
-        const afterCursor = content.substring(end)
-        const newText = beforeCursor + placeholderText + afterCursor
-
-        const newCursorPos = start + placeholderText.length
-        onChange(newText)
-
-        setTimeout(() => {
-          const textarea = containerRef.current?.querySelector('textarea')
-          if (textarea) {
-            textarea.focus()
-            textarea.setSelectionRange(newCursorPos, newCursorPos)
-          }
-        }, 0)
-
-        const url = await handleImageUpload(file)
-
-        if (url) {
-          const imageMarkdown = `![image](${url})`
-          const finalText = newText.replace(placeholderText, imageMarkdown)
-          const finalCursorPos = start + imageMarkdown.length
-          onChange(finalText)
-          setTimeout(() => {
-            const textarea = containerRef.current?.querySelector('textarea')
-            if (textarea) {
-              textarea.focus()
-              textarea.setSelectionRange(finalCursorPos, finalCursorPos)
-            }
-          }, 0)
-        } else {
-          onChange(content)
-          setTimeout(() => {
-            const textarea = containerRef.current?.querySelector('textarea')
-            if (textarea) {
-              textarea.focus()
-              textarea.setSelectionRange(start, end)
-            }
-          }, 0)
-        }
-      }
-    }
-  }, [content, handleImageUpload, onChange])
 
   const handleAction = (action: MarkdownAction) => {
     // If in Rich mode (or Split mode), try Tiptap first
@@ -188,135 +75,17 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
     const textarea = containerRef.current?.querySelector('textarea')
     if (!textarea) return
 
-    const start = textarea.selectionStart
-    const end = textarea.selectionEnd
-    const text = content
-    const selectedText = text.substring(start, end)
-
-    let insertStart = ''
-    let insertEnd = ''
-    let newCursorPos = start
-    let newSelectionEnd = end
-
-    const ensureStartOfLine = () => {
-      const beforeCursor = text.substring(0, start)
-      if (beforeCursor && beforeCursor.slice(-1) !== '\n' && start !== 0) {
-        return '\n'
-      }
-      return ''
-    }
-
-    switch (action) {
-      case 'bold':
-        insertStart = '**'
-        insertEnd = '**'
-        newCursorPos = start + 2
-        newSelectionEnd = end + 2
-        break
-      case 'italic':
-        insertStart = '*'
-        insertEnd = '*'
-        newCursorPos = start + 1
-        newSelectionEnd = end + 1
-        break
-      case 'underline':
-        insertStart = '<u>'
-        insertEnd = '</u>'
-        newCursorPos = start + 3
-        newSelectionEnd = end + 3
-        break
-      case 'highlight':
-        insertStart = '=='
-        insertEnd = '=='
-        newCursorPos = start + 2
-        newSelectionEnd = end + 2
-        break
-      case 'h1':
-        insertStart = ensureStartOfLine() + '# '
-        newCursorPos = start + insertStart.length
-        newSelectionEnd = end + insertStart.length
-        break
-      case 'h2':
-        insertStart = ensureStartOfLine() + '## '
-        newCursorPos = start + insertStart.length
-        newSelectionEnd = end + insertStart.length
-        break
-      case 'h3':
-        insertStart = ensureStartOfLine() + '### '
-        newCursorPos = start + insertStart.length
-        newSelectionEnd = end + insertStart.length
-        break
-      case 'list':
-        insertStart = ensureStartOfLine() + '- '
-        newCursorPos = start + insertStart.length
-        newSelectionEnd = end + insertStart.length
-        break
-      case 'ordered-list':
-        insertStart = ensureStartOfLine() + '1. '
-        newCursorPos = start + insertStart.length
-        newSelectionEnd = end + insertStart.length
-        break
-      case 'task-list':
-        insertStart = ensureStartOfLine() + '- [ ] '
-        newCursorPos = start + insertStart.length
-        newSelectionEnd = end + insertStart.length
-        break
-      case 'quote':
-        insertStart = ensureStartOfLine() + '> '
-        newCursorPos = start + insertStart.length
-        newSelectionEnd = end + insertStart.length
-        break
-      case 'code':
-        insertStart = '`'
-        insertEnd = '`'
-        newCursorPos = start + 1
-        newSelectionEnd = end + 1
-        break
-      case 'code-block':
-        insertStart = ensureStartOfLine() + '```\n'
-        insertEnd = '\n```'
-        newCursorPos = start + insertStart.length
-        newSelectionEnd = end + insertStart.length
-        break
-      case 'link':
-        insertStart = '['
-        insertEnd = '](url)'
-        newCursorPos = start + 1
-        newSelectionEnd = end + 1
-        break
-      case 'image':
-        insertStart = '!['
-        insertEnd = '](image-url)'
-        newCursorPos = start + 2
-        newSelectionEnd = end + 2
-        break
-      case 'table':
-        insertStart = ensureStartOfLine() + '| 标题1 | 标题2 | 标题3 |\n| --- | --- | --- |\n| 内容 | 内容 | 内容 |\n'
-        newCursorPos = start + insertStart.length
-        newSelectionEnd = newCursorPos
-        break
-      case 'hr':
-        insertStart = ensureStartOfLine() + '\n---\n'
-        newCursorPos = start + insertStart.length
-        newSelectionEnd = newCursorPos
-        break
-      case 'align-left':
-      case 'align-center':
-      case 'align-right':
-        // Text alignment is not natively supported in standard Markdown
-        break
-    }
-
-    const newText = text.substring(0, start) + insertStart + selectedText + insertEnd + text.substring(end)
-    onChange(newText)
+    const edit = applyMarkdownAction(
+      content,
+      textarea.selectionStart,
+      textarea.selectionEnd,
+      action
+    )
+    onChange(edit.text)
 
     setTimeout(() => {
       textarea.focus()
-      if (selectedText) {
-        textarea.setSelectionRange(newCursorPos, newSelectionEnd)
-      } else {
-        textarea.setSelectionRange(newCursorPos, newCursorPos)
-      }
+      textarea.setSelectionRange(edit.selectionStart, edit.selectionEnd)
     }, 0)
   }
 
@@ -334,27 +103,11 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
           viewMode === 'source' ? "w-full" :
             viewMode === 'split' ? "w-1/2 border-r border-black/5 dark:border-white/5" : "hidden"
         )}>
-          <div
-            className="source-markdown-editor flex-1 min-h-0 p-3 sm:p-4 md:p-6 font-mono text-sm"
-          >
-            <div ref={containerRef} className="min-h-full">
-              <CodeEditor
-                value={content}
-                onValueChange={onChange}
-                highlight={highlightCode}
-                padding={10}
-                placeholder="Source Mode..."
-                className="font-mono text-base leading-relaxed bg-transparent min-h-full focus:outline-none text-neutral-600 dark:text-neutral-400"
-                style={{
-                  fontFamily: '"Fira Code", "JetBrains Mono", Menlo, Monaco, Consolas, "Courier New", monospace',
-                  fontSize: 14,
-                  backgroundColor: 'transparent',
-                }}
-                textareaClassName="focus:outline-none"
-                onPaste={handleSourcePaste}
-              />
-            </div>
-          </div>
+          <SourceMarkdownEditor
+            content={content}
+            onChange={onChange}
+            containerRef={containerRef}
+          />
         </div>
 
         {/* Rich/Normal Mode Editor */}

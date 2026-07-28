@@ -1,0 +1,225 @@
+"use client"
+
+import { useCallback, useEffect, useRef, useState } from "react"
+import type { Post } from "@/components/post/post-card"
+import { isAbortError } from "@/lib/errors"
+
+export type PostSort = "latest" | "oldest" | "views"
+
+interface PostListFilters {
+  category?: string
+  tag?: string
+  search?: string
+  limit: number
+}
+
+interface PostPageResponse {
+  posts?: Post[]
+  total?: number
+  error?: string
+}
+
+export function usePostList({
+  initialPosts,
+  initialTotal,
+  filters,
+}: {
+  initialPosts: Post[]
+  initialTotal: number
+  filters: PostListFilters
+}) {
+  const [posts, setPosts] = useState(initialPosts)
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(initialTotal)
+  const [sort, setSort] = useState<PostSort>("latest")
+  const [loading, setLoading] = useState(false)
+  const [hasMore, setHasMore] = useState(initialPosts.length < initialTotal)
+  const controllerRef = useRef<AbortController | null>(null)
+
+  const buildParams = useCallback(
+    (targetPage: number, targetSort: PostSort) => {
+      const params = new URLSearchParams({
+        page: String(targetPage),
+        limit: String(filters.limit),
+        sort: targetSort,
+      })
+      if (filters.category) params.set("category", filters.category)
+      if (filters.tag) params.set("tag", filters.tag)
+      if (filters.search) params.set("search", filters.search)
+      return params
+    },
+    [filters.category, filters.limit, filters.search, filters.tag]
+  )
+
+  const requestPage = useCallback(
+    async (targetPage: number, targetSort: PostSort) => {
+      controllerRef.current?.abort()
+      const controller = new AbortController()
+      controllerRef.current = controller
+      setLoading(true)
+
+      try {
+        const response = await fetch(
+          `/api/posts?${buildParams(targetPage, targetSort)}`,
+          { signal: controller.signal }
+        )
+        const result = (await response.json()) as PostPageResponse
+        if (!response.ok || result.error) {
+          throw new Error(result.error || "文章列表加载失败")
+        }
+        return {
+          posts: result.posts || [],
+          total: result.total || 0,
+        }
+      } catch (error) {
+        if (!isAbortError(error)) {
+          console.error("Failed to load posts", error)
+        }
+        return null
+      } finally {
+        if (controllerRef.current === controller) {
+          controllerRef.current = null
+          setLoading(false)
+        }
+      }
+    },
+    [buildParams]
+  )
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setPosts(initialPosts)
+      setTotal(initialTotal)
+      setPage(1)
+      setSort("latest")
+      setHasMore(initialPosts.length < initialTotal)
+    }, 0)
+
+    return () => {
+      window.clearTimeout(timer)
+      controllerRef.current?.abort()
+    }
+  }, [initialPosts, initialTotal])
+
+  useEffect(() => {
+    const rememberListState = (event: MouseEvent) => {
+      const target = event.target as HTMLElement
+      const anchor = target.closest("a")
+      if (!anchor?.getAttribute("href")?.startsWith("/post/")) return
+
+      sessionStorage.setItem(
+        "post_list_state",
+        JSON.stringify({
+          page,
+          sort,
+          scrollY: window.scrollY,
+          pathname: window.location.pathname,
+        })
+      )
+    }
+
+    document.addEventListener("click", rememberListState)
+    return () => document.removeEventListener("click", rememberListState)
+  }, [page, sort])
+
+  useEffect(() => {
+    const restore = async () => {
+      try {
+        const raw = sessionStorage.getItem("post_list_state")
+        if (!raw) return
+        const saved = JSON.parse(raw) as {
+          page?: number
+          sort?: PostSort
+          scrollY?: number
+          pathname?: string
+        }
+        if (saved.pathname !== window.location.pathname) return
+
+        const targetPage = saved.page || 1
+        const targetSort = saved.sort || "latest"
+        if (targetPage > 1 || targetSort !== "latest") {
+          const result = await requestPage(targetPage, targetSort)
+          if (result) {
+            setPosts(result.posts)
+            setTotal(result.total)
+            setPage(targetPage)
+            setSort(targetSort)
+            setHasMore(result.posts.length < result.total)
+          }
+        }
+        if (saved.scrollY) {
+          window.requestAnimationFrame(() =>
+            window.scrollTo({ top: saved.scrollY, behavior: "instant" })
+          )
+        }
+      } catch (error) {
+        console.error("Error restoring post list state", error)
+      }
+    }
+
+    void restore()
+  }, [requestPage])
+
+  const loadMore = useCallback(async () => {
+    if (loading || !hasMore) return
+    const targetPage = page + 1
+    const result = await requestPage(targetPage, sort)
+    if (!result) return
+
+    setPosts((current) => {
+      const existingIds = new Set(current.map((post) => post.id))
+      return [
+        ...current,
+        ...result.posts.filter((post) => !existingIds.has(post.id)),
+      ]
+    })
+    setPage(targetPage)
+    setTotal(result.total)
+    setHasMore(page * filters.limit + result.posts.length < result.total)
+  }, [filters.limit, hasMore, loading, page, requestPage, sort])
+
+  const changePage = useCallback(
+    async (targetPage: number) => {
+      const result = await requestPage(targetPage, sort)
+      if (!result) return
+
+      setPosts(result.posts)
+      setTotal(result.total)
+      setPage(targetPage)
+      setHasMore(result.posts.length < result.total)
+      const url = new URL(window.location.href)
+      url.searchParams.set("page", String(targetPage))
+      window.history.replaceState(null, "", url)
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    },
+    [requestPage, sort]
+  )
+
+  const changeSort = useCallback(
+    async (nextSort: PostSort) => {
+      if (nextSort === sort) return
+      setSort(nextSort)
+      const result = await requestPage(1, nextSort)
+      if (!result) return
+
+      setPosts(result.posts)
+      setTotal(result.total)
+      setPage(1)
+      setHasMore(result.posts.length < result.total)
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    },
+    [requestPage, sort]
+  )
+
+  return {
+    posts,
+    page,
+    total,
+    sort,
+    loading,
+    hasMore,
+    loadMore,
+    changePage,
+    changeSort,
+  }
+}

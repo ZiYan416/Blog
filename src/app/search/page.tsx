@@ -1,10 +1,8 @@
-import { createClient } from '@/lib/supabase/server'
 import PostList from '@/components/post/post-list'
 import { Metadata } from 'next'
 import { Search } from 'lucide-react'
 import type { Post } from '@/components/post/post-card'
-import { buildPostSearchFilter } from '@/lib/validation'
-import { toTagNames } from '@/lib/types'
+import { searchPublishedPosts } from '@/server/repositories/posts'
 
 export async function generateMetadata({
   searchParams,
@@ -29,23 +27,10 @@ export default async function SearchPage({
 }) {
   const { q } = await searchParams
   const query = q ? decodeURIComponent(q) : ''
-  const supabase = await createClient()
-
   let posts: Post[] = []
 
   if (query) {
-    const { data } = await supabase
-      .from('posts')
-      .select('*')
-      .or(buildPostSearchFilter(query.slice(0, 100)))
-      .eq('published', true) // 只搜索已发布的文章
-      .order('created_at', { ascending: false })
-      .limit(20)
-
-    posts = (data || []).map((post) => ({
-      ...post,
-      tags: toTagNames(post.tags),
-    }))
+    posts = await searchPublishedPosts(query.slice(0, 100), 20)
   }
 
   return (

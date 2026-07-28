@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { generatePostSlug, getPostExcerpt } from '@/lib/markdown'
 import { AccessError, requireAdmin } from '@/lib/server-auth'
 import { getValidationMessage, postPayloadSchema } from '@/lib/validation'
+import { invalidatePublishedPosts } from '@/server/cache'
 
 export async function PUT(
   request: NextRequest,
@@ -81,5 +82,6 @@ export async function PUT(
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
+  invalidatePublishedPosts()
   return NextResponse.json({ post })
 }

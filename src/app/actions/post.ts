@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { AccessError, requireAdmin } from '@/lib/server-auth'
+import { invalidatePublishedPosts } from '@/server/cache'
 
 export async function incrementViewCount(slug: string) {
   const supabase = await createClient()
@@ -38,6 +39,7 @@ export async function toggleFeaturedStatus(id: string, currentStatus: boolean) {
 
   revalidatePath('/')
   revalidatePath('/post')
+  invalidatePublishedPosts()
 
   return { success: true }
 }
@@ -62,6 +64,7 @@ export async function deletePost(id: string) {
 
   revalidatePath('/')
   revalidatePath('/post')
+  invalidatePublishedPosts()
 
   return { success: true }
 }

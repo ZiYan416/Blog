@@ -10,10 +10,16 @@ import Image from "next/image";
 const DAY_VIDEOS = [
   {
     local: "/videos/night-1.mp4",
+    mobile: "/videos/night-1-mobile.mp4",
+    modern: "/videos/night-1.av1.webm",
+    poster: "/videos/posters/night-1.jpg",
     remote: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260702_081042_df7202bf-bd80-4b2b-bbc6-1f09ba2870e9.mp4",
   },
   {
     local: "/videos/night-2.mp4",
+    mobile: "/videos/night-2-mobile.mp4",
+    modern: "/videos/night-2.av1.webm",
+    poster: "/videos/posters/night-2.jpg",
     remote: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260702_080959_4cac5234-3573-464e-a5b7-76b94b8a7d61.mp4",
   },
 ];
@@ -22,10 +28,16 @@ const DAY_VIDEOS = [
 const NIGHT_VIDEOS = [
   {
     local: "/videos/day-1.mp4",
+    mobile: "/videos/day-1-mobile.mp4",
+    modern: "/videos/day-1.av1.webm",
+    poster: "/videos/posters/day-1.jpg",
     remote: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260702_081127_0992a171-d3c6-4978-8213-0ec5df8b6d63.mp4",
   },
   {
     local: "/videos/day-2.mp4",
+    mobile: "/videos/day-2-mobile.mp4",
+    modern: "/videos/day-2.av1.webm",
+    poster: "/videos/posters/day-2.jpg",
     remote: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260702_092026_dd05b805-ea0f-40b2-8c52-332b88502592.mp4",
   },
 ];
@@ -33,10 +45,17 @@ const NIGHT_VIDEOS = [
 const OVERLAY_IMAGE = "/images/hero-overlay.png";
 
 interface GroupVideoLoopProps {
-  videos: { local: string; remote: string }[];
+  videos: {
+    local: string;
+    mobile: string;
+    modern: string;
+    poster: string;
+    remote: string;
+  }[];
   isActiveGroup: boolean;
   isPrimaryGroup: boolean;
   onPrimaryReady?: () => void;
+  onPrimaryBuffered?: () => void;
   allowBackgroundPreload: boolean;
 }
 
@@ -46,11 +65,13 @@ function GroupVideoLoop({
   isActiveGroup,
   isPrimaryGroup,
   onPrimaryReady,
+  onPrimaryBuffered,
   allowBackgroundPreload,
 }: GroupVideoLoopProps) {
   const [activeIdx, setActiveIdx] = useState(0);
   const isTransitioningRef = useRef(false);
   const hasTriggeredReadyRef = useRef<boolean[]>([false, false]);
+  const hasTriggeredBufferedRef = useRef(false);
 
   const ref0 = useRef<HTMLVideoElement>(null);
   const ref1 = useRef<HTMLVideoElement>(null);
@@ -80,10 +101,25 @@ function GroupVideoLoop({
     }
   };
 
-  // When video 0 is ready/playing (handles iOS/Android mobile WebKit event differences)
-  const handleCanPlay = (idx: number, e: React.SyntheticEvent<HTMLVideoElement>) => {
+  // `canplay` means the first frame and a short playable buffer are ready
+  // (HAVE_FUTURE_DATA). This is the hand-off point for the branded loader:
+  // later than merely receiving one frame, but without waiting for the full
+  // clip to download.
+  const handlePrimaryPlayable = (idx: number, e: React.SyntheticEvent<HTMLVideoElement>) => {
     e.currentTarget.playbackRate = 1.0;
     markVideoReady(idx);
+  };
+
+  const handleBuffered = (idx: number) => {
+    if (
+      idx !== 0 ||
+      !isPrimaryGroup ||
+      hasTriggeredBufferedRef.current
+    ) {
+      return;
+    }
+    hasTriggeredBufferedRef.current = true;
+    onPrimaryBuffered?.();
   };
 
   const triggerNext = (currentIdx: number) => {
@@ -156,13 +192,15 @@ function GroupVideoLoop({
           allowBackgroundPreload || (isPrimaryGroup && idx === 0);
         return (
           <video
-            key={vid.remote}
+            key={vid.local}
             ref={idx === 0 ? ref0 : ref1}
             autoPlay={idx === 0 && isActiveGroup}
             muted
             playsInline
+            poster={vid.poster}
             preload={isPreloadAllowed ? "auto" : "none"}
-            onCanPlayThrough={(e) => handleCanPlay(idx, e)}
+            onCanPlay={(e) => handlePrimaryPlayable(idx, e)}
+            onCanPlayThrough={() => handleBuffered(idx)}
             onTimeUpdate={() => handleTimeUpdate(idx)}
             onEnded={() => handleEnded(idx)}
             className={cn(
@@ -172,6 +210,15 @@ function GroupVideoLoop({
           >
             {isPreloadAllowed && (
               <>
+                <source
+                  src={vid.mobile}
+                  type="video/mp4"
+                  media="(max-width: 767px)"
+                />
+                <source
+                  src={vid.modern}
+                  type='video/webm; codecs="av01"'
+                />
                 <source src={vid.local} type="video/mp4" />
                 <source src={vid.remote} type="video/mp4" />
               </>
@@ -200,7 +247,8 @@ export function CinematicHero({
 }: CinematicHeroProps) {
   const [isDark, setIsDark] = useState(false);
   const [initialDark, setInitialDark] = useState<boolean | null>(null);
-  const [isInitialVideoLoaded, setIsInitialVideoLoaded] = useState(false);
+  const [isInitialVideoReady, setIsInitialVideoReady] = useState(false);
+  const [isInitialVideoBuffered, setIsInitialVideoBuffered] = useState(false);
   const [videoEnabled, setVideoEnabled] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -221,6 +269,12 @@ export function CinematicHero({
   }, []);
 
   useEffect(() => {
+    if (!isInitialVideoReady) return
+    document.documentElement.dataset.heroReady = "true"
+    window.dispatchEvent(new Event("site-critical-ready"))
+  }, [isInitialVideoReady])
+
+  useEffect(() => {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const connection = (
       navigator as Navigator & {
@@ -237,7 +291,8 @@ export function CinematicHero({
       setVideoEnabled(enabled);
 
       if (!enabled) {
-        setIsInitialVideoLoaded(true);
+        setIsInitialVideoReady(true);
+        setIsInitialVideoBuffered(true);
       }
     };
 
@@ -257,7 +312,7 @@ export function CinematicHero({
       <div
         className={cn(
           "absolute inset-0 transition-opacity duration-1500 ease-in-out",
-          isInitialVideoLoaded ? "opacity-100" : "opacity-0"
+          isInitialVideoReady ? "opacity-100" : "opacity-0"
         )}
       >
         {/* Render BOTH Day and Night groups to allow seamless background preloading of all 4 videos */}
@@ -268,15 +323,17 @@ export function CinematicHero({
                 videos={DAY_VIDEOS}
                 isActiveGroup={!isDark}
                 isPrimaryGroup={!initialDark}
-                onPrimaryReady={() => setIsInitialVideoLoaded(true)}
-                allowBackgroundPreload={isInitialVideoLoaded && !isDark}
+                onPrimaryReady={() => setIsInitialVideoReady(true)}
+                onPrimaryBuffered={() => setIsInitialVideoBuffered(true)}
+                allowBackgroundPreload={isInitialVideoBuffered}
               />
               <GroupVideoLoop
                 videos={NIGHT_VIDEOS}
                 isActiveGroup={isDark}
                 isPrimaryGroup={initialDark}
-                onPrimaryReady={() => setIsInitialVideoLoaded(true)}
-                allowBackgroundPreload={isInitialVideoLoaded && isDark}
+                onPrimaryReady={() => setIsInitialVideoReady(true)}
+                onPrimaryBuffered={() => setIsInitialVideoBuffered(true)}
+                allowBackgroundPreload={isInitialVideoBuffered}
               />
             </>
           )}

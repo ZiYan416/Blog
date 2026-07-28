@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { AccessError, requireAdmin } from '@/lib/server-auth'
 import { NextResponse } from 'next/server'
+import { invalidatePublishedPosts } from '@/server/cache'
 
 export async function DELETE(
   request: Request,
@@ -38,5 +39,6 @@ export async function DELETE(
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
+  invalidatePublishedPosts()
   return NextResponse.json({ success: true })
 }
