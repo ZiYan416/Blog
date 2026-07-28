@@ -30,7 +30,7 @@ git checkout -b fix/your-bug-fix
 ### 4. 环境规范
 
 本项目使用以下主要技术栈环境：
-- Node.js >= 20.19.0
+- Node.js >= 22.0.0
 - npm / pnpm / yarn / bun (推荐 npm 或 pnpm)
 
 ```bash

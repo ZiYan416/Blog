@@ -65,7 +65,7 @@ It is more than just a Content Management System (CMS); it is a digital space fo
 
 ## 🚀 Quick Start
 
-Requirement: Node.js >= 20.19.0.
+Requirement: Node.js >= 22.0.0.
 
 ### 1. Clone the repository
 

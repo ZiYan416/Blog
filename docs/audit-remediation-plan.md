@@ -254,7 +254,7 @@ src/
 - [x] 统一 robots 与 sitemap 的域名来源。
 - [x] sitemap 覆盖静态页、文章与标签，并使用 Next Metadata API 生成。
 - [x] 搜索框、桌面/移动导航、图标按钮和自定义交互补充可访问名称与状态。
-- [x] README、CONTRIBUTING 与 `package.json#engines` 的 Node 要求更新为 `>=20.19.0`。
+- [x] README、CONTRIBUTING、CI 与 `package.json#engines` 的 Node 要求更新为 `>=22.0.0`，匹配当前 Supabase 客户端运行时要求。
 - [x] 三种语言 README 使用实际存在的 `.env.local.example`。
 
 ## 每批变更的验证清单

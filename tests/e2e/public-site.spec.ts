@@ -18,6 +18,48 @@ test("Logo loader hands off only after the hero can render", async ({ page }) =>
   await expect(page.locator("main h1").first()).toBeVisible()
 })
 
+test("desktop hero content stays centered inside the train window", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "chromium")
+  await page.setViewportSize({ width: 2500, height: 1210 })
+  await page.goto("/")
+  await expect(page.getByRole("status", { name: "网站正在加载" })).toBeHidden({
+    timeout: 10_000,
+  })
+
+  const metrics = await page.locator("[data-hero-content]").evaluate((content) => {
+    const section = content.closest("section")?.getBoundingClientRect()
+    const contentBox = content.getBoundingClientRect()
+    const childBoxes = Array.from(content.children, (child) =>
+      child.getBoundingClientRect()
+    )
+
+    if (!section || childBoxes.length === 0) {
+      throw new Error("Hero alignment geometry is unavailable")
+    }
+
+    const groupTop = Math.min(...childBoxes.map((box) => box.top))
+    const groupBottom = Math.max(...childBoxes.map((box) => box.bottom))
+
+    return {
+      topRatio: (contentBox.top - section.top) / section.height,
+      bottomRatio: (section.bottom - contentBox.bottom) / section.height,
+      contentCenter: contentBox.top + contentBox.height / 2,
+      groupCenter: (groupTop + groupBottom) / 2,
+    }
+  })
+
+  expect(metrics.topRatio).toBeCloseTo(0.04, 2)
+  expect(metrics.bottomRatio).toBeCloseTo(0.13, 2)
+  expect(Math.abs(metrics.groupCenter - metrics.contentCenter)).toBeLessThan(2)
+
+  await page.screenshot({
+    path: testInfo.outputPath("hero-window-centered.png"),
+    fullPage: false,
+  })
+})
+
 test("public article navigation remains available without authentication", async ({
   page,
 }) => {

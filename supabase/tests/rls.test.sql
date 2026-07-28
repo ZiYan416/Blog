@@ -27,7 +27,7 @@ select ok(
   'anonymous users can select the public profile projection'
 );
 select ok(
-  not has_table_privilege('authenticated', 'public.profiles', 'UPDATE(is_admin)'),
+  not has_column_privilege('authenticated', 'public.profiles', 'is_admin', 'UPDATE'),
   'authenticated users cannot update is_admin'
 );
 select ok(

@@ -355,8 +355,12 @@ export function CinematicHero({
       {/* Subtle radial vignette behind hero text — ensures legibility against bright video backgrounds like snow/lake scenes */}
       <div className="absolute inset-0 z-[3] pointer-events-none bg-[radial-gradient(ellipse_80%_70%_at_50%_55%,rgba(0,0,0,0.45)_0%,rgba(0,0,0,0.15)_55%,transparent_100%)]" />
 
-      {/* Hero Main Content (z-index 4) */}
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center max-w-5xl mx-auto my-auto py-4 sm:py-8 px-2">
+      {/* Hero Main Content (z-index 4)
+          Desktop positioning follows the central window opening rather than the full hero canvas. */}
+      <div
+        data-hero-content
+        className="relative z-10 flex-1 flex flex-col items-center justify-center text-center max-w-5xl mx-auto my-auto py-4 sm:py-8 px-2 md:absolute md:inset-x-0 md:top-[4%] md:bottom-[13%] md:w-full"
+      >
         {/* Badge / DailyQuote */}
         {badgeText && (
           <div className="mb-2 sm:mb-4 inline-flex items-center justify-center">
