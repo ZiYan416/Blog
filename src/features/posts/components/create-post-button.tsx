@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useAuth } from "@/components/providers/auth-provider"
+import { useAuth } from "@/features/auth/components/auth-provider"
 
 export function CreatePostButton() {
   const { isAdmin, loading } = useAuth()

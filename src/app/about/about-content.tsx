@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { Github, Mail, ArrowUpRight } from "lucide-react";
-import { CinematicHero } from "@/components/home/cinematic-hero";
+import { CinematicHero } from "@/features/home/components/cinematic-hero";
 
 /* ─────────────────────────────────────────────
    Utility: Scroll-triggered section wrapper

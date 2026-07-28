@@ -1,4 +1,4 @@
-import PostList from '@/components/post/post-list';
+import PostList from '@/features/posts/components/post-list';
 import { getVisiblePostCards } from '@/server/repositories/posts';
 import { CreatePostButton } from '@/features/posts/components/create-post-button';
 

@@ -1,6 +1,6 @@
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { CommentManagement } from '@/components/dashboard/comment-management'
+import { CommentManagement } from '@/features/admin/components/comment-management'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'

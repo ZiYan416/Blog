@@ -7,15 +7,15 @@ import {
   UserCircle,
   Plus
 } from 'lucide-react'
-import { SignOutButton } from '@/components/auth/sign-out-button'
+import { SignOutButton } from '@/features/auth/components/sign-out-button'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 
-import { DashboardHeader } from '@/components/dashboard/dashboard-header'
-import { UserManagementWrapper } from '@/components/dashboard/user-management-wrapper'
-import { AnalyticsTabsWrapper } from '@/components/dashboard/analytics-tabs-wrapper'
-import { StatsCard } from '@/components/dashboard/stats-card'
-import { TodoAlerts } from '@/components/dashboard/todo-alerts'
+import { DashboardHeader } from '@/features/admin/components/dashboard-header'
+import { UserManagementWrapper } from '@/features/admin/components/user-management-wrapper'
+import { AnalyticsTabsWrapper } from '@/features/admin/components/analytics-tabs-wrapper'
+import { StatsCard } from '@/features/admin/components/stats-card'
+import { TodoAlerts } from '@/features/admin/components/todo-alerts'
 import { getAnalyticsData } from '@/lib/analytics-helpers'
 import { getLoginRedirect, getManagedUsers } from '@/lib/admin-data'
 import { SafeImage } from '@/components/ui/safe-image'

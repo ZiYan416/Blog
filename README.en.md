@@ -98,11 +98,16 @@ npm run dev
 
 You can now access `http://localhost:3000` to preview the project.
 
+## 🧭 Architecture
+
+Routes and request adapters live in `src/app`, domain code in `src/features`, shared layout/UI in `src/components`, and server/database boundaries in `src/server` and `src/db`. Read the [project structure and module boundaries](docs/architecture.md) before adding or moving code.
+
 ## 🤝 Contributing
 
 We welcome and appreciate all forms of contributions! Whether it's submitting an Issue, adding a new Feature, or improving the documentation, all efforts help make the project better.
 
-Before contributing, please be sure to read our [Contributing Guidelines (CONTRIBUTING.md)](CONTRIBUTING.md) to understand the workflow. If you encounter a Bug or have good suggestions, please refer to the corresponding templates:
+Before contributing, please read the [Contributing Guidelines](CONTRIBUTING.md) and [architecture rules](docs/architecture.md). If you encounter a Bug or have a suggestion, use the corresponding template:
+
 - [Bug Report](.github/ISSUE_TEMPLATE/bug_report.md)
 - [Feature Request](.github/ISSUE_TEMPLATE/feature_request.md)
 

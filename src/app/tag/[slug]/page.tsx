@@ -1,4 +1,4 @@
-import PostList from '@/components/post/post-list'
+import PostList from '@/features/posts/components/post-list'
 import { Metadata } from 'next'
 import { Tag } from 'lucide-react'
 import { getTagStyles } from '@/lib/tag-color'

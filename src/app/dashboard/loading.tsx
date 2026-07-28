@@ -2,7 +2,7 @@ import {
   StatsCardSkeleton,
   AnalyticsTabsSkeleton,
   UserManagementSkeleton,
-} from "@/components/dashboard/loading-skeletons";
+} from "@/features/admin/components/loading-skeletons";
 
 export default function DashboardLoading() {
   return (

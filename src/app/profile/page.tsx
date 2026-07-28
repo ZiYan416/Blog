@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { ProfileTabs } from "@/components/profile/profile-tabs"
+import { ProfileTabs } from "@/features/profile/components/profile-tabs"
 import { getLoginRedirect } from '@/lib/admin-data'
 
 export default async function ProfilePage() {

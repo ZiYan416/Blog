@@ -19,7 +19,7 @@ git clone https://github.com/your-username/your-repo.git
 
 ### 3. 创建分支 (Create a Branch)
 
-请基于 `main` 分支创建功能分支或 bug 修复分支。分支名应该具有描述性：
+请基于 `master` 分支创建功能分支或 bug 修复分支。分支名应该具有描述性：
 
 ```bash
 git checkout -b feature/your-feature-name
@@ -30,8 +30,9 @@ git checkout -b fix/your-bug-fix
 ### 4. 环境规范
 
 本项目使用以下主要技术栈环境：
+
 - Node.js >= 22.0.0
-- npm / pnpm / yarn / bun (推荐 npm 或 pnpm)
+- npm（以仓库中的 `package-lock.json` 为唯一依赖锁文件）
 
 ```bash
 npm install
@@ -39,7 +40,36 @@ npm install
 npm run dev
 ```
 
-### 5. 提交代码 (Commit Changes)
+### 5. 遵循模块边界
+
+开始编码前请阅读 [项目结构与模块边界](docs/architecture.md)。核心约定如下：
+
+- `src/app` 只负责 Next.js 路由入口、协议适配和页面组合。
+- 单一领域的组件、Hook、模型与 Server Actions 放入 `src/features/<domain>`。
+- `src/components/ui` 只存放领域无关的基础 UI；跨页面站点外壳放入 `src/components/layout`。
+- 仅服务端模块放入 `src/server`，不得依赖路由层、React UI 或客户端 Hook。
+- 跨目录导入使用 `@/` 别名，不为旧路径保留无期限的转发文件。
+
+### 6. 运行验证
+
+提交前至少执行：
+
+```bash
+npm run lint
+npm run typecheck
+npm test
+git diff --check
+```
+
+如果改动路由、构建配置、Server/Client 边界或静态资源加载，还应执行：
+
+```bash
+npm run build
+```
+
+数据库改动需额外执行 `supabase/` 下的 schema、迁移和 RLS 测试要求，详见 [审计与整改计划](docs/audit-remediation-plan.md)。
+
+### 7. 提交代码 (Commit Changes)
 
 我们推荐使用 [约定式提交 (Conventional Commits)](https://www.conventionalcommits.org/zh-hans/v1.0.0/) 规范来格式化提交信息。
 
@@ -57,7 +87,7 @@ npm run dev
 git commit -m "feat: add tip feature to user profile"
 ```
 
-### 6. 发起 Pull Request (PR)
+### 8. 发起 Pull Request (PR)
 
 1. 将代码推送到你的 GitHub 仓库。
 2. 访问主仓库，点击 "New Pull Request"。

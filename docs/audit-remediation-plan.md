@@ -56,6 +56,16 @@
 - Vercel 确认提交 `780ca9a` 部署成功后，通过 Supabase 插件应用后置迁移 `20260728023305`：删除旧 JSON 列和索引，并精确清理 30 条已确认的虚假快照。
 - 远端最终验证：15 篇文章、23 条标签关系、172 条有效快照、目标虚假快照剩余 0；实时生成类型确认 RPC 与 `posts` 均不再包含 JSON 标签字段。
 
+### 第三轮结构收敛（2026-07-28）
+
+- 将认证、后台、首页、文章/编辑器、资料、设置和标签组件统一收敛到 `src/features/<domain>`，`src/components` 仅保留全站布局与领域无关 UI。
+- 将 Tailwind 项目级配置迁移到仓库根目录，与 Next.js、TypeScript、ESLint 和 PostCSS 配置保持一致。
+- 将评论、文章、标签和认证 Server Actions 从 `src/app` 移入所属 feature，消除 feature 反向依赖 App Router 的结构倒置。
+- 删除无引用的旧版后台分析组件、数据报告、关于页书本组件、动画包装器、后台文章操作组件和资料类型转发层。
+- 新增 `docs/architecture.md`，明确目录职责、依赖方向、文件放置和命名规范；README 与贡献指南同步链接该规范。
+- ESLint 增加模块边界检查：共享 UI 不得依赖业务/路由/服务端模块，feature 不得依赖 `app`，服务端模块不得依赖路由或客户端 UI/Hooks。
+- 验证通过：`npm run lint`、`npm run typecheck`、`npm test`（13 个文件、38 个测试）和 `npm run build`（23 个静态页面）。
+
 ## P0：安全与权限边界
 
 ### P0-1 个人资料与管理员权限
@@ -205,24 +215,30 @@
 - [x] 合并新建/编辑文章页的表单、上传和标签逻辑。
 - [x] 按 `features/`、`server/`、`db/` 重组业务代码。
 
-目标结构：
+当前目标结构：
 
 ```text
 src/
+  app/
+  components/
+    layout/
+    ui/
   features/
+    admin/
     auth/
-    posts/
     comments/
+    home/
+    posts/
     profile/
-    analytics/
+    settings/
+    tags/
   server/
-    auth/
     repositories/
-    services/
+    cache.ts
   db/
     database.types.ts
-  components/
-    ui/
+  hooks/
+  lib/
 ```
 
 ### P2-2 类型、死代码与依赖

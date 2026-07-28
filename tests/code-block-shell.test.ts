@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   detectCodeLanguage,
   extractCodeBlockLanguage,
-} from '../src/components/post/code-block-shell'
+} from '../src/features/posts/components/code-block-shell'
 
 describe('code block language helpers', () => {
   it('extracts an explicit language from a Markdown code class', () => {

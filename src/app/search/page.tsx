@@ -1,7 +1,7 @@
-import PostList from '@/components/post/post-list'
+import PostList from '@/features/posts/components/post-list'
 import { Metadata } from 'next'
 import { Search } from 'lucide-react'
-import type { Post } from '@/components/post/post-card'
+import type { Post } from '@/features/posts/components/post-card'
 import { searchPublishedPosts } from '@/server/repositories/posts'
 
 export async function generateMetadata({

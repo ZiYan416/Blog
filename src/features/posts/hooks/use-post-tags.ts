@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import { getTagNames } from "@/app/actions/tags"
+import { getTagNames } from "@/features/tags/actions"
 
 export function usePostTags() {
   const [availableTags, setAvailableTags] = useState<string[]>([])

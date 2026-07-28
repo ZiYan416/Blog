@@ -2,7 +2,7 @@
 
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
-import { MarkdownRenderer } from '../src/components/post/markdown-renderer'
+import { MarkdownRenderer } from '../src/features/posts/components/markdown-renderer'
 
 describe('MarkdownRenderer', () => {
   beforeAll(() => {
@@ -46,5 +46,18 @@ describe('MarkdownRenderer', () => {
       )
     })
     expect(container.querySelector('.article-code-block [title="自动识别的代码语言"]')).not.toBeNull()
+  })
+
+  it('keeps article images at intrinsic width and restores Bing originals', () => {
+    const thumbnail =
+      'https://tse1-mm.cn.bing.net/th/id/OIP-C.example?w=320&h=114&c=7'
+    render(<MarkdownRenderer content={`![示例图片](${thumbnail})`} />)
+
+    const image = screen.getByRole('img', { name: '示例图片' })
+    expect(image.getAttribute('src')).toBe(
+      'https://tse1-mm.cn.bing.net/th/id/OIP-C.example',
+    )
+    expect(image.getAttribute('loading')).toBe('lazy')
+    expect(image.classList.contains('markdown-article-image')).toBe(true)
   })
 })

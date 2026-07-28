@@ -8,7 +8,7 @@ import { type User as SupabaseUser } from "@supabase/supabase-js";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./theme-toggle";
-import { useUser } from "@/hooks/use-auth";
+import { useUser } from "@/features/auth/hooks/use-auth";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,11 +25,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { SignOutButton } from "@/components/auth/sign-out-button";
-import { LoginModal } from "@/components/auth/login-modal";
+import { SignOutButton } from "@/features/auth/components/sign-out-button";
+import { LoginModal } from "@/features/auth/components/login-modal";
 import { Logo } from "@/components/ui/logo";
 
-import { SettingsModal } from "@/components/settings/settings-modal";
+import { SettingsModal } from "@/features/settings/components/settings-modal";
 import { SafeImage } from "@/components/ui/safe-image";
 
 const navItems = [

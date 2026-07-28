@@ -98,11 +98,23 @@ npm run dev
 
 现在你可以访问 `http://localhost:3000` 预览项目。
 
+## 🧭 项目结构 (Architecture)
+
+源码采用“路由编排 + 领域模块 + 共享基础设施”的组织方式：
+
+- `src/app`：Next.js 路由、页面和 Route Handlers。
+- `src/features`：认证、文章、评论、标签、资料、后台等领域代码。
+- `src/components`：仅保留跨页面布局和领域无关 UI。
+- `src/server` / `src/db`：服务端仓储、缓存与数据库类型边界。
+
+新增或移动代码前，请阅读 [项目结构与模块边界](docs/architecture.md)。
+
 ## 🤝 参与贡献 (Contributing)
 
 我们非常欢迎且感谢任何形式的贡献！无论是提交 Issue, 增加 Feature 还是改进文档，所有的工作都有助于让项目变得更好。
 
-参与贡献前，请务必阅读我们的 [贡献指南 (CONTRIBUTING.md)](CONTRIBUTING.md) 了解提交流程。如果你遇到 Bug 或有好的建议，可以参阅对应的模板：
+参与贡献前，请务必阅读我们的 [贡献指南 (CONTRIBUTING.md)](CONTRIBUTING.md) 和 [项目结构规范](docs/architecture.md)。如果你遇到 Bug 或有好的建议，可以参阅对应的模板：
+
 - [报告 Bug](.github/ISSUE_TEMPLATE/bug_report.md)
 - [提交需求](.github/ISSUE_TEMPLATE/feature_request.md)
 

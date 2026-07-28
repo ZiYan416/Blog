@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import type { Post } from "@/components/post/post-card"
+import type { Post } from "@/features/posts/components/post-card"
 import { isAbortError } from "@/lib/errors"
 
 export type PostSort = "latest" | "oldest" | "views"

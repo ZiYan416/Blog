@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight, FileText, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getTagStyles } from "@/lib/tag-color";
-import { HomeHero } from "@/components/home/home-hero";
+import { HomeHero } from "@/features/home/components/home-hero";
 import type { Metadata } from "next";
 import { getFeaturedPosts } from "@/server/repositories/posts";
 import { Suspense } from "react";

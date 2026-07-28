@@ -4,18 +4,18 @@ import Link from 'next/link'
 import { ArrowLeft, Calendar, Tag, Eye, Clock, User } from 'lucide-react'
 import { calculateReadingTime, formatDateString, generatePostSlug } from '@/lib/markdown'
 import { Button } from '@/components/ui/button'
-import { ViewCounter } from '@/components/post/view-counter'
-import { CommentSection } from '@/components/post/comment-section'
+import { ViewCounter } from '@/features/posts/components/view-counter'
+import { CommentSection } from '@/features/posts/components/comment-section'
 import { getComments } from '@/server/repositories/comments'
-import { MarkdownRenderer } from '@/components/post/markdown-renderer'
+import { MarkdownRenderer } from '@/features/posts/components/markdown-renderer'
 import { getTagStyles } from '@/lib/tag-color'
-import { TableOfContents } from '@/components/post/table-of-contents'
-import { PostTipButton } from '@/components/post/post-tip-button'
+import { TableOfContents } from '@/features/posts/components/table-of-contents'
+import { PostTipButton } from '@/features/posts/components/post-tip-button'
 import { absoluteSiteUrl, siteConfig } from '@/lib/site-config'
 import Image from 'next/image'
 import { getVisiblePost } from '@/server/repositories/posts'
 import { getPublicProfile } from '@/server/repositories/profiles'
-import { PostHeroCover } from '@/components/post/post-hero-cover'
+import { PostPageBackground } from '@/features/posts/components/post-page-background'
 
 import { BackToTop } from '@/components/ui/back-to-top'
 import { GoToComments } from '@/components/ui/go-to-comments'
@@ -97,35 +97,31 @@ export default async function PostPage({
   }
 
   return (
-    <div className="min-h-screen bg-[#fafafa] dark:bg-[#050505] pb-8 md:pb-24">
+    <div className="relative isolate min-h-screen bg-[#fafafa] pb-8 dark:bg-[#050505] md:pb-24">
       <ViewCounter slug={post.slug} />
+      <PostPageBackground coverImage={post.cover_image} />
 
       {/* Hero Header */}
       <div
         data-post-hero
-        className="relative w-full min-h-[360px] md:min-h-[440px] bg-neutral-900 dark:bg-black overflow-hidden group -mt-16 pt-16"
+        className="group relative z-10 -mt-16 min-h-[360px] w-full overflow-hidden pt-16 md:min-h-[440px]"
       >
-        <PostHeroCover
-          coverImage={post.cover_image}
-          title={post.title}
-        />
-
         <div className="container max-w-6xl mx-auto px-6 relative z-10">
           <div className="flex min-h-[320px] md:min-h-[380px] items-end pt-10 pb-16 md:pt-14 md:pb-24">
-            <div className="w-full max-w-4xl space-y-4 pt-16 md:pt-0">
+            <div className="post-hero-copy w-full max-w-4xl space-y-4 pt-16 md:pt-0">
             <div className="absolute top-20 left-6 md:static z-30">
-              <Button variant="ghost" asChild className="text-white hover:text-white hover:bg-white/20 rounded-full h-10 w-auto px-4 gap-2 bg-black/50 backdrop-blur-md md:bg-transparent md:backdrop-blur-none">
+              <Button variant="ghost" asChild className="post-hero-supporting text-white hover:text-white hover:bg-white/20 rounded-full h-10 w-auto px-4 gap-2 bg-black/50 backdrop-blur-md md:bg-transparent md:backdrop-blur-none">
                 <Link href="/post">
                   <ArrowLeft className="w-4 h-4" />
                   <span className="text-sm font-medium">返回列表</span>
                 </Link>
               </Button>
             </div>
-            <h1 className="text-2xl sm:text-3xl md:text-5xl font-bold text-white leading-tight tracking-tight drop-shadow-sm break-words" style={{ overflowWrap: 'anywhere' }}>
+            <h1 className="post-hero-title text-2xl sm:text-3xl md:text-5xl font-bold text-white leading-tight tracking-tight break-words" style={{ overflowWrap: 'anywhere' }}>
               {post.title}
             </h1>
 
-            <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm font-medium text-neutral-400">
+            <div className="post-hero-supporting flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm font-medium text-neutral-400">
               <span className="bg-black/20 dark:bg-white/10 backdrop-blur-md px-2 py-1 md:px-3 md:py-1 rounded-full border border-white/10 flex items-center gap-2 text-white/90">
                 <Calendar className="w-3 h-3 md:w-3.5 md:h-3.5" />
                 {formattedDate}
@@ -146,7 +142,7 @@ export default async function PostPage({
             </div>
 
             {tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 pt-1">
+              <div className="post-hero-emphasis flex flex-wrap gap-2 pt-1">
                 {tags.map((tag: string) => {
                   const styles = getTagStyles(tag)
                   return (
@@ -182,7 +178,7 @@ export default async function PostPage({
         />
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8">
           {/* Main Content */}
-          <div className="bg-white dark:bg-neutral-900 rounded-none md:rounded-3xl p-5 md:p-10 shadow-none md:shadow-xl border-none md:border border-black/5 dark:border-white/5 min-h-[50vh]">
+          <div className="min-h-[50vh] rounded-none border-none bg-white/92 p-5 shadow-none backdrop-blur-2xl dark:bg-neutral-900/92 md:rounded-3xl md:border md:border-black/5 md:p-10 md:shadow-xl dark:md:border-white/5">
             {/* Mobile TOC - Card Style */}
             <div className="lg:hidden mb-8 p-5 bg-neutral-50 dark:bg-neutral-800/50 rounded-2xl border border-black/5 dark:border-white/5" id="mobile-toc">
               <h3 className="font-bold text-base mb-4 flex items-center gap-2 text-neutral-900 dark:text-neutral-100">
@@ -237,11 +233,11 @@ export default async function PostPage({
 
           {/* Sidebar */}
           <div className="lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)] flex flex-col gap-6 px-4 md:px-0">
-            <div className="hidden lg:flex bg-white dark:bg-neutral-900 rounded-3xl shadow-sm border border-black/5 dark:border-white/5 min-h-0 flex-col overflow-hidden">
+            <div className="hidden min-h-0 flex-col overflow-hidden rounded-3xl border border-black/5 bg-white/90 shadow-sm backdrop-blur-xl dark:border-white/5 dark:bg-neutral-900/90 lg:flex">
               <TableOfContents content={content} className="h-full p-4 pl-2 pr-2" />
             </div>
 
-            <div className="hidden lg:block bg-white dark:bg-neutral-900 rounded-3xl p-6 shadow-sm border border-black/5 dark:border-white/5 flex-none">
+            <div className="hidden flex-none rounded-3xl border border-black/5 bg-white/90 p-6 shadow-sm backdrop-blur-xl dark:border-white/5 dark:bg-neutral-900/90 lg:block">
               <h3 className="font-bold mb-6 text-sm uppercase tracking-widest text-neutral-400">About Author</h3>
               <div className="flex flex-col items-center text-center">
                 <div className="w-20 h-20 rounded-full bg-neutral-100 dark:bg-neutral-800 mb-4 overflow-hidden">

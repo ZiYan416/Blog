@@ -98,11 +98,16 @@ npm run dev
 
 これで、`http://localhost:3000` にアクセスしてプロジェクトをプレビューできます。
 
+## 🧭 プロジェクト構成 (Architecture)
+
+ルートとリクエスト境界は `src/app`、ドメインコードは `src/features`、共有レイアウト/UI は `src/components`、サーバーとデータベースの境界は `src/server` と `src/db` に配置します。コードを追加・移動する前に [プロジェクト構成とモジュール境界](docs/architecture.md) を参照してください。
+
 ## 🤝 貢献について (Contributing)
 
 どのような形での貢献も大歓迎です！Issueの報告、新機能の追加、ドキュメントの改善など、すべての作業がプロジェクトを良くすることに繋がります。
 
-貢献する前に、必ず [貢献ガイド (CONTRIBUTING.md)](CONTRIBUTING.md) を読み、ワークフローを理解してください。バグの報告や良いアイデアがある場合は、対応するテンプレートを参照してください：
+貢献する前に、[貢献ガイド](CONTRIBUTING.md) と [アーキテクチャ規約](docs/architecture.md) を確認してください。バグ報告や提案には対応するテンプレートを使用してください：
+
 - [バグ報告 (Bug Report)](.github/ISSUE_TEMPLATE/bug_report.md)
 - [機能リクエスト (Feature Request)](.github/ISSUE_TEMPLATE/feature_request.md)
 

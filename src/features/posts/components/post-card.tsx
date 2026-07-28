@@ -1,0 +1,269 @@
+"use client"
+
+import Link from 'next/link'
+import { Calendar, Eye, Edit2, ArrowUpRight, Star, Loader2 } from 'lucide-react'
+import { formatDateString } from '@/lib/markdown'
+import { useUser } from '@/features/auth/hooks/use-auth'
+import { DeletePostButton } from './delete-post-button'
+import { cn } from '@/lib/utils'
+import { getTagStyles } from '@/lib/tag-color'
+import { toggleFeaturedStatus } from '@/features/posts/actions'
+import { useState } from 'react'
+import { useToast } from '@/hooks/use-toast'
+import { motion } from 'framer-motion'
+import { getErrorMessage } from '@/lib/errors'
+import { SafeImage } from '@/components/ui/safe-image'
+
+export interface Post {
+  id: string
+  title: string
+  slug: string
+  excerpt: string | null
+  cover_image: string | null
+  published: boolean
+  featured: boolean
+  created_at: string
+  updated_at: string
+  tags: string[]
+  category: string | null
+  view_count: number
+}
+
+interface PostCardProps {
+  post: Post
+}
+
+function FeaturedToggle({ id, isFeatured }: { id: string, isFeatured: boolean }) {
+  const [loading, setLoading] = useState(false)
+  const [featured, setFeatured] = useState(isFeatured)
+  const { toast } = useToast()
+
+  const handleToggle = async (e: React.MouseEvent) => {
+    e.preventDefault() // Prevent navigation
+    e.stopPropagation()
+
+    setLoading(true)
+    try {
+      const result = await toggleFeaturedStatus(id, featured)
+      if (result.error) throw new Error(result.error)
+
+      setFeatured(!featured)
+      toast({
+        title: !featured ? "已设为精选" : "已取消精选",
+        description: !featured ? "该文章将在首页精选栏目展示" : "该文章已从首页移除",
+      })
+    } catch (error: unknown) {
+      toast({
+        title: "操作失败",
+        description: getErrorMessage(error, '无法更新精选状态'),
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <button
+      onClick={handleToggle}
+      disabled={loading}
+      aria-label={featured ? "取消精选文章" : "设为精选文章"}
+      className={cn(
+        "w-10 h-10 rounded-full bg-white/90 dark:bg-black/90 backdrop-blur-md flex items-center justify-center shadow-sm hover:scale-110 transition-transform",
+        featured ? "text-amber-500" : "text-neutral-400 hover:text-amber-500"
+      )}
+      title={featured ? "取消精选" : "设为精选"}
+    >
+      {loading ? (
+        <Loader2 className="w-4 h-4 animate-spin" />
+      ) : (
+        <Star className={cn("w-4 h-4", featured && "fill-current")} />
+      )}
+    </button>
+  )
+}
+
+export default function PostCard({ post }: PostCardProps) {
+  const { isAdmin } = useUser()
+  const formattedDate = formatDateString(post.created_at)
+  const tags = post.tags || []
+
+  return (
+    <div className={cn(
+      "group relative bg-white dark:bg-neutral-900 rounded-2xl md:rounded-[2.5rem] border transition-all duration-500 flex flex-row md:flex-col overflow-hidden",
+      post.featured
+        ? "border-transparent shadow-[0_0_30px_-5px_rgba(245,158,11,0.15)] dark:shadow-[0_0_30px_-5px_rgba(245,158,11,0.1)]"
+        : "border-black/[0.03] dark:border-white/[0.03] hover:border-black/10 dark:hover:border-white/10 hover:shadow-2xl hover:shadow-black/[0.02] dark:hover:shadow-white/[0.01]"
+    )}>
+      {/* Featured Border Animation - Using SVG for line drawing effect */}
+      {post.featured && (
+        <div className="absolute inset-0 z-10 pointer-events-none rounded-2xl md:rounded-[2.5rem]">
+          <svg className="w-full h-full" style={{ overflow: 'visible' }}>
+            <motion.rect
+              width="100%"
+              height="100%"
+              x="0"
+              y="0"
+              rx="16" // Mobile radius
+              className="md:hidden"
+              fill="none"
+              stroke="#f59e0b"
+              strokeWidth="2"
+              initial={{ pathLength: 0, opacity: 0 }}
+              animate={{ pathLength: 1, opacity: 1 }}
+              transition={{ duration: 1.5, ease: "easeInOut" }}
+            />
+            <motion.rect
+              width="100%"
+              height="100%"
+              x="0"
+              y="0"
+              rx="40" // Desktop radius
+              className="hidden md:block"
+              fill="none"
+              stroke="#f59e0b"
+              strokeWidth="2"
+              initial={{ pathLength: 0, opacity: 0 }}
+              animate={{ pathLength: 1, opacity: 1 }}
+              transition={{ duration: 1.5, ease: "easeInOut" }}
+            />
+          </svg>
+        </div>
+      )}
+
+      {/* Featured Ribbon for everyone */}
+      {post.featured && (
+        <div className="absolute top-0 right-0 z-30 animate-in fade-in slide-in-from-top-2 duration-700 delay-500 fill-mode-both">
+          <div className="bg-amber-500/90 backdrop-blur-sm text-white text-[10px] font-bold px-4 py-1.5 rounded-bl-2xl shadow-sm border-l border-b border-white/10">
+            FEATURED
+          </div>
+        </div>
+      )}
+
+      {/* Admin Actions Overlay - Desktop: Top Left, Mobile: Bottom Right (in content) */}
+      {isAdmin && (
+        <>
+          {/* Desktop Version */}
+          <div className="hidden md:flex absolute top-6 left-6 z-20 gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
+            <Link
+              href={`/admin/posts/${post.id}/edit`}
+              aria-label={`编辑文章：${post.title}`}
+              className="w-10 h-10 rounded-full bg-white/90 dark:bg-black/90 backdrop-blur-md flex items-center justify-center shadow-sm hover:scale-110 transition-transform text-black dark:text-white"
+              title="编辑文章"
+            >
+              <Edit2 className="w-4 h-4" />
+            </Link>
+            <FeaturedToggle id={post.id} isFeatured={post.featured} />
+            <DeletePostButton slug={post.slug || post.id} title={post.title} />
+          </div>
+
+          {/* Mobile Version - Inside Content Area */}
+          <div className="md:hidden absolute bottom-3 right-3 z-20 flex gap-2 origin-bottom-right">
+             <Link
+              href={`/admin/posts/${post.id}/edit`}
+              aria-label={`编辑文章：${post.title}`}
+              className="w-10 h-10 rounded-full bg-neutral-100/90 dark:bg-neutral-800/90 backdrop-blur-md flex items-center justify-center shadow-sm text-black dark:text-white"
+            >
+              <Edit2 className="w-4 h-4" />
+            </Link>
+            <FeaturedToggle id={post.id} isFeatured={post.featured} />
+            <DeletePostButton slug={post.slug || post.id} title={post.title} />
+          </div>
+        </>
+      )}
+
+      {/* Status Badge */}
+      {!post.published && (
+        <div className="absolute top-4 right-4 md:top-6 md:right-6 z-20">
+          <span className="px-3 py-1 md:px-4 md:py-1.5 text-[10px] md:text-xs font-bold bg-amber-100/90 dark:bg-amber-900/60 text-amber-600 dark:text-amber-400 backdrop-blur-md rounded-full uppercase tracking-widest border border-amber-200/50 dark:border-amber-800/50 shadow-sm">
+            草稿
+          </span>
+        </div>
+      )}
+
+      {/* Image Section - Mobile: Right side (w-1/3), Desktop: Top (w-full) */}
+      <Link
+        href={`/post/${post.slug || post.id}`}
+        className="block relative w-[35%] md:w-full md:aspect-[16/10] shrink-0 order-last md:order-first border-l md:border-l-0 md:border-b border-black/5 dark:border-white/5"
+      >
+        {post.cover_image ? (
+          <SafeImage
+            src={post.cover_image}
+            alt={post.title}
+            fill
+            sizes="(min-width: 768px) 33vw, 35vw"
+            className="object-cover transition-transform duration-700 group-hover:scale-110"
+          />
+        ) : (
+          <div className="w-full h-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+            <div className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center">
+              <span className="text-lg md:text-2xl font-bold opacity-10">{post.title[0]}</span>
+            </div>
+          </div>
+        )}
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-500" />
+      </Link>
+
+      {/* Content Section */}
+      <div className="p-4 md:p-6 flex flex-col flex-1 min-w-0 justify-between">
+        <div>
+          <div className="flex items-center gap-3 text-[10px] md:text-[11px] font-bold uppercase tracking-widest text-neutral-400 mb-2 md:mb-4">
+            <span className="flex items-center gap-1.5">
+              <Calendar className="w-3 h-3" />
+              {formattedDate}
+            </span>
+            <span className="flex items-center gap-1.5 hidden sm:flex">
+              <Eye className="w-3 h-3" />
+              {post.view_count || 0}
+            </span>
+          </div>
+
+          <Link href={`/post/${post.slug || post.id}`} className="group/title inline-block w-full" title={post.title}>
+            <h3 className="text-base md:text-2xl font-bold leading-snug md:leading-tight mb-2 md:mb-4 group-hover/title:text-neutral-600 dark:group-hover/title:text-neutral-400 transition-colors line-clamp-1 md:line-clamp-2">
+              {post.title}
+              <ArrowUpRight className="hidden md:inline-block w-5 h-5 opacity-0 -translate-y-1 translate-x-1 group-hover/title:opacity-100 group-hover/title:translate-y-0 group-hover/title:translate-x-0 transition-all duration-300 ml-1 align-text-top" />
+            </h3>
+          </Link>
+
+          {post.excerpt && (
+            <p className="text-neutral-500 dark:text-neutral-400 text-xs md:text-sm leading-relaxed mb-3 md:mb-4 line-clamp-1 md:line-clamp-3">
+              {post.excerpt}
+            </p>
+          )}
+        </div>
+
+        <div className="mt-auto pt-0 md:pt-6 md:border-t md:border-black/[0.03] md:dark:border-white/[0.03] flex items-center justify-between">
+          <div className="flex flex-wrap gap-2">
+            {tags.length > 0 ? (
+              tags.slice(0, 2).map((tag: string) => {
+                const styles = getTagStyles(tag)
+                return (
+                  <span
+                    key={tag}
+                    className={cn(
+                      "px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[9px] md:text-[10px] font-bold uppercase tracking-wider transition-colors",
+                    )}
+                    style={{ backgroundColor: styles.backgroundColor, color: styles.color }}
+                  >
+                    {tag}
+                  </span>
+                )
+              })
+            ) : (
+              <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-300 dark:text-neutral-700 hidden md:inline-block">
+                Uncategorized
+              </span>
+            )}
+          </div>
+
+          <Link
+            href={`/post/${post.slug || post.id}`}
+            className="text-[11px] font-bold uppercase tracking-widest hover:underline underline-offset-4 hidden md:inline-block"
+          >
+            Read More
+          </Link>
+        </div>
+      </div>
+    </div>
+  )
+}

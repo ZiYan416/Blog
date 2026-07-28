@@ -1,4 +1,4 @@
-import type { MarkdownAction } from "@/components/editor/toolbar"
+import type { MarkdownAction } from "@/features/posts/editor/toolbar"
 
 export interface MarkdownEdit {
   text: string
