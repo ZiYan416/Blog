@@ -136,6 +136,9 @@ export function RichEditor({
         },
         // Disable the default codeBlock since we use CodeBlockLowlight
         codeBlock: false,
+        // These are configured separately below.
+        link: false,
+        underline: false,
       }),
       // Markdown bidirectional conversion
       Markdown.configure({
