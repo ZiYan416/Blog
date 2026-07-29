@@ -36,6 +36,11 @@ describe("RichEditor lifecycle", () => {
     await waitFor(() => {
       expect(view.container.querySelector(".editor-link")).not.toBeNull()
     })
+    const favicon = view.container.querySelector(".editor-link__favicon")
+    expect(favicon?.nextSibling?.textContent).toBe("\u2060")
+    expect(
+      (favicon?.nextSibling as HTMLElement | null)?.dataset.copyExclude
+    ).toBe("true")
 
     view.unmount()
     await new Promise((resolve) => window.setTimeout(resolve, 10))

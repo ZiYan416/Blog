@@ -38,6 +38,14 @@ function createFavicon(href: string) {
   return container
 }
 
+function createLineBreakJoiner() {
+  const joiner = document.createElement("span")
+  joiner.textContent = "\u2060"
+  joiner.dataset.copyExclude = "true"
+  joiner.setAttribute("aria-hidden", "true")
+  return joiner
+}
+
 class EditorLinkMarkView extends MarkView<null> {
   private readonly wrapper: HTMLSpanElement
   private readonly link: HTMLAnchorElement
@@ -64,7 +72,11 @@ class EditorLinkMarkView extends MarkView<null> {
 
     this.linkContent = document.createElement("span")
     this.linkContent.dataset.markViewContent = ""
-    this.link.append(createFavicon(href), this.linkContent)
+    this.link.append(
+      createFavicon(href),
+      createLineBreakJoiner(),
+      this.linkContent
+    )
     this.wrapper.append(this.link)
   }
 

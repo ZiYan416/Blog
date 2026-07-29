@@ -30,6 +30,11 @@ describe('MarkdownRenderer', () => {
     expect(
       link.querySelector<HTMLImageElement>('.link-favicon__image')?.src,
     ).toBe('https://icons.duckduckgo.com/ip3/example.com.ico')
+    const favicon = link.querySelector('.link-favicon')
+    expect(favicon?.nextSibling?.textContent).toBe('\u2060')
+    expect(
+      (favicon?.nextSibling as HTMLElement | null)?.dataset.copyExclude,
+    ).toBe('true')
   })
 
   it('writes a selected table to the plain-text clipboard as TSV', () => {
