@@ -369,6 +369,13 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
           object-fit: contain;
           box-shadow: none;
         }
+        .dark .markdown-article .link-favicon {
+          padding: 0.08em;
+          border-radius: 0.2em;
+          background: rgba(255, 255, 255, 0.92);
+          box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
+          opacity: 1;
+        }
 
         /* === Horizontal Rule === */
         .markdown-article hr {

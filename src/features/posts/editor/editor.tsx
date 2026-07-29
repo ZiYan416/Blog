@@ -659,6 +659,13 @@ export default function Editor({
           object-fit: contain;
           pointer-events: none;
         }
+        .dark .ProseMirror .editor-link__favicon {
+          padding: 0.08em;
+          border-radius: 0.2em;
+          background: rgba(255, 255, 255, 0.92);
+          box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
+          opacity: 1;
+        }
 
         /* === Horizontal Rule === */
         .ProseMirror hr {
