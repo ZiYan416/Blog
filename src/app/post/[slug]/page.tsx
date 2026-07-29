@@ -108,15 +108,15 @@ export default async function PostPage({
       >
         <div className="container max-w-6xl mx-auto px-6 relative z-10">
           <div className="flex min-h-[320px] md:min-h-[380px] items-end pt-10 pb-16 md:pt-14 md:pb-24">
-            <div className="post-hero-copy w-full max-w-4xl space-y-4 pt-16 md:pt-0">
-            <div className="absolute top-20 left-6 md:static z-30">
-              <Button variant="ghost" asChild className="post-hero-supporting text-white hover:text-white hover:bg-white/20 rounded-full h-10 w-auto px-4 gap-2 bg-black/50 backdrop-blur-md md:bg-transparent md:backdrop-blur-none">
-                <Link href="/post">
-                  <ArrowLeft className="w-4 h-4" />
-                  <span className="text-sm font-medium">返回列表</span>
-                </Link>
-              </Button>
-            </div>
+            <div className="post-hero-copy w-full max-w-4xl space-y-4">
+              <div className="relative z-30">
+                <Button variant="ghost" asChild className="post-hero-supporting text-white hover:text-white hover:bg-white/20 rounded-full h-10 w-auto px-4 gap-2 bg-black/50 backdrop-blur-md md:bg-transparent md:backdrop-blur-none">
+                  <Link href="/post">
+                    <ArrowLeft className="w-4 h-4" />
+                    <span className="text-sm font-medium">返回列表</span>
+                  </Link>
+                </Button>
+              </div>
             <h1 className="post-hero-title text-2xl sm:text-3xl md:text-5xl font-bold text-white leading-tight tracking-tight break-words" style={{ overflowWrap: 'anywhere' }}>
               {post.title}
             </h1>

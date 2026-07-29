@@ -347,7 +347,7 @@ export function CinematicHero({
             fill
             priority
             sizes="100vw"
-            className="absolute w-full sm:h-[106%] sm:-top-[6%] sm:translate-y-0 sm:scale-100 max-sm:h-[108%] max-sm:-top-[2%] max-sm:-translate-y-4 max-sm:scale-110 max-sm:object-cover max-sm:object-[center_30%] pointer-events-none animate-train-bob transform-gpu translate-z-0 backface-hidden origin-center"
+            className="absolute w-full sm:h-[106%] sm:-top-[6%] sm:translate-y-0 sm:scale-100 max-sm:top-0 max-sm:h-full max-sm:translate-y-0 max-sm:scale-100 max-sm:object-cover max-sm:object-top pointer-events-none animate-train-bob transform-gpu translate-z-0 backface-hidden origin-center"
           />
         </div>
       </div>
