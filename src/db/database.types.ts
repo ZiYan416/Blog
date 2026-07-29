@@ -68,6 +68,7 @@ export interface Database {
           excerpt: string | null
           cover_image: string | null
           published: boolean
+          published_at: string | null
           featured: boolean
           created_at: string
           updated_at: string
@@ -83,6 +84,7 @@ export interface Database {
           excerpt?: string | null
           cover_image?: string | null
           published?: boolean
+          published_at?: string | null
           featured?: boolean
           created_at?: string
           updated_at?: string
@@ -97,6 +99,7 @@ export interface Database {
           excerpt?: string | null
           cover_image?: string | null
           published?: boolean
+          published_at?: string | null
           featured?: boolean
           created_at?: string
           updated_at?: string

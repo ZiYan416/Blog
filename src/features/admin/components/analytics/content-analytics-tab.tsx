@@ -3,6 +3,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { FileText, Eye, MessageSquare } from "lucide-react";
+import {
+  chartAxisStroke,
+  chartGridStroke,
+  chartTooltipContentStyle,
+  chartTooltipItemStyle,
+  chartTooltipLabelStyle,
+} from "./chart-theme";
 
 interface ContentAnalyticsTabProps {
   topPosts: Array<{
@@ -35,17 +42,9 @@ function TagTooltip({ active, payload }: TagTooltipProps) {
   const value = item.payload?.value ?? item.value ?? 0;
 
   return (
-    <div
-      style={{
-        backgroundColor: "rgba(255, 255, 255, 0.95)",
-        border: "1px solid #e5e5e5",
-        borderRadius: "12px",
-        padding: "8px 12px",
-        fontSize: "12px",
-      }}
-    >
+    <div className="rounded-xl border border-border bg-popover px-3 py-2 text-xs text-popover-foreground shadow-lg">
       <div className="font-medium">{name}</div>
-      <div className="text-neutral-500">{value} 篇</div>
+      <div className="text-muted-foreground">{value} 篇</div>
     </div>
   );
 }
@@ -135,10 +134,10 @@ export function ContentAnalyticsTab({ topPosts, totalPosts, tagData = [] }: Cont
                 layout="vertical"
                 margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" opacity={0.3} />
+                <CartesianGrid strokeDasharray="3 3" stroke={chartGridStroke} />
                 <XAxis
                   type="number"
-                  stroke="#a3a3a3"
+                  stroke={chartAxisStroke}
                   fontSize={11}
                   tickLine={false}
                   axisLine={false}
@@ -146,20 +145,16 @@ export function ContentAnalyticsTab({ topPosts, totalPosts, tagData = [] }: Cont
                 <YAxis
                   type="category"
                   dataKey="name"
-                  stroke="#a3a3a3"
+                  stroke={chartAxisStroke}
                   fontSize={10}
                   width={100}
                   tickLine={false}
                   axisLine={false}
                 />
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: "rgba(255, 255, 255, 0.95)",
-                    border: "1px solid #e5e5e5",
-                    borderRadius: "12px",
-                    padding: "8px 12px",
-                    fontSize: "12px",
-                  }}
+                  contentStyle={chartTooltipContentStyle}
+                  itemStyle={chartTooltipItemStyle}
+                  labelStyle={chartTooltipLabelStyle}
                 />
                 <Bar dataKey="views" fill="#8b5cf6" radius={[0, 8, 8, 0]} />
               </BarChart>

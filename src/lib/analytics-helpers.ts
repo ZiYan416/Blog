@@ -1,6 +1,11 @@
 import { SupabaseClient } from '@supabase/supabase-js'
-import { subDays, format } from 'date-fns'
+import { subDays } from 'date-fns'
 import type { Database } from '@/lib/types'
+
+function formatSnapshotDate(date: string) {
+  const [, month = '', day = ''] = date.split('-')
+  return `${month}-${day}`
+}
 
 export async function getAnalyticsData(
   supabase: SupabaseClient<Database>,
@@ -21,11 +26,12 @@ export async function getAnalyticsData(
     statsQuery = statsQuery.gte('date', startDate.toISOString().split('T')[0])
   }
 
-  const { data: statsData } = await statsQuery
+  const { data: statsData, error: statsError } = await statsQuery
+  if (statsError) throw statsError
 
   // 2. 格式化为图表数据 - 添加索引以确保顺序
   const recentActivity = (statsData || []).map((snapshot, index) => ({
-    date: format(new Date(snapshot.date), 'MM-dd'),
+    date: formatSnapshotDate(snapshot.date),
     posts: snapshot.new_posts_today || 0,
     views: snapshot.new_views_today || 0,
     comments: snapshot.new_comments_today || 0,
@@ -33,12 +39,13 @@ export async function getAnalyticsData(
   }))
 
   // 3. 获取标签分布（从关系表统计）
-  const { data: tagStats } = await supabase
+  const { data: tagStats, error: tagStatsError } = await supabase
     .from('tags')
     .select('name, post_count')
     .gt('post_count', 0)
     .order('post_count', { ascending: false })
     .limit(5)
+  if (tagStatsError) throw tagStatsError
 
   const tagData = (tagStats || []).map((tag, index) => ({
     name: tag.name,
@@ -63,7 +70,8 @@ export async function getAnalyticsData(
     commentQuery = commentQuery.gte('created_at', startDate.toISOString())
   }
 
-  const { data: commentData } = await commentQuery.limit(10000)
+  const { data: commentData, error: commentError } = await commentQuery.limit(10000)
+  if (commentError) throw commentError
 
   const userCommentCounts: Record<string, {
     count: number
@@ -111,12 +119,13 @@ export async function getAnalyticsData(
     ? subDays(endDate, 30)
     : subDays(endDate, periodLength)
 
-  const { data: prevPeriodData } = await supabase
+  const { data: prevPeriodData, error: prevPeriodError } = await supabase
     .from('stats_snapshots')
     .select('*')
     .gte('date', prevStartDate.toISOString().split('T')[0])
     .lt('date', prevEndDate.toISOString().split('T')[0])
     .order('date', { ascending: true })
+  if (prevPeriodError) throw prevPeriodError
 
   const prevTotal = {
     posts: (prevPeriodData || []).reduce((sum, s) => sum + (s.new_posts_today || 0), 0),
@@ -153,17 +162,18 @@ export async function getAnalyticsData(
     userGrowthQuery = userGrowthQuery.gte('date', startDate.toISOString().split('T')[0])
   }
 
-  const { data: userGrowthData } = await userGrowthQuery
+  const { data: userGrowthData, error: userGrowthError } = await userGrowthQuery
+  if (userGrowthError) throw userGrowthError
 
   const userGrowth = (userGrowthData || []).map((snapshot) => ({
-    date: format(new Date(snapshot.date), 'MM-dd'),
+    date: formatSnapshotDate(snapshot.date),
     totalUsers: snapshot.total_users || 0,
     newUsers: snapshot.new_users_today || 0,
   }))
 
   // 7. 获取评论趋势 - 添加索引确保顺序
   const commentTrend = (statsData || []).map((snapshot, index) => ({
-    date: format(new Date(snapshot.date), 'MM-dd'),
+    date: formatSnapshotDate(snapshot.date),
     comments: snapshot.new_comments_today || 0,
     _index: index, // 添加索引确保排序
   }))

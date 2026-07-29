@@ -13,6 +13,7 @@ import { EngagementTab } from "./analytics/engagement-tab"
 interface AnalyticsData {
   stats: {
     totalPosts: number
+    totalPublishedPosts: number
     totalViews: number
     totalComments: number
     totalUsers: number
@@ -123,7 +124,7 @@ export function AnalyticsTabsWrapper({ data7d, data30d, dataAll }: Props) {
             {activeTab === "content" && (
               <ContentAnalyticsTab
                 topPosts={currentData.topPosts}
-                totalPosts={currentData.stats.totalPosts}
+                totalPosts={currentData.stats.totalPublishedPosts}
                 tagData={currentData.tagData}
               />
             )}

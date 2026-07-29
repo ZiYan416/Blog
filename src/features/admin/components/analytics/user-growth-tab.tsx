@@ -13,6 +13,13 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import {
+  chartAxisStroke,
+  chartGridStroke,
+  chartTooltipContentStyle,
+  chartTooltipItemStyle,
+  chartTooltipLabelStyle,
+} from "./chart-theme";
 
 interface UserGrowthTabProps {
   totalUsers: number;
@@ -99,10 +106,10 @@ export function UserGrowthTab({ totalUsers, userGrowth, rangeText = { period: '7
                     <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" opacity={0.3} />
+                <CartesianGrid strokeDasharray="3 3" stroke={chartGridStroke} />
                 <XAxis
                   dataKey="date"
-                  stroke="#a3a3a3"
+                  stroke={chartAxisStroke}
                   fontSize={11}
                   tickLine={false}
                   axisLine={false}
@@ -112,20 +119,16 @@ export function UserGrowthTab({ totalUsers, userGrowth, rangeText = { period: '7
                   dy={10}
                 />
                 <YAxis
-                  stroke="#a3a3a3"
+                  stroke={chartAxisStroke}
                   fontSize={11}
                   tickLine={false}
                   axisLine={false}
                   width={40}
                 />
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: "rgba(255, 255, 255, 0.95)",
-                    border: "1px solid #e5e5e5",
-                    borderRadius: "12px",
-                    padding: "8px 12px",
-                    fontSize: "12px",
-                  }}
+                  contentStyle={chartTooltipContentStyle}
+                  itemStyle={chartTooltipItemStyle}
+                  labelStyle={chartTooltipLabelStyle}
                 />
                 <Area
                   type="monotone"
@@ -148,10 +151,10 @@ export function UserGrowthTab({ totalUsers, userGrowth, rangeText = { period: '7
           <CardContent className="px-2 md:px-6 pb-6">
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={newUsersData} margin={{ top: 5, right: 15, left: -15, bottom: -30 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" opacity={0.3} />
+                <CartesianGrid strokeDasharray="3 3" stroke={chartGridStroke} />
                 <XAxis
                   dataKey="date"
-                  stroke="#a3a3a3"
+                  stroke={chartAxisStroke}
                   fontSize={11}
                   tickLine={false}
                   axisLine={false}
@@ -161,20 +164,16 @@ export function UserGrowthTab({ totalUsers, userGrowth, rangeText = { period: '7
                   dy={10}
                 />
                 <YAxis
-                  stroke="#a3a3a3"
+                  stroke={chartAxisStroke}
                   fontSize={11}
                   tickLine={false}
                   axisLine={false}
                   width={40}
                 />
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: "rgba(255, 255, 255, 0.95)",
-                    border: "1px solid #e5e5e5",
-                    borderRadius: "12px",
-                    padding: "8px 12px",
-                    fontSize: "12px",
-                  }}
+                  contentStyle={chartTooltipContentStyle}
+                  itemStyle={chartTooltipItemStyle}
+                  labelStyle={chartTooltipLabelStyle}
                 />
                 <Bar
                   dataKey="newUsers"

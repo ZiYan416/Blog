@@ -11,6 +11,13 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import {
+  chartAxisStroke,
+  chartGridStroke,
+  chartTooltipContentStyle,
+  chartTooltipItemStyle,
+  chartTooltipLabelStyle,
+} from "./chart-theme";
 
 interface EngagementTabProps {
   totalComments: number;
@@ -107,10 +114,10 @@ export function EngagementTab({
         <CardContent className="px-2 md:px-6 pb-6">
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={commentTrendData} margin={{ top: 5, right: 15, left: -15, bottom: -30 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" opacity={0.3} />
+              <CartesianGrid strokeDasharray="3 3" stroke={chartGridStroke} />
               <XAxis
                 dataKey="date"
-                stroke="#a3a3a3"
+                stroke={chartAxisStroke}
                 fontSize={11}
                 tickLine={false}
                 axisLine={false}
@@ -120,20 +127,16 @@ export function EngagementTab({
                 dy={10}
               />
               <YAxis
-                stroke="#a3a3a3"
+                stroke={chartAxisStroke}
                 fontSize={11}
                 tickLine={false}
                 axisLine={false}
                 width={40}
               />
               <Tooltip
-                contentStyle={{
-                  backgroundColor: "rgba(255, 255, 255, 0.95)",
-                  border: "1px solid #e5e5e5",
-                  borderRadius: "12px",
-                  padding: "8px 12px",
-                  fontSize: "12px",
-                }}
+                contentStyle={chartTooltipContentStyle}
+                itemStyle={chartTooltipItemStyle}
+                labelStyle={chartTooltipLabelStyle}
               />
               <Line
                 type="monotone"

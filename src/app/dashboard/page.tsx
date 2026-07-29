@@ -49,6 +49,11 @@ export default async function DashboardPage() {
     .from('posts')
     .select('*', { count: 'exact', head: true })
 
+  const { count: totalPublishedPosts } = await supabase
+    .from('posts')
+    .select('*', { count: 'exact', head: true })
+    .eq('published', true)
+
   // 2. 获取最近修改的文章（包括草稿）
   const { data: posts } = await supabase
     .from('posts')
@@ -61,6 +66,7 @@ export default async function DashboardPage() {
   const { data: allPosts } = await supabase
     .from('posts')
     .select('id, title, view_count')
+    .eq('published', true)
     .order('view_count', { ascending: false })
 
   const totalViews = allPosts?.reduce((sum, post) => sum + (post.view_count || 0), 0) || 0
@@ -168,6 +174,7 @@ export default async function DashboardPage() {
           data7d={{
             stats: {
               totalPosts: totalPosts || 0,
+              totalPublishedPosts: totalPublishedPosts || 0,
               totalViews,
               totalComments: totalComments || 0,
               totalUsers: totalUsers || 0,
@@ -178,6 +185,7 @@ export default async function DashboardPage() {
           data30d={{
             stats: {
               totalPosts: totalPosts || 0,
+              totalPublishedPosts: totalPublishedPosts || 0,
               totalViews,
               totalComments: totalComments || 0,
               totalUsers: totalUsers || 0,
@@ -188,6 +196,7 @@ export default async function DashboardPage() {
           dataAll={{
             stats: {
               totalPosts: totalPosts || 0,
+              totalPublishedPosts: totalPublishedPosts || 0,
               totalViews,
               totalComments: totalComments || 0,
               totalUsers: totalUsers || 0,

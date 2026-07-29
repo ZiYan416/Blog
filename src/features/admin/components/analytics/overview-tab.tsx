@@ -12,11 +12,19 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
+import {
+  chartAxisStroke,
+  chartGridStroke,
+  chartTooltipContentStyle,
+  chartTooltipItemStyle,
+  chartTooltipLabelStyle,
+} from "./chart-theme";
 
 interface OverviewTabProps {
   data: {
     stats: {
       totalPosts: number;
+      totalPublishedPosts: number;
       totalViews: number;
       totalComments: number;
       totalUsers: number;
@@ -40,8 +48,8 @@ export function OverviewTab({ data, rangeText = { period: '7天', label: '7日' 
   const chartData = hasData ? data.recentActivity : generateEmptyData();
 
   // 计算关键指标
-  const avgViewsPerPost = data.stats.totalPosts > 0
-    ? Math.round(data.stats.totalViews / data.stats.totalPosts)
+  const avgViewsPerPost = data.stats.totalPublishedPosts > 0
+    ? Math.round(data.stats.totalViews / data.stats.totalPublishedPosts)
     : 0;
 
   const engagementRate = data.stats.totalViews > 0
@@ -111,10 +119,10 @@ export function OverviewTab({ data, rangeText = { period: '7天', label: '7日' 
             )}
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={chartData} margin={{ top: 5, right: 15, left: -15, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" opacity={0.3} />
+                <CartesianGrid strokeDasharray="3 3" stroke={chartGridStroke} />
                 <XAxis
                   dataKey="date"
-                  stroke="#a3a3a3"
+                  stroke={chartAxisStroke}
                   fontSize={11}
                   tickLine={false}
                   axisLine={false}
@@ -125,20 +133,16 @@ export function OverviewTab({ data, rangeText = { period: '7天', label: '7日' 
                   interval="preserveStartEnd"
                 />
                 <YAxis
-                  stroke="#a3a3a3"
+                  stroke={chartAxisStroke}
                   fontSize={11}
                   tickLine={false}
                   axisLine={false}
                   width={40}
                 />
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: "rgba(255, 255, 255, 0.95)",
-                    border: "1px solid #e5e5e5",
-                    borderRadius: "12px",
-                    padding: "8px 12px",
-                    fontSize: "12px",
-                  }}
+                  contentStyle={chartTooltipContentStyle}
+                  itemStyle={chartTooltipItemStyle}
+                  labelStyle={chartTooltipLabelStyle}
                 />
                 <Legend
                   wrapperStyle={{

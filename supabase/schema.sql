@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS public.posts (
   excerpt TEXT,
   cover_image TEXT,
   published BOOLEAN NOT NULL DEFAULT false,
+  published_at TIMESTAMPTZ,
   featured BOOLEAN NOT NULL DEFAULT false,
   view_count INTEGER NOT NULL DEFAULT 0,
   category TEXT,
@@ -74,12 +75,23 @@ ALTER TABLE public.posts
   ADD COLUMN IF NOT EXISTS excerpt TEXT,
   ADD COLUMN IF NOT EXISTS cover_image TEXT,
   ADD COLUMN IF NOT EXISTS published BOOLEAN DEFAULT false,
+  ADD COLUMN IF NOT EXISTS published_at TIMESTAMPTZ,
   ADD COLUMN IF NOT EXISTS featured BOOLEAN DEFAULT false,
   ADD COLUMN IF NOT EXISTS view_count INTEGER DEFAULT 0,
   ADD COLUMN IF NOT EXISTS category TEXT,
   ADD COLUMN IF NOT EXISTS author_id UUID,
   ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW(),
   ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+
+UPDATE public.posts
+SET published_at = created_at
+WHERE published = true
+  AND published_at IS NULL;
+
+UPDATE public.posts
+SET published_at = NULL
+WHERE published = false
+  AND published_at IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS public.tags (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -837,6 +849,7 @@ BEGIN
     cover_image,
     category,
     published,
+    published_at,
     author_id
   )
   VALUES (
@@ -847,6 +860,7 @@ BEGIN
     p_cover_image,
     p_category,
     p_published,
+    CASE WHEN p_published THEN NOW() ELSE NULL END,
     auth.uid()
   )
   RETURNING * INTO created_post;
@@ -902,8 +916,12 @@ BEGIN
     cover_image = p_cover_image,
     category = p_category,
     published = p_published,
+    published_at = CASE
+      WHEN p_published THEN COALESCE(post.published_at, NOW())
+      ELSE NULL
+    END,
     updated_at = NOW()
-  WHERE slug = p_current_slug
+  WHERE post.slug = p_current_slug
   RETURNING * INTO updated_post;
 
   IF NOT FOUND THEN
@@ -1145,22 +1163,26 @@ SECURITY DEFINER
 SET search_path = public, pg_temp
 AS $$
 DECLARE
-  today_start TIMESTAMPTZ := DATE_TRUNC('day', NOW());
-  tomorrow_start TIMESTAMPTZ := today_start + INTERVAL '1 day';
-  today_date DATE := CURRENT_DATE;
+  analytics_timezone CONSTANT TEXT := 'Asia/Shanghai';
+  snapshot_date DATE :=
+    (NOW() AT TIME ZONE analytics_timezone)::DATE - 1;
+  snapshot_start TIMESTAMPTZ :=
+    snapshot_date::TIMESTAMP AT TIME ZONE analytics_timezone;
+  snapshot_end TIMESTAMPTZ := snapshot_start + INTERVAL '1 day';
   previous_total_views INTEGER := 0;
   current_total_views INTEGER := 0;
 BEGIN
   SELECT snapshot.total_views
   INTO previous_total_views
   FROM public.stats_snapshots AS snapshot
-  WHERE snapshot.date < today_date
+  WHERE snapshot.date < snapshot_date
   ORDER BY snapshot.date DESC
   LIMIT 1;
 
   SELECT COALESCE(SUM(post.view_count), 0)::INTEGER
   INTO current_total_views
-  FROM public.posts AS post;
+  FROM public.posts AS post
+  WHERE post.published = true;
 
   INSERT INTO public.stats_snapshots (
     date,
@@ -1175,35 +1197,36 @@ BEGIN
     active_users_today
   )
   SELECT
-    today_date,
-    (SELECT COUNT(*)::INTEGER FROM public.posts),
+    snapshot_date,
+    (SELECT COUNT(*)::INTEGER FROM public.posts WHERE published = true),
     current_total_views,
     (SELECT COUNT(*)::INTEGER FROM public.comments),
     (SELECT COUNT(*)::INTEGER FROM public.profiles),
     (
       SELECT COUNT(*)::INTEGER
       FROM public.posts
-      WHERE created_at >= today_start
-        AND created_at < tomorrow_start
+      WHERE published = true
+        AND published_at >= snapshot_start
+        AND published_at < snapshot_end
     ),
     GREATEST(current_total_views - COALESCE(previous_total_views, 0), 0),
     (
       SELECT COUNT(*)::INTEGER
       FROM public.comments
-      WHERE created_at >= today_start
-        AND created_at < tomorrow_start
+      WHERE created_at >= snapshot_start
+        AND created_at < snapshot_end
     ),
     (
       SELECT COUNT(*)::INTEGER
       FROM public.profiles
-      WHERE created_at >= today_start
-        AND created_at < tomorrow_start
+      WHERE created_at >= snapshot_start
+        AND created_at < snapshot_end
     ),
     (
       SELECT COUNT(DISTINCT user_id)::INTEGER
       FROM public.comments
-      WHERE created_at >= today_start
-        AND created_at < tomorrow_start
+      WHERE created_at >= snapshot_start
+        AND created_at < snapshot_end
     )
   ON CONFLICT (date) DO UPDATE
   SET
@@ -1369,6 +1392,10 @@ CREATE INDEX IF NOT EXISTS idx_comments_pending
 CREATE INDEX IF NOT EXISTS idx_stats_snapshots_created_at
   ON public.stats_snapshots (created_at DESC);
 
+CREATE INDEX IF NOT EXISTS idx_posts_published_at
+  ON public.posts (published_at DESC)
+  WHERE published = true;
+
 -- ============================================================================
 -- 10. Daily analytics schedule
 -- ============================================================================
@@ -1387,7 +1414,7 @@ BEGIN
 
   PERFORM cron.schedule(
     'daily-stats-snapshot',
-    '0 0 * * *',
+    '5 16 * * *',
     'SELECT public.calculate_daily_stats()'
   );
 END;
