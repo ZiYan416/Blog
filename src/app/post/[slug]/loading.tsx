@@ -3,25 +3,29 @@ import { Skeleton } from "@/components/ui/skeleton"
 export default function PostLoading() {
   return (
     <div className="min-h-screen bg-[#fafafa] dark:bg-[#050505] pb-12 md:pb-24">
-      {/* Hero Header Skeleton */}
-      <div className="relative w-full h-[35vh] min-h-[300px] md:h-[40vh] md:min-h-[350px] bg-neutral-900 dark:bg-black overflow-hidden">
+      <div className="relative z-10 -mt-16 min-h-[360px] w-full overflow-hidden bg-neutral-900 pt-16 dark:bg-black md:min-h-[440px]">
         <div className="absolute inset-0 bg-neutral-800 animate-pulse" />
 
-        <div className="container max-w-6xl mx-auto px-6 h-full flex flex-col justify-end md:justify-start md:pt-24 pb-12 relative z-10">
-          <div className="space-y-4 pt-16 md:pt-0">
-             {/* Back Button Skeleton */}
-            <div className="absolute top-4 left-6 md:static z-30">
-               <div className="h-10 w-24 rounded-full bg-white/10 backdrop-blur-md" />
-            </div>
+        <div className="container relative z-10 mx-auto max-w-6xl px-6">
+          <div className="flex min-h-[320px] items-end pt-10 pb-16 md:min-h-[380px] md:pt-14 md:pb-24">
+            <div className="w-full max-w-4xl space-y-4">
+              <div className="h-10 w-24 rounded-full bg-white/10 backdrop-blur-md" />
 
-            {/* Title Skeleton */}
-            <Skeleton className="h-10 md:h-14 w-3/4 bg-white/10" />
+              <div className="space-y-2">
+                <Skeleton className="h-8 w-full max-w-3xl bg-white/10 md:h-14" />
+                <Skeleton className="h-8 w-2/3 bg-white/10 md:hidden" />
+              </div>
 
-            {/* Meta Pills Skeleton */}
-            <div className="flex flex-wrap items-center gap-2 md:gap-4">
-              <Skeleton className="h-6 md:h-8 w-24 rounded-full bg-white/10" />
-              <Skeleton className="h-6 md:h-8 w-20 rounded-full bg-white/10" />
-              <Skeleton className="h-6 md:h-8 w-20 rounded-full bg-white/10" />
+              <div className="flex flex-wrap items-center gap-2 md:gap-4">
+                <Skeleton className="h-6 w-24 rounded-full bg-white/10 md:h-8" />
+                <Skeleton className="h-6 w-20 rounded-full bg-white/10 md:h-8" />
+                <Skeleton className="h-6 w-20 rounded-full bg-white/10 md:h-8" />
+              </div>
+
+              <div className="flex gap-2 pt-1">
+                <Skeleton className="h-7 w-16 rounded-full bg-white/10" />
+                <Skeleton className="h-7 w-20 rounded-full bg-white/10" />
+              </div>
             </div>
           </div>
         </div>
@@ -31,11 +35,15 @@ export default function PostLoading() {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8">
           {/* Main Content Skeleton */}
           <div className="bg-white dark:bg-neutral-900 rounded-none md:rounded-3xl p-5 md:p-10 shadow-none md:shadow-xl border-none md:border border-black/5 dark:border-white/5 min-h-[50vh]">
-             {/* Mobile TOC Skeleton */}
             <div className="lg:hidden mb-8 p-5 bg-neutral-50 dark:bg-neutral-800/50 rounded-2xl border border-black/5 dark:border-white/5 space-y-4">
-               <Skeleton className="h-5 w-16" />
-               <Skeleton className="h-4 w-full" />
-               <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-5 w-16" />
+              {[80, 68, 92, 74, 86, 62].map((width) => (
+                <Skeleton
+                  key={width}
+                  className="h-4"
+                  style={{ width: `${width}%` }}
+                />
+              ))}
             </div>
 
             {/* Article Content Skeletons */}
