@@ -1,25 +1,32 @@
 "use client"
 
-import { useCallback, useEffect, useRef } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import CodeEditor from "react-simple-code-editor"
 import { highlight, languages } from "prismjs"
 import "prismjs/components/prism-markdown"
-import { v4 as uuidv4 } from "uuid"
-import { createClient } from "@/lib/supabase/client"
 import { useToast } from "@/hooks/use-toast"
-import { getErrorMessage } from "@/lib/errors"
+import {
+  getImageAltText,
+  uploadBlogImages,
+} from "@/features/posts/image-upload"
 
 export function SourceMarkdownEditor({
   content,
   onChange,
   containerRef,
+  articleSlug,
+  onUploadStateChange,
 }: {
   content: string
   onChange: (content: string) => void
   containerRef: React.RefObject<HTMLDivElement | null>
+  articleSlug?: string
+  onUploadStateChange?: (uploading: boolean) => void
 }) {
   const { toast } = useToast()
   const contentRef = useRef(content)
+  const pendingUploads = useRef(0)
+  const [dragActive, setDragActive] = useState(false)
 
   useEffect(() => {
     contentRef.current = content
@@ -33,71 +40,153 @@ export function SourceMarkdownEditor({
     void import("prismjs/components/prism-bash")
   }, [])
 
-  const uploadImage = useCallback(
-    async (file: File) => {
+  const updateContent = useCallback(
+    (nextContent: string) => {
+      contentRef.current = nextContent
+      onChange(nextContent)
+    },
+    [onChange]
+  )
+
+  const handleImageFiles = useCallback(
+    async (files: File[], selection?: { start: number; end: number }) => {
+      if (files.length === 0) return
+      const textarea = containerRef.current?.querySelector("textarea")
+      if (!textarea) return
+
+      const start = selection?.start ?? textarea.selectionStart
+      const end = selection?.end ?? textarea.selectionEnd
+      const markers = files.map(
+        (_, index) =>
+          `![图片上传中…… ${crypto.randomUUID()}-${index}]()`
+      )
+      const pendingContent =
+        contentRef.current.substring(0, start) +
+        markers.join("\n") +
+        contentRef.current.substring(end)
+      updateContent(pendingContent)
+
+      pendingUploads.current += 1
+      onUploadStateChange?.(true)
       try {
-        const supabase = createClient()
-        const extension = file.name.split(".").pop()
-        const filePath = `${uuidv4()}.${extension}`
-        const { error } = await supabase.storage
-          .from("blog-images")
-          .upload(filePath, file)
-        if (error) throw error
-        return supabase.storage.from("blog-images").getPublicUrl(filePath).data
-          .publicUrl
-      } catch (error) {
-        toast({
-          title: "图片上传失败",
-          description: getErrorMessage(error, "图片上传失败"),
-          variant: "destructive",
+        const results = await uploadBlogImages(files, { articleSlug })
+        let nextContent = contentRef.current
+        let insertedLength = 0
+
+        results.forEach((result, index) => {
+          const replacement = result.url
+            ? `![${getImageAltText(result.file)}](${result.url})`
+            : ""
+          insertedLength += replacement.length
+          nextContent = nextContent.replace(markers[index], replacement)
         })
-        return null
+        updateContent(nextContent)
+
+        const failed = results.filter((result) => !result.url)
+        if (failed.length > 0) {
+          toast({
+            title: failed.length === results.length
+              ? "图片上传失败"
+              : "部分图片上传失败",
+            description:
+              failed[0].error?.message ||
+              `${failed.length} 张图片上传失败，请稍后重试`,
+            variant: "destructive",
+          })
+        }
+
+        window.requestAnimationFrame(() => {
+          const current = containerRef.current?.querySelector("textarea")
+          if (
+            !current ||
+            document.activeElement !== current ||
+            current.selectionStart !== start ||
+            current.selectionEnd !== start
+          ) {
+            return
+          }
+          const cursor =
+            start +
+            insertedLength +
+            Math.max(0, results.length - 1)
+          current.setSelectionRange(cursor, cursor)
+        })
+      } finally {
+        pendingUploads.current = Math.max(0, pendingUploads.current - 1)
+        onUploadStateChange?.(pendingUploads.current > 0)
       }
     },
-    [toast]
+    [
+      articleSlug,
+      containerRef,
+      onUploadStateChange,
+      toast,
+      updateContent,
+    ]
   )
 
   const handlePaste = useCallback(
-    async (event: React.ClipboardEvent) => {
-      const imageItem = Array.from(event.clipboardData.items).find((item) =>
-        item.type.startsWith("image")
-      )
-      const file = imageItem?.getAsFile()
-      if (!file) return
+    (event: React.ClipboardEvent) => {
+      const files = Array.from(event.clipboardData.items)
+        .filter((item) => item.type.startsWith("image"))
+        .flatMap((item) => {
+          const file = item.getAsFile()
+          return file ? [file] : []
+        })
+      if (files.length === 0) return
 
       event.preventDefault()
-      const textarea = containerRef.current?.querySelector("textarea")
-      if (!textarea) return
-      const start = textarea.selectionStart
-      const end = textarea.selectionEnd
-      const marker = `![Uploading ${file.name}...]()`
-      const pending =
-        contentRef.current.substring(0, start) +
-        marker +
-        contentRef.current.substring(end)
-      onChange(pending)
-
-      const url = await uploadImage(file)
-      const replacement = url ? `![image](${url})` : ""
-      onChange(pending.replace(marker, replacement))
-      window.requestAnimationFrame(() => {
-        const current = containerRef.current?.querySelector("textarea")
-        const cursor = start + replacement.length
-        current?.focus()
-        current?.setSelectionRange(cursor, cursor)
-      })
+      void handleImageFiles(files)
     },
-    [containerRef, onChange, uploadImage]
+    [handleImageFiles]
+  )
+
+  const handleDrop = useCallback(
+    (event: React.DragEvent) => {
+      const files = Array.from(event.dataTransfer.files).filter((file) =>
+        file.type.startsWith("image")
+      )
+      setDragActive(false)
+      if (files.length === 0) return
+
+      event.preventDefault()
+      void handleImageFiles(files)
+    },
+    [handleImageFiles]
   )
 
   return (
     <div
       ref={containerRef}
-      className="source-markdown-editor min-h-full p-3 sm:p-4 md:p-6"
+      className={`source-markdown-editor relative min-h-full p-3 sm:p-4 md:p-6 ${
+        dragActive ? "bg-blue-50/80 dark:bg-blue-950/20" : ""
+      }`}
+      onDragEnter={(event) => {
+        if (Array.from(event.dataTransfer.items).some((item) =>
+          item.type.startsWith("image")
+        )) {
+          event.preventDefault()
+          setDragActive(true)
+        }
+      }}
+      onDragOver={(event) => {
+        if (dragActive) event.preventDefault()
+      }}
+      onDragLeave={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          setDragActive(false)
+        }
+      }}
+      onDrop={handleDrop}
     >
+      {dragActive ? (
+        <div className="pointer-events-none absolute inset-3 z-20 flex items-center justify-center rounded-xl border-2 border-dashed border-blue-400 bg-white/80 text-sm font-medium text-blue-600 backdrop-blur-sm dark:bg-neutral-950/80 dark:text-blue-300">
+          松开以上传图片
+        </div>
+      ) : null}
       <CodeEditor
         value={content}
-        onValueChange={onChange}
+        onValueChange={updateContent}
         highlight={(code) => highlight(code, languages.markdown, "markdown")}
         padding={10}
         placeholder="Source Mode..."

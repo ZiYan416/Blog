@@ -1,12 +1,14 @@
 "use client"
 
 import { useCallback, useRef, useState } from "react"
-import { v4 as uuidv4 } from "uuid"
-import { createClient } from "@/lib/supabase/client"
 import { getErrorMessage } from "@/lib/errors"
 import { useToast } from "@/hooks/use-toast"
+import { uploadBlogImage } from "@/features/posts/image-upload"
 
-export function usePostCoverUpload(onUploaded: (url: string) => void) {
+export function usePostCoverUpload(
+  onUploaded: (url: string) => void,
+  articleSlug?: string
+) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
   const { toast } = useToast()
@@ -18,20 +20,8 @@ export function usePostCoverUpload(onUploaded: (url: string) => void) {
 
       setUploading(true)
       try {
-        const extension = file.name.split(".").pop()
-        const filePath = `${uuidv4()}.${extension}`
-        const supabase = createClient()
-        const { error } = await supabase.storage
-          .from("blog-images")
-          .upload(filePath, file)
-
-        if (error) throw error
-
-        const { data } = supabase.storage
-          .from("blog-images")
-          .getPublicUrl(filePath)
-
-        onUploaded(data.publicUrl)
+        const url = await uploadBlogImage(file, { articleSlug })
+        onUploaded(url)
         toast({
           title: "封面上传成功",
           description: "图片已保存到云端",
@@ -47,7 +37,7 @@ export function usePostCoverUpload(onUploaded: (url: string) => void) {
         if (inputRef.current) inputRef.current.value = ""
       }
     },
-    [onUploaded, toast]
+    [articleSlug, onUploaded, toast]
   )
 
   return { inputRef, uploading, uploadCover }

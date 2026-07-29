@@ -24,6 +24,7 @@ import {
   AlignLeft,
   AlignCenter,
   AlignRight,
+  Loader2,
   type LucideIcon,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -54,6 +55,7 @@ interface ToolbarProps {
   onViewModeChange: (mode: ViewMode) => void
   onAction: (action: MarkdownAction) => void
   editor: Editor | null
+  uploadingImages?: boolean
 }
 
 interface ToolbarItem {
@@ -206,12 +208,23 @@ const alignItems: ToolbarItem[] = [
   },
 ]
 
-function ToolbarGroup({ items, editor, onAction }: { items: ToolbarItem[], editor: Editor | null, onAction: (action: MarkdownAction) => void }) {
+function ToolbarGroup({
+  items,
+  editor,
+  onAction,
+  uploadingImages,
+}: {
+  items: ToolbarItem[]
+  editor: Editor | null
+  onAction: (action: MarkdownAction) => void
+  uploadingImages?: boolean
+}) {
   return (
     <>
       {items.map((item, index) => {
         const isActive = editor && !editor.isDestroyed && item.isActive ? item.isActive(editor) : false
         const tooltip = item.shortcut ? `${item.title} (${item.shortcut})` : item.title
+        const isUploadingImage = item.action === 'image' && uploadingImages
 
         return (
           <Button
@@ -225,9 +238,14 @@ function ToolbarGroup({ items, editor, onAction }: { items: ToolbarItem[], edito
                 : "text-neutral-500 hover:bg-black/5 dark:hover:bg-white/5 hover:text-neutral-800 dark:hover:text-neutral-200"
             )}
             onClick={() => onAction(item.action)}
-            title={tooltip}
+            title={isUploadingImage ? "图片上传中……" : tooltip}
+            disabled={isUploadingImage}
           >
-            <item.icon className="h-4 w-4" />
+            {isUploadingImage ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <item.icon className="h-4 w-4" />
+            )}
           </Button>
         )
       })}
@@ -239,7 +257,13 @@ function ToolbarSeparator() {
   return <div className="w-px h-5 bg-black/8 dark:bg-white/8 mx-0.5 flex-shrink-0" />
 }
 
-export function Toolbar({ viewMode, onViewModeChange, onAction, editor }: ToolbarProps) {
+export function Toolbar({
+  viewMode,
+  onViewModeChange,
+  onAction,
+  editor,
+  uploadingImages,
+}: ToolbarProps) {
   const [showAdvancedMode, setShowAdvancedMode] = useState(false)
 
   return (
@@ -320,16 +344,36 @@ export function Toolbar({ viewMode, onViewModeChange, onAction, editor }: Toolba
       {/* 工具栏按钮 - 分组 */}
       <div className="flex items-center gap-0.5 flex-shrink-0">
         {/* 文本格式组 */}
-        <ToolbarGroup items={textFormatItems} editor={editor} onAction={onAction} />
+        <ToolbarGroup
+          items={textFormatItems}
+          editor={editor}
+          onAction={onAction}
+          uploadingImages={uploadingImages}
+        />
         <ToolbarSeparator />
         {/* 段落格式组 */}
-        <ToolbarGroup items={paragraphItems} editor={editor} onAction={onAction} />
+        <ToolbarGroup
+          items={paragraphItems}
+          editor={editor}
+          onAction={onAction}
+          uploadingImages={uploadingImages}
+        />
         <ToolbarSeparator />
         {/* 对齐组 */}
-        <ToolbarGroup items={alignItems} editor={editor} onAction={onAction} />
+        <ToolbarGroup
+          items={alignItems}
+          editor={editor}
+          onAction={onAction}
+          uploadingImages={uploadingImages}
+        />
         <ToolbarSeparator />
         {/* 插入组 */}
-        <ToolbarGroup items={insertItems} editor={editor} onAction={onAction} />
+        <ToolbarGroup
+          items={insertItems}
+          editor={editor}
+          onAction={onAction}
+          uploadingImages={uploadingImages}
+        />
       </div>
     </div>
   )

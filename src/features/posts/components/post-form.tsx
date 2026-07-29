@@ -53,6 +53,7 @@ export function PostForm({ mode, postId }: PostFormProps) {
   const isEditing = mode === "edit"
   const [loading, setLoading] = useState(isEditing)
   const [saving, setSaving] = useState(false)
+  const [uploadingEditorImages, setUploadingEditorImages] = useState(false)
   const [title, setTitle] = useState("")
   const [slug, setSlug] = useState("")
   const [originalSlug, setOriginalSlug] = useState("")
@@ -70,7 +71,10 @@ export function PostForm({ mode, postId }: PostFormProps) {
     inputRef: coverInputRef,
     uploading,
     uploadCover,
-  } = usePostCoverUpload(handleCoverUploaded)
+  } = usePostCoverUpload(
+    handleCoverUploaded,
+    slug || generatePostSlug(title)
+  )
 
   useEffect(() => {
     if (!isEditing || !postId) return
@@ -258,7 +262,7 @@ export function PostForm({ mode, postId }: PostFormProps) {
             </div>
 
             <PostSaveActions
-              saving={saving}
+              saving={saving || uploadingEditorImages || uploading}
               published={isPublished}
               onSave={savePost}
               className="flex lg:hidden"
@@ -269,7 +273,7 @@ export function PostForm({ mode, postId }: PostFormProps) {
         <div className="hidden lg:block fixed left-0 right-0 top-26 z-40 pointer-events-none">
           <div className="container max-w-6xl mx-auto px-4 sm:px-6 flex justify-end">
             <PostSaveActions
-              saving={saving}
+              saving={saving || uploadingEditorImages || uploading}
               published={isPublished}
               onSave={savePost}
               className="pointer-events-auto rounded-2xl bg-[#fafafa]/90 dark:bg-[#050505]/90 backdrop-blur-sm px-2 py-2 border shadow-sm"
@@ -305,6 +309,8 @@ export function PostForm({ mode, postId }: PostFormProps) {
             <Editor
               content={content}
               onChange={setContent}
+              articleSlug={slug || generatePostSlug(title)}
+              onUploadStateChange={setUploadingEditorImages}
               placeholder={isEditing ? "继续您的创作之旅..." : "开始您的创作之旅..."}
             />
           </div>
@@ -333,7 +339,7 @@ export function PostForm({ mode, postId }: PostFormProps) {
                     type="file"
                     ref={coverInputRef}
                     className="hidden"
-                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
                     onChange={uploadCover}
                   />
                   {coverImage ? (

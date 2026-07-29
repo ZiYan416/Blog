@@ -19,12 +19,14 @@ import { Typography } from '@tiptap/extension-typography'
 import { common, createLowlight } from 'lowlight'
 import powershell from 'highlight.js/lib/languages/powershell'
 import { useEffect, useRef } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { v4 as uuidv4 } from 'uuid'
 import { useToast } from '@/hooks/use-toast'
 import { ArticleCodeBlock } from './article-code-block-extension'
 import type { MarkdownStorage } from 'tiptap-markdown'
-import { getErrorMessage } from '@/lib/errors'
+import {
+  getImageAltText,
+  uploadBlogImages,
+} from '@/features/posts/image-upload'
+import type { EditorView } from '@tiptap/pm/view'
 
 // Create lowlight instance with common languages
 const lowlight = createLowlight(common)
@@ -39,41 +41,69 @@ interface RichEditorProps {
   content: string
   onChange: (content: string) => void
   onEditorReady: (editor: Editor) => void
+  articleSlug?: string
+  onUploadStateChange?: (uploading: boolean) => void
   placeholder?: string
   className?: string
 }
 
-export function RichEditor({ content, onChange, onEditorReady, placeholder, className }: RichEditorProps) {
+export function RichEditor({
+  content,
+  onChange,
+  onEditorReady,
+  articleSlug,
+  onUploadStateChange,
+  placeholder,
+  className,
+}: RichEditorProps) {
   const isInternalUpdate = useRef(false)
   const lastInternalContent = useRef('')
+  const pendingUploads = useRef(0)
   const { toast } = useToast()
 
-  const handleImageUpload = async (file: File): Promise<string | null> => {
+  const handleImageFiles = async (
+    view: EditorView,
+    files: File[],
+    position: number
+  ) => {
+    pendingUploads.current += 1
+    onUploadStateChange?.(true)
+
     try {
-      const supabase = createClient()
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${uuidv4()}.${fileExt}`
-      const filePath = `${fileName}`
+      const results = await uploadBlogImages(files, { articleSlug })
+      const successful = results.filter(
+        (result): result is typeof result & { url: string } =>
+          typeof result.url === 'string'
+      )
 
-      const { error: uploadError } = await supabase.storage
-        .from('blog-images')
-        .upload(filePath, file)
+      if (successful.length > 0 && view.dom.isConnected) {
+        let transaction = view.state.tr
+        let insertionPosition = Math.min(position, transaction.doc.content.size)
 
-      if (uploadError) throw uploadError
+        for (const result of successful) {
+          const node = view.state.schema.nodes.image.create({
+            src: result.url,
+            alt: getImageAltText(result.file),
+          })
+          transaction = transaction.insert(insertionPosition, node)
+          insertionPosition += node.nodeSize
+        }
+        view.dispatch(transaction)
+      }
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('blog-images')
-        .getPublicUrl(filePath)
-
-      return publicUrl
-    } catch (error: unknown) {
-      console.error('Image upload failed:', error)
-      toast({
-        title: "图片上传失败",
-        description: getErrorMessage(error, '图片上传失败'),
-        variant: "destructive"
-      })
-      return null
+      const failed = results.filter((result) => !result.url)
+      if (failed.length > 0) {
+        toast({
+          title: successful.length > 0 ? "部分图片上传失败" : "图片上传失败",
+          description:
+            failed[0].error?.message ||
+            `${failed.length} 张图片上传失败，请稍后重试`,
+          variant: "destructive",
+        })
+      }
+    } finally {
+      pendingUploads.current = Math.max(0, pendingUploads.current - 1)
+      onUploadStateChange?.(pendingUploads.current > 0)
     }
   }
 
@@ -155,43 +185,36 @@ export function RichEditor({ content, onChange, onEditorReady, placeholder, clas
         spellcheck: 'false',
       },
       handlePaste: (view, event) => {
-        const items = Array.from(event.clipboardData?.items || [])
-        const imageItem = items.find(item => item.type.startsWith('image'))
+        const files = Array.from(event.clipboardData?.items || [])
+          .filter((item) => item.type.startsWith('image'))
+          .flatMap((item) => {
+            const file = item.getAsFile()
+            return file ? [file] : []
+          })
+        if (files.length === 0) return false
 
-        if (imageItem) {
-          event.preventDefault()
-          const file = imageItem.getAsFile()
-          if (file) {
-            handleImageUpload(file).then(url => {
-              if (url) {
-                view.dispatch(view.state.tr.replaceSelectionWith(
-                  view.state.schema.nodes.image.create({ src: url })
-                ))
-              }
-            })
-          }
-          return true
-        }
-        return false
+        event.preventDefault()
+        void handleImageFiles(view, files, view.state.selection.from)
+        return true
       },
       handleDrop: (view, event, _slice, moved) => {
-        if (!moved && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0]) {
-          const file = event.dataTransfer.files[0]
-          if (file.type.startsWith('image')) {
-            event.preventDefault()
-            handleImageUpload(file).then(url => {
-              if (url) {
-                const { schema } = view.state
-                const coordinates = view.posAtCoords({ left: event.clientX, top: event.clientY })
-                if (coordinates) {
-                  view.dispatch(view.state.tr.insert(coordinates.pos, schema.nodes.image.create({ src: url })))
-                }
-              }
-            })
-            return true
-          }
-        }
-        return false
+        if (moved || !event.dataTransfer) return false
+        const files = Array.from(event.dataTransfer.files).filter((file) =>
+          file.type.startsWith('image')
+        )
+        if (files.length === 0) return false
+
+        event.preventDefault()
+        const coordinates = view.posAtCoords({
+          left: event.clientX,
+          top: event.clientY,
+        })
+        void handleImageFiles(
+          view,
+          files,
+          coordinates?.pos || view.state.selection.from
+        )
+        return true
       },
     },
     onUpdate: ({ editor }) => {

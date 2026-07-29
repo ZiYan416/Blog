@@ -90,6 +90,10 @@ npm install
 cp .env.local.example .env.local
 ```
 
+文章图片默认保存到 Supabase Storage。若要启用 CloudFlare-ImgBed，请仅在服务端配置可选的
+`IMGBED_API_TOKEN`；不要使用 `NEXT_PUBLIC_` 前缀。部署、权限与图片清理策略见
+[图片存储与生命周期管理](docs/image-storage.md)。
+
 ### 4. 启动开发服务器
 
 ```bash

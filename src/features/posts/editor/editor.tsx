@@ -1,22 +1,40 @@
 "use client"
 
-import { useState, useRef, useEffect } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Toolbar, ViewMode, MarkdownAction } from './toolbar'
 import { cn } from '@/lib/utils'
 import { RichEditor } from './rich-editor'
 import type { Editor as TiptapEditor } from '@tiptap/react'
 import { applyMarkdownAction } from '@/features/posts/editor/markdown-actions'
 import { SourceMarkdownEditor } from '@/features/posts/editor/source-markdown-editor'
+import { useToast } from '@/hooks/use-toast'
+import {
+  BLOG_IMAGE_ACCEPT,
+  getImageAltText,
+  uploadBlogImages,
+} from '@/features/posts/image-upload'
 
 interface EditorProps {
   content: string
   onChange: (content: string) => void
+  articleSlug?: string
+  onUploadStateChange?: (uploading: boolean) => void
   placeholder?: string
 }
 
-export default function Editor({ content, onChange, placeholder = '开始创作吧...' }: EditorProps) {
+export default function Editor({
+  content,
+  onChange,
+  articleSlug,
+  onUploadStateChange,
+  placeholder = '开始创作吧...',
+}: EditorProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('rich')
   const [tiptapEditor, setTiptapEditor] = useState<TiptapEditor | null>(null)
+  const [toolbarUploading, setToolbarUploading] = useState(false)
+  const [richUploading, setRichUploading] = useState(false)
+  const [sourceUploading, setSourceUploading] = useState(false)
+  const { toast } = useToast()
   // Force re-render when editor state changes (for toolbar active states)
   const [, forceUpdate] = useState(0)
   useEffect(() => {
@@ -32,8 +50,140 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
 
   // Refs for editor instances
   const containerRef = useRef<HTMLDivElement>(null)
+  const imageInputRef = useRef<HTMLInputElement>(null)
+  const contentRef = useRef(content)
+  const sourceSelectionRef = useRef({ start: 0, end: 0 })
+  const richSelectionRef = useRef(1)
+
+  useEffect(() => {
+    contentRef.current = content
+  }, [content])
+
+  useEffect(() => {
+    onUploadStateChange?.(
+      toolbarUploading || richUploading || sourceUploading
+    )
+  }, [
+    onUploadStateChange,
+    richUploading,
+    sourceUploading,
+    toolbarUploading,
+  ])
+
+  const updateContent = useCallback(
+    (nextContent: string) => {
+      contentRef.current = nextContent
+      onChange(nextContent)
+    },
+    [onChange]
+  )
+
+  const openImagePicker = useCallback(() => {
+    if (
+      (viewMode === 'rich' || viewMode === 'split') &&
+      tiptapEditor &&
+      !tiptapEditor.isDestroyed
+    ) {
+      richSelectionRef.current = tiptapEditor.state.selection.from
+    } else {
+      const textarea = containerRef.current?.querySelector('textarea')
+      sourceSelectionRef.current = {
+        start: textarea?.selectionStart || 0,
+        end: textarea?.selectionEnd || 0,
+      }
+    }
+    imageInputRef.current?.click()
+  }, [tiptapEditor, viewMode])
+
+  const uploadSelectedImages = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(event.target.files || [])
+      event.target.value = ''
+      if (files.length === 0) return
+
+      setToolbarUploading(true)
+      const sourceMode = viewMode === 'source'
+      const markers = files.map(
+        (_, index) =>
+          `![图片上传中……](uploading-${crypto.randomUUID()}-${index})`
+      )
+
+      if (sourceMode) {
+        const { start, end } = sourceSelectionRef.current
+        updateContent(
+          contentRef.current.slice(0, start) +
+            markers.join('\n') +
+            contentRef.current.slice(end)
+        )
+      }
+
+      try {
+        const results = await uploadBlogImages(files, { articleSlug })
+        const failed = results.filter((result) => !result.url)
+
+        if (sourceMode) {
+          let nextContent = contentRef.current
+          results.forEach((result, index) => {
+            const replacement = result.url
+              ? `![${getImageAltText(result.file)}](${result.url})`
+              : ''
+            nextContent = nextContent.replace(markers[index], replacement)
+          })
+          updateContent(nextContent)
+        } else if (tiptapEditor && !tiptapEditor.isDestroyed) {
+          const images = results.flatMap((result) =>
+            result.url
+              ? [
+                  {
+                    type: 'image',
+                    attrs: {
+                      src: result.url,
+                      alt: getImageAltText(result.file),
+                    },
+                  },
+                ]
+              : []
+          )
+          if (images.length > 0) {
+            const maxPosition = tiptapEditor.state.doc.content.size
+            tiptapEditor
+              .chain()
+              .focus()
+              .insertContentAt(
+                Math.min(richSelectionRef.current, maxPosition),
+                images
+              )
+              .run()
+          }
+        }
+
+        if (failed.length > 0) {
+          toast({
+            title: "部分图片上传失败",
+            description:
+              failed[0].error?.message ||
+              `${failed.length} 张图片上传失败，请稍后重试`,
+            variant: "destructive",
+          })
+        } else {
+          toast({
+            title: "图片上传成功",
+            description: `${results.length} 张图片已插入文章`,
+          })
+        }
+      } finally {
+        setToolbarUploading(false)
+      }
+    },
+    [articleSlug, tiptapEditor, toast, updateContent, viewMode]
+  )
 
   const handleAction = (action: MarkdownAction) => {
+    if (action === 'image') {
+      openImagePicker()
+      return
+    }
+
     // If in Rich mode (or Split mode), try Tiptap first
     if ((viewMode === 'rich' || viewMode === 'split') && tiptapEditor && !tiptapEditor.isDestroyed) {
       switch (action) {
@@ -54,11 +204,6 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
         case 'link': {
           const url = window.prompt('URL')
           if (url) tiptapEditor.chain().focus().setLink({ href: url }).run();
-          break;
-        }
-        case 'image': {
-          const imgUrl = window.prompt('Image URL')
-          if (imgUrl) tiptapEditor.chain().focus().setImage({ src: imgUrl }).run();
           break;
         }
         case 'table':
@@ -91,8 +236,22 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
 
   return (
     <div className="w-full border border-black/5 dark:border-white/5 bg-white dark:bg-neutral-900 rounded-2xl md:rounded-[2rem] transition-all focus-within:ring-1 ring-black/10 dark:ring-white/10 shadow-sm flex flex-col relative">
+      <input
+        ref={imageInputRef}
+        type="file"
+        className="hidden"
+        accept={BLOG_IMAGE_ACCEPT}
+        multiple
+        onChange={uploadSelectedImages}
+      />
       <div className="sticky top-16 z-40 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-black/5 dark:border-white/5 rounded-t-2xl md:rounded-t-[2rem]">
-        <Toolbar viewMode={viewMode} onViewModeChange={setViewMode} onAction={handleAction} editor={tiptapEditor} />
+        <Toolbar
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          onAction={handleAction}
+          editor={tiptapEditor}
+          uploadingImages={toolbarUploading || richUploading || sourceUploading}
+        />
       </div>
 
       <div className="flex-1 relative flex min-h-[calc(100vh-14rem)]">
@@ -105,8 +264,10 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
         )}>
           <SourceMarkdownEditor
             content={content}
-            onChange={onChange}
+            onChange={updateContent}
             containerRef={containerRef}
+            articleSlug={articleSlug}
+            onUploadStateChange={setSourceUploading}
           />
         </div>
 
@@ -121,8 +282,10 @@ export default function Editor({ content, onChange, placeholder = '开始创作�
           >
             <RichEditor
               content={content}
-              onChange={onChange}
+              onChange={updateContent}
               onEditorReady={setTiptapEditor}
+              articleSlug={articleSlug}
+              onUploadStateChange={setRichUploading}
               placeholder={placeholder}
             />
           </div>

@@ -4,6 +4,8 @@ import { generatePostSlug, getPostExcerpt } from '@/lib/markdown'
 import { AccessError, requireAdmin } from '@/lib/server-auth'
 import { getValidationMessage, postPayloadSchema } from '@/lib/validation'
 import { invalidatePublishedPosts } from '@/server/cache'
+import { extractManagedImageAssets } from '@/features/posts/image-assets'
+import { cleanupUnusedImageAssets } from '@/server/image-storage'
 
 export async function PUT(
   request: NextRequest,
@@ -24,7 +26,7 @@ export async function PUT(
   // RLS and the shared guard both enforce administrator-only editing.
   const { data: existingPost } = await supabase
     .from('posts')
-    .select('id')
+    .select('id, content, cover_image')
     .eq('slug', currentSlug)
     .single()
 
@@ -83,5 +85,12 @@ export async function PUT(
   }
 
   invalidatePublishedPosts()
-  return NextResponse.json({ post })
+  const imageCleanup = await cleanupUnusedImageAssets(
+    supabase,
+    extractManagedImageAssets(
+      existingPost.content,
+      existingPost.cover_image
+    )
+  )
+  return NextResponse.json({ post, imageCleanup })
 }
