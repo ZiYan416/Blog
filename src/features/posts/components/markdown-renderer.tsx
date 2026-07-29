@@ -6,10 +6,21 @@ import rehypeHighlight from 'rehype-highlight'
 import rehypeRaw from 'rehype-raw'
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'
 import rehypeSlug from 'rehype-slug'
-import { Children, isValidElement, useEffect, useRef, type ComponentPropsWithoutRef } from 'react'
+import {
+  Children,
+  isValidElement,
+  useEffect,
+  useRef,
+  type ClipboardEvent,
+  type ComponentPropsWithoutRef,
+} from 'react'
 import { CodeBlockShell, extractCodeBlockLanguage } from '@/features/posts/components/code-block-shell'
+import { LinkFavicon } from '@/features/posts/components/link-favicon'
+import {
+  getMarkdownSelectionText,
+  removeCopyExcludedElements,
+} from '@/features/posts/markdown-copy'
 import type { Schema } from 'hast-util-sanitize'
-import { ArrowUpRight, Link2 } from 'lucide-react'
 import { common } from 'lowlight'
 import powershell from 'highlight.js/lib/languages/powershell'
 import { getHighResolutionImageUrl } from '@/features/posts/image-url'
@@ -46,6 +57,7 @@ const markdownComponents: Components & {
   t: (props: ComponentPropsWithoutRef<'span'>) => React.ReactNode
 } = {
   pre: PreBlock,
+  table: MarkdownTable,
   a: MarkdownLink,
   img: MarkdownImage,
   t: ({ children }) => <span className="font-mono text-sm">&lt;T&gt;{children}</span>,
@@ -72,9 +84,35 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
       })
   }, [])
 
+  const handleCopy = (event: ClipboardEvent<HTMLElement>) => {
+    const selection = window.getSelection()
+    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return
+    if (
+      !event.currentTarget.contains(selection.anchorNode) ||
+      !event.currentTarget.contains(selection.focusNode)
+    ) {
+      return
+    }
+
+    const fragment = selection.getRangeAt(0).cloneContents()
+    removeCopyExcludedElements(fragment)
+    const plainText = getMarkdownSelectionText(fragment)
+    if (!plainText || !event.clipboardData) return
+
+    const htmlContainer = document.createElement('div')
+    htmlContainer.append(fragment.cloneNode(true))
+
+    event.preventDefault()
+    event.clipboardData.setData('text/plain', plainText)
+    event.clipboardData.setData('text/html', htmlContainer.innerHTML)
+  }
+
   return (
     <>
-      <article className="markdown-article prose prose-neutral dark:prose-invert max-w-none break-words prose-headings:font-bold prose-headings:tracking-tight prose-headings:leading-tight prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg md:prose-h1:text-3xl md:prose-h2:text-2xl md:prose-h3:text-xl prose-img:rounded-2xl prose-pre:bg-transparent prose-pre:p-0 prose-pre:border-none">
+      <article
+        className="markdown-article prose prose-neutral dark:prose-invert max-w-none break-words prose-headings:font-bold prose-headings:tracking-tight prose-headings:leading-tight prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg md:prose-h1:text-3xl md:prose-h2:text-2xl md:prose-h3:text-xl prose-img:rounded-2xl prose-pre:bg-transparent prose-pre:p-0 prose-pre:border-none"
+        onCopy={handleCopy}
+      >
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[
@@ -304,19 +342,32 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
           color: #f6c875;
           background-color: rgba(246, 200, 117, 0.1);
         }
-        .markdown-article .markdown-link__icon {
-          display: inline-block;
-          width: 0.82em;
-          height: 0.82em;
-          margin-left: 0.22em;
-          opacity: 0.72;
-          vertical-align: -0.04em;
-          stroke-width: 2.25;
-          transition: opacity 0.15s ease, transform 0.15s ease;
+        .markdown-article .markdown-link__favicon {
+          margin-right: 0.28em;
+          vertical-align: -0.08em;
         }
-        .markdown-article a:hover .markdown-link__icon {
+        .markdown-article a:hover .markdown-link__favicon {
           opacity: 1;
-          transform: translate(1px, -1px);
+        }
+        .markdown-article .link-favicon {
+          display: inline-flex;
+          width: 0.9em;
+          height: 0.9em;
+          align-items: center;
+          justify-content: center;
+          opacity: 0.78;
+          transition: opacity 0.15s ease;
+          user-select: none;
+        }
+        .markdown-article .link-favicon__image,
+        .markdown-article .link-favicon__fallback {
+          display: inline-block;
+          width: 100%;
+          height: 100%;
+          max-width: none;
+          margin: 0;
+          object-fit: contain;
+          box-shadow: none;
         }
 
         /* === Horizontal Rule === */
@@ -331,18 +382,23 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
         }
 
         /* === Tables === */
+        .markdown-article .markdown-table-scroll {
+          width: 100%;
+          margin: 1em 0;
+          overflow-x: auto;
+          border: 1px solid rgba(0, 0, 0, 0.1);
+          border-radius: 8px;
+        }
+        .dark .markdown-article .markdown-table-scroll {
+          border-color: rgba(255, 255, 255, 0.1);
+        }
         .markdown-article table {
           border-collapse: collapse;
           width: 100%;
-          margin: 1em 0;
-          border-radius: 8px;
-          overflow: hidden;
-          border: 1px solid rgba(0, 0, 0, 0.1);
-          display: block;
-          overflow-x: auto;
-        }
-        .dark .markdown-article table {
-          border-color: rgba(255, 255, 255, 0.1);
+          min-width: max-content;
+          margin: 0;
+          border: 0;
+          display: table;
         }
 
         .markdown-article th,
@@ -356,6 +412,18 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
         .dark .markdown-article th,
         .dark .markdown-article td {
           border-color: rgba(255, 255, 255, 0.08);
+        }
+        .markdown-article tr > :first-child {
+          border-left: 0;
+        }
+        .markdown-article tr > :last-child {
+          border-right: 0;
+        }
+        .markdown-article thead:first-child tr:first-child > * {
+          border-top: 0;
+        }
+        .markdown-article tbody:last-child tr:last-child > td {
+          border-bottom: 0;
         }
 
         .markdown-article th {
@@ -500,6 +568,20 @@ function MarkdownImage({
   )
 }
 
+function MarkdownTable({
+  node: _node,
+  children,
+  ...props
+}: ComponentPropsWithoutRef<'table'> & { node?: unknown }) {
+  void _node
+
+  return (
+    <div className="markdown-table-scroll">
+      <table {...props}>{children}</table>
+    </div>
+  )
+}
+
 function MarkdownLink({
   node: _node,
   href = '',
@@ -511,7 +593,6 @@ function MarkdownLink({
   const hasImage = Children.toArray(children).some(
     (child) => isValidElement(child) && child.type === 'img',
   )
-  const LinkIcon = isExternal ? ArrowUpRight : Link2
 
   return (
     <a
@@ -520,8 +601,8 @@ function MarkdownLink({
       target={isExternal ? '_blank' : props.target}
       rel={isExternal ? 'noopener noreferrer' : props.rel}
     >
+      {!hasImage ? <LinkFavicon href={href} className="markdown-link__favicon" /> : null}
       {children}
-      {!hasImage ? <LinkIcon className="markdown-link__icon" aria-hidden="true" /> : null}
     </a>
   )
 }

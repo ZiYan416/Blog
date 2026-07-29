@@ -30,9 +30,15 @@ export function DeletePostButton({ slug, title }: { slug: string, title: string 
       });
 
       if (res.ok) {
+        const data = await res.json() as {
+          imageCleanup?: { failed?: unknown[] }
+        };
+        const failedCleanupCount = data.imageCleanup?.failed?.length || 0;
         toast({
           title: "删除成功",
-          description: `文章 "${title}" 已被永久删除。`,
+          description: failedCleanupCount > 0
+            ? `文章 "${title}" 已删除；${failedCleanupCount} 张图片需稍后手动清理。`
+            : `文章 "${title}" 及其未被引用的托管图片已删除。`,
         });
         setOpen(false);
         router.refresh();
@@ -75,7 +81,8 @@ export function DeletePostButton({ slug, title }: { slug: string, title: string 
           <DialogDescription className="pt-2">
             您即将删除文章 <span className="font-bold text-foreground">&ldquo;{title}&rdquo;</span>。
             <br />
-            此操作<span className="font-bold text-red-500">无法撤销</span>，删除后该文章及其所有数据将永久丢失。
+            此操作<span className="font-bold text-red-500">无法撤销</span>。文章删除后，
+            系统还会清理仅由该文章引用的博客托管图片；被其他文章复用的图片会保留。
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-0">

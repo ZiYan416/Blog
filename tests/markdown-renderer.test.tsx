@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { MarkdownRenderer } from '../src/features/posts/components/markdown-renderer'
 
@@ -16,15 +16,45 @@ describe('MarkdownRenderer', () => {
     HTMLElement.prototype.scrollTo = vi.fn()
   })
 
-  afterEach(cleanup)
+  afterEach(() => {
+    window.getSelection()?.removeAllRanges()
+    cleanup()
+  })
 
-  it('styles external links with an icon and safe new-tab attributes', () => {
+  it('shows the linked website favicon with safe new-tab attributes', () => {
     render(<MarkdownRenderer content="[示例链接](https://example.com)" />)
 
     const link = screen.getByRole('link', { name: '示例链接' })
     expect(link.getAttribute('target')).toBe('_blank')
     expect(link.getAttribute('rel')).toBe('noopener noreferrer')
-    expect(link.querySelector('.markdown-link__icon')).not.toBeNull()
+    expect(
+      link.querySelector<HTMLImageElement>('.link-favicon__image')?.src,
+    ).toBe('https://icons.duckduckgo.com/ip3/example.com.ico')
+  })
+
+  it('writes a selected table to the plain-text clipboard as TSV', () => {
+    const { container } = render(
+      <MarkdownRenderer content={'| 名称 | 值 |\n| --- | --- |\n| alpha | `1` |'} />,
+    )
+    const table = container.querySelector('table')
+    expect(table).not.toBeNull()
+    expect(table?.parentElement?.classList.contains('markdown-table-scroll')).toBe(
+      true,
+    )
+
+    const range = document.createRange()
+    range.selectNode(table!)
+    window.getSelection()?.addRange(range)
+    const setData = vi.fn()
+
+    fireEvent.copy(table!, {
+      clipboardData: { setData },
+    })
+
+    expect(setData).toHaveBeenCalledWith(
+      'text/plain',
+      '名称\t值\nalpha\t1',
+    )
   })
 
   it('recognizes explicit PowerShell aliases', () => {

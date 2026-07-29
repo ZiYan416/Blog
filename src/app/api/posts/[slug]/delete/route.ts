@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { AccessError, requireAdmin } from '@/lib/server-auth'
 import { NextResponse } from 'next/server'
 import { invalidatePublishedPosts } from '@/server/cache'
+import { extractManagedImageAssets } from '@/features/posts/image-assets'
+import { cleanupUnusedImageAssets } from '@/server/image-storage'
 
 export async function DELETE(
   request: Request,
@@ -22,7 +24,7 @@ export async function DELETE(
   // The shared guard and RLS both enforce administrator-only deletion.
   const { data: post } = await supabase
     .from('posts')
-    .select('slug')
+    .select('slug, content, cover_image')
     .eq('slug', slug)
     .single()
 
@@ -40,5 +42,9 @@ export async function DELETE(
   }
 
   invalidatePublishedPosts()
-  return NextResponse.json({ success: true })
+  const imageCleanup = await cleanupUnusedImageAssets(
+    supabase,
+    extractManagedImageAssets(post.content, post.cover_image)
+  )
+  return NextResponse.json({ success: true, imageCleanup })
 }
