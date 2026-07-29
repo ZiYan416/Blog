@@ -17,16 +17,22 @@ import { TextAlign } from '@tiptap/extension-text-align'
 import { Typography } from '@tiptap/extension-typography'
 import { common, createLowlight } from 'lowlight'
 import powershell from 'highlight.js/lib/languages/powershell'
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import { ArticleCodeBlock } from './article-code-block-extension'
 import { ArticleLink } from './article-link-extension'
+import {
+  TableContextMenu,
+  type TableContextMenuPosition,
+} from './table-context-menu'
 import type { MarkdownStorage } from 'tiptap-markdown'
 import {
   getImageAltText,
   uploadBlogImages,
 } from '@/features/posts/image-upload'
 import type { EditorView } from '@tiptap/pm/view'
+import type { ResolvedPos } from '@tiptap/pm/model'
+import { TextSelection } from '@tiptap/pm/state'
 
 // Create lowlight instance with common languages
 const lowlight = createLowlight(common)
@@ -35,6 +41,15 @@ lowlight.registerAlias('powershell', ['pwsh', 'ps1'])
 
 function getMarkdown(editor: Editor) {
   return (editor.storage as unknown as { markdown: MarkdownStorage }).markdown.getMarkdown()
+}
+
+function isInsideTableCell(position: ResolvedPos) {
+  for (let depth = position.depth; depth > 0; depth -= 1) {
+    const tableRole = position.node(depth).type.spec.tableRole
+    if (tableRole === 'cell' || tableRole === 'header_cell') return true
+  }
+
+  return false
 }
 
 interface RichEditorProps {
@@ -59,7 +74,12 @@ export function RichEditor({
   const isInternalUpdate = useRef(false)
   const lastInternalContent = useRef('')
   const pendingUploads = useRef(0)
+  const [tableContextMenu, setTableContextMenu] =
+    useState<TableContextMenuPosition | null>(null)
   const { toast } = useToast()
+  const closeTableContextMenu = useCallback(() => {
+    setTableContextMenu(null)
+  }, [])
 
   const handleImageFiles = async (
     view: EditorView,
@@ -216,6 +236,33 @@ export function RichEditor({
         )
         return true
       },
+      handleDOMEvents: {
+        contextmenu: (view, event) => {
+          if (!(event instanceof MouseEvent)) return false
+
+          const coordinates = view.posAtCoords({
+            left: event.clientX,
+            top: event.clientY,
+          })
+          if (!coordinates) return false
+
+          const position = view.state.doc.resolve(coordinates.pos)
+          if (!isInsideTableCell(position)) {
+            closeTableContextMenu()
+            return false
+          }
+
+          view.dispatch(
+            view.state.tr.setSelection(TextSelection.near(position))
+          )
+          event.preventDefault()
+          setTableContextMenu({
+            x: event.clientX,
+            y: event.clientY,
+          })
+          return true
+        },
+      },
     },
     onUpdate: ({ editor }) => {
       isInternalUpdate.current = true
@@ -260,5 +307,16 @@ export function RichEditor({
     }
   }, [content, editor])
 
-  return <EditorContent editor={editor} className="h-full" />
+  return (
+    <>
+      <EditorContent editor={editor} className="h-full" />
+      {editor && tableContextMenu ? (
+        <TableContextMenu
+          editor={editor}
+          position={tableContextMenu}
+          onClose={closeTableContextMenu}
+        />
+      ) : null}
+    </>
+  )
 }
