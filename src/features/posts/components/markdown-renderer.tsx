@@ -57,6 +57,7 @@ const markdownComponents: Components & {
   t: (props: ComponentPropsWithoutRef<'span'>) => React.ReactNode
 } = {
   pre: PreBlock,
+  table: MarkdownTable,
   a: MarkdownLink,
   img: MarkdownImage,
   t: ({ children }) => <span className="font-mono text-sm">&lt;T&gt;{children}</span>,
@@ -381,18 +382,23 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
         }
 
         /* === Tables === */
+        .markdown-article .markdown-table-scroll {
+          width: 100%;
+          margin: 1em 0;
+          overflow-x: auto;
+          border: 1px solid rgba(0, 0, 0, 0.1);
+          border-radius: 8px;
+        }
+        .dark .markdown-article .markdown-table-scroll {
+          border-color: rgba(255, 255, 255, 0.1);
+        }
         .markdown-article table {
           border-collapse: collapse;
           width: 100%;
-          margin: 1em 0;
-          border-radius: 8px;
-          overflow: hidden;
-          border: 1px solid rgba(0, 0, 0, 0.1);
-          display: block;
-          overflow-x: auto;
-        }
-        .dark .markdown-article table {
-          border-color: rgba(255, 255, 255, 0.1);
+          min-width: max-content;
+          margin: 0;
+          border: 0;
+          display: table;
         }
 
         .markdown-article th,
@@ -406,6 +412,18 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
         .dark .markdown-article th,
         .dark .markdown-article td {
           border-color: rgba(255, 255, 255, 0.08);
+        }
+        .markdown-article tr > :first-child {
+          border-left: 0;
+        }
+        .markdown-article tr > :last-child {
+          border-right: 0;
+        }
+        .markdown-article thead:first-child tr:first-child > * {
+          border-top: 0;
+        }
+        .markdown-article tbody:last-child tr:last-child > td {
+          border-bottom: 0;
         }
 
         .markdown-article th {
@@ -547,6 +565,20 @@ function MarkdownImage({
       className={['markdown-article-image', className].filter(Boolean).join(' ')}
       data-original-src={displaySrc !== src ? src : undefined}
     />
+  )
+}
+
+function MarkdownTable({
+  node: _node,
+  children,
+  ...props
+}: ComponentPropsWithoutRef<'table'> & { node?: unknown }) {
+  void _node
+
+  return (
+    <div className="markdown-table-scroll">
+      <table {...props}>{children}</table>
+    </div>
   )
 }
 

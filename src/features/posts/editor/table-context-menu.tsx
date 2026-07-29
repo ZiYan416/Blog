@@ -144,7 +144,7 @@ export function TableContextMenu({
       ref={menuRef}
       role="menu"
       aria-label="表格编辑菜单"
-      className="fixed z-[100] w-56 overflow-hidden rounded-xl border border-black/10 bg-white/98 p-1.5 text-sm shadow-2xl backdrop-blur dark:border-white/10 dark:bg-neutral-900/98"
+      className="fixed z-[100] w-56 overflow-hidden rounded-xl border border-black/10 bg-white p-1.5 text-sm shadow-2xl dark:border-white/10 dark:bg-neutral-900"
       style={coordinates}
       onContextMenu={(event) => event.preventDefault()}
     >

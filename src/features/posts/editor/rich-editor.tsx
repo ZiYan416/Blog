@@ -33,6 +33,7 @@ import {
 import type { EditorView } from '@tiptap/pm/view'
 import type { ResolvedPos } from '@tiptap/pm/model'
 import { TextSelection } from '@tiptap/pm/state'
+import { CellSelection } from '@tiptap/pm/tables'
 
 // Create lowlight instance with common languages
 const lowlight = createLowlight(common)
@@ -252,9 +253,16 @@ export function RichEditor({
             return false
           }
 
-          view.dispatch(
-            view.state.tr.setSelection(TextSelection.near(position))
-          )
+          const currentSelection = view.state.selection
+          const clickedSelectedCells =
+            currentSelection instanceof CellSelection &&
+            coordinates.pos >= currentSelection.from &&
+            coordinates.pos <= currentSelection.to
+          if (!clickedSelectedCells) {
+            view.dispatch(
+              view.state.tr.setSelection(TextSelection.near(position))
+            )
+          }
           event.preventDefault()
           setTableContextMenu({
             x: event.clientX,

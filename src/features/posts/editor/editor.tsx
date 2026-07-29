@@ -252,6 +252,14 @@ export default function Editor({
           editor={tiptapEditor}
           uploadingImages={toolbarUploading || richUploading || sourceUploading}
         />
+        {(viewMode === 'rich' || viewMode === 'split') &&
+        tiptapEditor &&
+        !tiptapEditor.isDestroyed &&
+        tiptapEditor.isActive('table') ? (
+          <div className="border-t border-black/5 px-3 py-1.5 text-xs text-neutral-500 dark:border-white/5 dark:text-neutral-400">
+            表格编辑：在单元格内点击鼠标右键，可插入或删除行列。
+          </div>
+        ) : null}
       </div>
 
       <div className="flex-1 relative flex min-h-[calc(100vh-14rem)]">

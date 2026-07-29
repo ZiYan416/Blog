@@ -38,6 +38,9 @@ describe('MarkdownRenderer', () => {
     )
     const table = container.querySelector('table')
     expect(table).not.toBeNull()
+    expect(table?.parentElement?.classList.contains('markdown-table-scroll')).toBe(
+      true,
+    )
 
     const range = document.createRange()
     range.selectNode(table!)
