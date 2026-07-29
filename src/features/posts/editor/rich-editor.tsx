@@ -22,16 +22,15 @@ import { useToast } from '@/hooks/use-toast'
 import { ArticleCodeBlock } from './article-code-block-extension'
 import { ArticleLink } from './article-link-extension'
 import {
-  TableContextMenu,
-  type TableContextMenuPosition,
-} from './table-context-menu'
+  EditorContextMenu,
+  type EditorContextMenuPosition,
+} from './editor-context-menu'
 import type { MarkdownStorage } from 'tiptap-markdown'
 import {
   getImageAltText,
   uploadBlogImages,
 } from '@/features/posts/image-upload'
 import type { EditorView } from '@tiptap/pm/view'
-import type { ResolvedPos } from '@tiptap/pm/model'
 import { TextSelection } from '@tiptap/pm/state'
 import { CellSelection } from '@tiptap/pm/tables'
 
@@ -42,15 +41,6 @@ lowlight.registerAlias('powershell', ['pwsh', 'ps1'])
 
 function getMarkdown(editor: Editor) {
   return (editor.storage as unknown as { markdown: MarkdownStorage }).markdown.getMarkdown()
-}
-
-function isInsideTableCell(position: ResolvedPos) {
-  for (let depth = position.depth; depth > 0; depth -= 1) {
-    const tableRole = position.node(depth).type.spec.tableRole
-    if (tableRole === 'cell' || tableRole === 'header_cell') return true
-  }
-
-  return false
 }
 
 interface RichEditorProps {
@@ -75,11 +65,11 @@ export function RichEditor({
   const isInternalUpdate = useRef(false)
   const lastInternalContent = useRef('')
   const pendingUploads = useRef(0)
-  const [tableContextMenu, setTableContextMenu] =
-    useState<TableContextMenuPosition | null>(null)
+  const [contextMenu, setContextMenu] =
+    useState<EditorContextMenuPosition | null>(null)
   const { toast } = useToast()
-  const closeTableContextMenu = useCallback(() => {
-    setTableContextMenu(null)
+  const closeContextMenu = useCallback(() => {
+    setContextMenu(null)
   }, [])
 
   const handleImageFiles = async (
@@ -251,23 +241,22 @@ export function RichEditor({
           if (!coordinates) return false
 
           const position = view.state.doc.resolve(coordinates.pos)
-          if (!isInsideTableCell(position)) {
-            closeTableContextMenu()
-            return false
-          }
-
           const currentSelection = view.state.selection
           const clickedSelectedCells =
             currentSelection instanceof CellSelection &&
             coordinates.pos >= currentSelection.from &&
             coordinates.pos <= currentSelection.to
-          if (!clickedSelectedCells) {
+          const clickedTextSelection =
+            !currentSelection.empty &&
+            coordinates.pos >= currentSelection.from &&
+            coordinates.pos <= currentSelection.to
+          if (!clickedSelectedCells && !clickedTextSelection) {
             view.dispatch(
               view.state.tr.setSelection(TextSelection.near(position))
             )
           }
           event.preventDefault()
-          setTableContextMenu({
+          setContextMenu({
             x: event.clientX,
             y: event.clientY,
           })
@@ -321,11 +310,18 @@ export function RichEditor({
   return (
     <>
       <EditorContent editor={editor} className="h-full" />
-      {editor && tableContextMenu ? (
-        <TableContextMenu
+      {editor && contextMenu ? (
+        <EditorContextMenu
           editor={editor}
-          position={tableContextMenu}
-          onClose={closeTableContextMenu}
+          position={contextMenu}
+          onClose={closeContextMenu}
+          onClipboardError={(message) =>
+            toast({
+              title: "剪贴板操作失败",
+              description: message,
+              variant: "destructive",
+            })
+          }
         />
       ) : null}
     </>

@@ -9,6 +9,12 @@ import {
   getImageAltText,
   uploadBlogImages,
 } from "@/features/posts/image-upload"
+import {
+  SourceEditorContextMenu,
+  type EditorContextMenuPosition,
+  type EditorMenuGroup,
+} from "@/features/posts/editor/editor-context-menu"
+import type { MarkdownAction } from "@/features/posts/editor/toolbar"
 
 export function SourceMarkdownEditor({
   content,
@@ -16,17 +22,21 @@ export function SourceMarkdownEditor({
   containerRef,
   articleSlug,
   onUploadStateChange,
+  onAction,
 }: {
   content: string
   onChange: (content: string) => void
   containerRef: React.RefObject<HTMLDivElement | null>
   articleSlug?: string
   onUploadStateChange?: (uploading: boolean) => void
+  onAction: (action: MarkdownAction) => void
 }) {
   const { toast } = useToast()
   const contentRef = useRef(content)
   const pendingUploads = useRef(0)
   const [dragActive, setDragActive] = useState(false)
+  const [contextMenu, setContextMenu] =
+    useState<EditorContextMenuPosition | null>(null)
 
   useEffect(() => {
     contentRef.current = content
@@ -155,6 +165,155 @@ export function SourceMarkdownEditor({
     [handleImageFiles]
   )
 
+  const withTextarea = useCallback(
+    <Result,>(operation: (textarea: HTMLTextAreaElement) => Result) => {
+      const textarea = containerRef.current?.querySelector("textarea")
+      if (!textarea) return
+      return operation(textarea)
+    },
+    [containerRef]
+  )
+
+  const replaceSelection = useCallback(
+    (textarea: HTMLTextAreaElement, replacement: string) => {
+      const start = textarea.selectionStart
+      const nextContent =
+        contentRef.current.slice(0, start) +
+        replacement +
+        contentRef.current.slice(textarea.selectionEnd)
+      updateContent(nextContent)
+      window.requestAnimationFrame(() => {
+        textarea.focus()
+        textarea.setSelectionRange(
+          start + replacement.length,
+          start + replacement.length
+        )
+      })
+    },
+    [updateContent]
+  )
+
+  const sourceMenuGroups: EditorMenuGroup[] = [
+    {
+      actions: [
+        {
+          label: "撤销",
+          shortcut: "Ctrl+Z",
+          run: () =>
+            withTextarea((textarea) => {
+              textarea.focus()
+              document.execCommand("undo")
+            }),
+        },
+        {
+          label: "重做",
+          shortcut: "Ctrl+Y",
+          run: () =>
+            withTextarea((textarea) => {
+              textarea.focus()
+              document.execCommand("redo")
+            }),
+        },
+      ],
+    },
+    {
+      actions: [
+        {
+          label: "剪切",
+          shortcut: "Ctrl+X",
+          run: async () => {
+            try {
+              await withTextarea(async (textarea) => {
+                const selected = textarea.value.slice(
+                  textarea.selectionStart,
+                  textarea.selectionEnd
+                )
+                await navigator.clipboard.writeText(selected)
+                replaceSelection(textarea, "")
+              })
+            } catch {
+              toast({
+                title: "剪贴板操作失败",
+                description: "无法访问剪贴板，请检查浏览器权限",
+                variant: "destructive",
+              })
+            }
+          },
+        },
+        {
+          label: "复制",
+          shortcut: "Ctrl+C",
+          run: async () => {
+            try {
+              await withTextarea((textarea) =>
+                navigator.clipboard.writeText(
+                  textarea.value.slice(
+                    textarea.selectionStart,
+                    textarea.selectionEnd
+                  )
+                )
+              )
+            } catch {
+              toast({
+                title: "剪贴板操作失败",
+                description: "无法访问剪贴板，请检查浏览器权限",
+                variant: "destructive",
+              })
+            }
+          },
+        },
+        {
+          label: "粘贴",
+          shortcut: "Ctrl+V",
+          run: async () => {
+            try {
+              const text = await navigator.clipboard.readText()
+              withTextarea((textarea) => replaceSelection(textarea, text))
+            } catch {
+              toast({
+                title: "剪贴板操作失败",
+                description: "浏览器未允许读取剪贴板，请使用 Ctrl+V",
+                variant: "destructive",
+              })
+            }
+          },
+        },
+        {
+          label: "全选",
+          shortcut: "Ctrl+A",
+          run: () =>
+            withTextarea((textarea) => {
+              textarea.focus()
+              textarea.select()
+            }),
+        },
+      ],
+    },
+    {
+      label: "Markdown 格式",
+      actions: [
+        { label: "一级标题", run: () => onAction("h1") },
+        { label: "二级标题", run: () => onAction("h2") },
+        { label: "三级标题", run: () => onAction("h3") },
+        { label: "加粗", shortcut: "Ctrl+B", run: () => onAction("bold") },
+        { label: "斜体", shortcut: "Ctrl+I", run: () => onAction("italic") },
+        { label: "行内代码", shortcut: "Ctrl+E", run: () => onAction("code") },
+        { label: "无序列表", run: () => onAction("list") },
+        { label: "有序列表", run: () => onAction("ordered-list") },
+        { label: "引用", run: () => onAction("quote") },
+      ],
+    },
+    {
+      label: "插入",
+      actions: [
+        { label: "链接", shortcut: "Ctrl+K", run: () => onAction("link") },
+        { label: "图片", run: () => onAction("image") },
+        { label: "表格", run: () => onAction("table") },
+        { label: "分割线", run: () => onAction("hr") },
+      ],
+    },
+  ]
+
   return (
     <div
       ref={containerRef}
@@ -199,7 +358,18 @@ export function SourceMarkdownEditor({
         }}
         textareaClassName="focus:outline-none"
         onPaste={handlePaste}
+        onContextMenu={(event) => {
+          event.preventDefault()
+          setContextMenu({ x: event.clientX, y: event.clientY })
+        }}
       />
+      {contextMenu ? (
+        <SourceEditorContextMenu
+          groups={sourceMenuGroups}
+          position={contextMenu}
+          onClose={() => setContextMenu(null)}
+        />
+      ) : null}
     </div>
   )
 }

@@ -276,6 +276,7 @@ export default function Editor({
             containerRef={containerRef}
             articleSlug={articleSlug}
             onUploadStateChange={setSourceUploading}
+            onAction={handleAction}
           />
         </div>
 
