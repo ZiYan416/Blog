@@ -369,6 +369,12 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
           object-fit: contain;
           box-shadow: none;
         }
+        .dark .markdown-article .link-favicon {
+          border-radius: 0.2em;
+          background: rgba(255, 255, 255, 0.92);
+          box-shadow: 0 0 0 0.08em rgba(255, 255, 255, 0.92);
+          opacity: 1;
+        }
 
         /* === Horizontal Rule === */
         .markdown-article hr {
@@ -602,6 +608,11 @@ function MarkdownLink({
       rel={isExternal ? 'noopener noreferrer' : props.rel}
     >
       {!hasImage ? <LinkFavicon href={href} className="markdown-link__favicon" /> : null}
+      {!hasImage ? (
+        <span data-copy-exclude="true" aria-hidden="true">
+          {"\u2060"}
+        </span>
+      ) : null}
       {children}
     </a>
   )

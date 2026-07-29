@@ -8,6 +8,20 @@ export type PostSort = "latest" | "oldest" | "views"
 
 const POST_LIST_RETURN_STATE_KEY = "post_list_return_state_v2"
 const LEGACY_POST_LIST_STATE_KEY = "post_list_state"
+const POST_LIST_HISTORY_ENTRY_KEY = "__blogPostListReturnKey"
+
+function getHistoryState() {
+  const state = window.history.state
+  return state && typeof state === "object"
+    ? (state as Record<string, unknown>)
+    : {}
+}
+
+function clearPostListHistoryMarker() {
+  const state = { ...getHistoryState() }
+  delete state[POST_LIST_HISTORY_ENTRY_KEY]
+  window.history.replaceState(state, "", window.location.href)
+}
 
 interface PostListFilters {
   category?: string
@@ -126,6 +140,15 @@ export function usePostList({
         return
       }
 
+      const returnKey = `${Date.now()}-${Math.random().toString(36).slice(2)}`
+      window.history.replaceState(
+        {
+          ...getHistoryState(),
+          [POST_LIST_HISTORY_ENTRY_KEY]: returnKey,
+        },
+        "",
+        window.location.href
+      )
       sessionStorage.setItem(
         POST_LIST_RETURN_STATE_KEY,
         JSON.stringify({
@@ -133,28 +156,50 @@ export function usePostList({
           sort,
           scrollY: window.scrollY,
           pathname: window.location.pathname,
+          returnKey,
         })
       )
     }
 
-    document.addEventListener("click", rememberListState)
-    return () => document.removeEventListener("click", rememberListState)
+    document.addEventListener("click", rememberListState, true)
+    return () => document.removeEventListener("click", rememberListState, true)
   }, [page, sort])
 
   useEffect(() => {
     const restore = async () => {
+      const scrollTo = (top: number) => {
+        window.requestAnimationFrame(() =>
+          window.scrollTo({ top, behavior: "instant" })
+        )
+      }
+
       try {
         sessionStorage.removeItem(LEGACY_POST_LIST_STATE_KEY)
         const raw = sessionStorage.getItem(POST_LIST_RETURN_STATE_KEY)
-        if (!raw) return
+        if (!raw) {
+          scrollTo(0)
+          return
+        }
         sessionStorage.removeItem(POST_LIST_RETURN_STATE_KEY)
         const saved = JSON.parse(raw) as {
           page?: number
           sort?: PostSort
           scrollY?: number
           pathname?: string
+          returnKey?: string
         }
-        if (saved.pathname !== window.location.pathname) return
+        if (saved.pathname !== window.location.pathname) {
+          scrollTo(0)
+          return
+        }
+        if (
+          !saved.returnKey ||
+          getHistoryState()[POST_LIST_HISTORY_ENTRY_KEY] !== saved.returnKey
+        ) {
+          scrollTo(0)
+          return
+        }
+        clearPostListHistoryMarker()
 
         const targetPage = saved.page || 1
         const targetSort = saved.sort || "latest"
@@ -168,13 +213,10 @@ export function usePostList({
             setHasMore(result.posts.length < result.total)
           }
         }
-        if (saved.scrollY) {
-          window.requestAnimationFrame(() =>
-            window.scrollTo({ top: saved.scrollY, behavior: "instant" })
-          )
-        }
+        scrollTo(saved.scrollY || 0)
       } catch (error) {
         console.error("Error restoring post list state", error)
+        scrollTo(0)
       }
     }
 

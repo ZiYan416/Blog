@@ -228,13 +228,13 @@ export function TagManager({ initialTags }: TagManagerProps) {
                     borderStyle: 'solid',
                   }}
                 >
-                  <Tag className="w-4 h-4 opacity-70" style={{ color: styles.color }} />
-                  <span className="text-lg font-bold" style={{ color: '#333' }}>
+                  <Tag className="w-4 h-4 text-neutral-700 dark:text-white/80" />
+                  <span className="text-lg font-bold text-neutral-800 dark:text-neutral-50">
                     {tag.name}
                   </span>
 
                   {tag.post_count > 0 && (
-                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-white/50 text-neutral-800">
+                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-white/50 text-neutral-800 dark:bg-black/30 dark:text-white">
                       {tag.post_count}
                     </span>
                   )}
