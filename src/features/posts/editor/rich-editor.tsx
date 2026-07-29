@@ -4,7 +4,6 @@ import { useEditor, EditorContent, Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { Markdown } from 'tiptap-markdown'
 import Image from '@tiptap/extension-image'
-import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
 import { Table } from '@tiptap/extension-table'
 import { TableRow } from '@tiptap/extension-table-row'
@@ -21,6 +20,7 @@ import powershell from 'highlight.js/lib/languages/powershell'
 import { useEffect, useRef } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import { ArticleCodeBlock } from './article-code-block-extension'
+import { ArticleLink } from './article-link-extension'
 import type { MarkdownStorage } from 'tiptap-markdown'
 import {
   getImageAltText,
@@ -139,7 +139,7 @@ export function RichEditor({
         },
       }),
       // Link support
-      Link.configure({
+      ArticleLink.configure({
         openOnClick: false,
         HTMLAttributes: {
           class: 'editor-link',

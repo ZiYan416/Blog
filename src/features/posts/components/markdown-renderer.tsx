@@ -8,8 +8,8 @@ import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'
 import rehypeSlug from 'rehype-slug'
 import { Children, isValidElement, useEffect, useRef, type ComponentPropsWithoutRef } from 'react'
 import { CodeBlockShell, extractCodeBlockLanguage } from '@/features/posts/components/code-block-shell'
+import { LinkFavicon } from '@/features/posts/components/link-favicon'
 import type { Schema } from 'hast-util-sanitize'
-import { ArrowUpRight, Link2 } from 'lucide-react'
 import { common } from 'lowlight'
 import powershell from 'highlight.js/lib/languages/powershell'
 import { getHighResolutionImageUrl } from '@/features/posts/image-url'
@@ -304,19 +304,32 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
           color: #f6c875;
           background-color: rgba(246, 200, 117, 0.1);
         }
-        .markdown-article .markdown-link__icon {
-          display: inline-block;
-          width: 0.82em;
-          height: 0.82em;
-          margin-left: 0.22em;
-          opacity: 0.72;
-          vertical-align: -0.04em;
-          stroke-width: 2.25;
-          transition: opacity 0.15s ease, transform 0.15s ease;
+        .markdown-article .markdown-link__favicon {
+          margin-right: 0.28em;
+          vertical-align: -0.08em;
         }
-        .markdown-article a:hover .markdown-link__icon {
+        .markdown-article a:hover .markdown-link__favicon {
           opacity: 1;
-          transform: translate(1px, -1px);
+        }
+        .markdown-article .link-favicon {
+          display: inline-flex;
+          width: 0.9em;
+          height: 0.9em;
+          align-items: center;
+          justify-content: center;
+          opacity: 0.78;
+          transition: opacity 0.15s ease;
+          user-select: none;
+        }
+        .markdown-article .link-favicon__image,
+        .markdown-article .link-favicon__fallback {
+          display: inline-block;
+          width: 100%;
+          height: 100%;
+          max-width: none;
+          margin: 0;
+          object-fit: contain;
+          box-shadow: none;
         }
 
         /* === Horizontal Rule === */
@@ -511,7 +524,6 @@ function MarkdownLink({
   const hasImage = Children.toArray(children).some(
     (child) => isValidElement(child) && child.type === 'img',
   )
-  const LinkIcon = isExternal ? ArrowUpRight : Link2
 
   return (
     <a
@@ -520,8 +532,8 @@ function MarkdownLink({
       target={isExternal ? '_blank' : props.target}
       rel={isExternal ? 'noopener noreferrer' : props.rel}
     >
+      {!hasImage ? <LinkFavicon href={href} className="markdown-link__favicon" /> : null}
       {children}
-      {!hasImage ? <LinkIcon className="markdown-link__icon" aria-hidden="true" /> : null}
     </a>
   )
 }

@@ -18,13 +18,15 @@ describe('MarkdownRenderer', () => {
 
   afterEach(cleanup)
 
-  it('styles external links with an icon and safe new-tab attributes', () => {
+  it('shows the linked website favicon with safe new-tab attributes', () => {
     render(<MarkdownRenderer content="[示例链接](https://example.com)" />)
 
     const link = screen.getByRole('link', { name: '示例链接' })
     expect(link.getAttribute('target')).toBe('_blank')
     expect(link.getAttribute('rel')).toBe('noopener noreferrer')
-    expect(link.querySelector('.markdown-link__icon')).not.toBeNull()
+    expect(
+      link.querySelector<HTMLImageElement>('.link-favicon__image')?.src,
+    ).toBe('https://icons.duckduckgo.com/ip3/example.com.ico')
   })
 
   it('recognizes explicit PowerShell aliases', () => {

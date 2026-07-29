@@ -612,6 +612,9 @@ export default function Editor({
         }
 
         /* === Links === */
+        .ProseMirror .editor-link-mark {
+          display: inline;
+        }
         .ProseMirror a {
           color: #6366f1;
           text-decoration: none;
@@ -626,6 +629,26 @@ export default function Editor({
         }
         .dark .ProseMirror a:hover {
           border-bottom-color: #818cf8;
+        }
+        .ProseMirror .editor-link__favicon {
+          display: inline-flex;
+          width: 0.9em;
+          height: 0.9em;
+          margin-right: 0.28em;
+          align-items: center;
+          justify-content: center;
+          vertical-align: -0.08em;
+          opacity: 0.78;
+          user-select: none;
+        }
+        .ProseMirror .link-favicon__image,
+        .ProseMirror .link-favicon__fallback {
+          display: inline-block;
+          width: 100%;
+          height: 100%;
+          margin: 0;
+          object-fit: contain;
+          pointer-events: none;
         }
 
         /* === Horizontal Rule === */
