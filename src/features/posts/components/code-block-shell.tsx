@@ -149,7 +149,11 @@ export function CodeBlockShell({
         )}
         style={viewportHeight ? { maxHeight: `${viewportHeight}px` } : undefined}
       >
-        <div ref={headerRef} className="article-code-block__header">
+        <div
+          ref={headerRef}
+          className="article-code-block__header"
+          data-copy-exclude="true"
+        >
           <div className="flex items-center gap-2">
             <div className="flex gap-1.5">
               <div className="article-code-block__dot article-code-block__dot--red" />
@@ -196,7 +200,9 @@ export function CodeBlockShell({
         <div ref={bodyRef} className={cn('article-code-block__body', bodyClassName)}>
           {children}
         </div>
-        {canCollapse && !expanded ? <div className="article-code-block__fade" /> : null}
+        {canCollapse && !expanded ? (
+          <div className="article-code-block__fade" data-copy-exclude="true" />
+        ) : null}
       </div>
     </div>
   )

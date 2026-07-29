@@ -6,9 +6,20 @@ import rehypeHighlight from 'rehype-highlight'
 import rehypeRaw from 'rehype-raw'
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'
 import rehypeSlug from 'rehype-slug'
-import { Children, isValidElement, useEffect, useRef, type ComponentPropsWithoutRef } from 'react'
+import {
+  Children,
+  isValidElement,
+  useEffect,
+  useRef,
+  type ClipboardEvent,
+  type ComponentPropsWithoutRef,
+} from 'react'
 import { CodeBlockShell, extractCodeBlockLanguage } from '@/features/posts/components/code-block-shell'
 import { LinkFavicon } from '@/features/posts/components/link-favicon'
+import {
+  getMarkdownSelectionText,
+  removeCopyExcludedElements,
+} from '@/features/posts/markdown-copy'
 import type { Schema } from 'hast-util-sanitize'
 import { common } from 'lowlight'
 import powershell from 'highlight.js/lib/languages/powershell'
@@ -72,9 +83,35 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
       })
   }, [])
 
+  const handleCopy = (event: ClipboardEvent<HTMLElement>) => {
+    const selection = window.getSelection()
+    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return
+    if (
+      !event.currentTarget.contains(selection.anchorNode) ||
+      !event.currentTarget.contains(selection.focusNode)
+    ) {
+      return
+    }
+
+    const fragment = selection.getRangeAt(0).cloneContents()
+    removeCopyExcludedElements(fragment)
+    const plainText = getMarkdownSelectionText(fragment)
+    if (!plainText || !event.clipboardData) return
+
+    const htmlContainer = document.createElement('div')
+    htmlContainer.append(fragment.cloneNode(true))
+
+    event.preventDefault()
+    event.clipboardData.setData('text/plain', plainText)
+    event.clipboardData.setData('text/html', htmlContainer.innerHTML)
+  }
+
   return (
     <>
-      <article className="markdown-article prose prose-neutral dark:prose-invert max-w-none break-words prose-headings:font-bold prose-headings:tracking-tight prose-headings:leading-tight prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg md:prose-h1:text-3xl md:prose-h2:text-2xl md:prose-h3:text-xl prose-img:rounded-2xl prose-pre:bg-transparent prose-pre:p-0 prose-pre:border-none">
+      <article
+        className="markdown-article prose prose-neutral dark:prose-invert max-w-none break-words prose-headings:font-bold prose-headings:tracking-tight prose-headings:leading-tight prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg md:prose-h1:text-3xl md:prose-h2:text-2xl md:prose-h3:text-xl prose-img:rounded-2xl prose-pre:bg-transparent prose-pre:p-0 prose-pre:border-none"
+        onCopy={handleCopy}
+      >
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[
