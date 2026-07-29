@@ -32,6 +32,7 @@ function renderPostListHook() {
 describe('usePostList scroll restoration', () => {
   beforeEach(() => {
     sessionStorage.clear()
+    window.history.replaceState({}, '', '/')
     vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
       callback(0)
       return 1
@@ -53,9 +54,14 @@ describe('usePostList scroll restoration', () => {
         sort: 'latest',
         scrollY: 420,
         pathname: '/post',
+        returnKey: 'return-to-post-list',
       }),
     )
-    window.history.replaceState(null, '', '/post')
+    window.history.replaceState(
+      { __blogPostListReturnKey: 'return-to-post-list' },
+      '',
+      '/post',
+    )
 
     const firstRender = renderPostListHook()
 
@@ -66,6 +72,7 @@ describe('usePostList scroll restoration', () => {
       })
     })
     expect(sessionStorage.getItem('post_list_return_state_v2')).toBeNull()
+    expect(window.history.state.__blogPostListReturnKey).toBeUndefined()
 
     firstRender.unmount()
     vi.mocked(window.scrollTo).mockClear()
@@ -74,7 +81,34 @@ describe('usePostList scroll restoration', () => {
     await act(async () => {
       await Promise.resolve()
     })
-    expect(window.scrollTo).not.toHaveBeenCalled()
+    expect(window.scrollTo).toHaveBeenCalledWith({
+      top: 0,
+      behavior: 'instant',
+    })
+  })
+
+  it('starts at the top instead of restoring stale state from another page', async () => {
+    sessionStorage.setItem(
+      'post_list_return_state_v2',
+      JSON.stringify({
+        page: 1,
+        sort: 'latest',
+        scrollY: 420,
+        pathname: '/post',
+        returnKey: 'stale-return-entry',
+      }),
+    )
+    window.history.replaceState({}, '', '/post')
+
+    renderPostListHook()
+
+    await waitFor(() => {
+      expect(sessionStorage.getItem('post_list_return_state_v2')).toBeNull()
+    })
+    expect(window.scrollTo).toHaveBeenCalledWith({
+      top: 0,
+      behavior: 'instant',
+    })
   })
 
   it('does not save a return position for modified new-tab clicks', () => {
@@ -114,6 +148,9 @@ describe('usePostList scroll restoration', () => {
     await waitFor(() => {
       expect(sessionStorage.getItem('post_list_state')).toBeNull()
     })
-    expect(window.scrollTo).not.toHaveBeenCalled()
+    expect(window.scrollTo).toHaveBeenCalledWith({
+      top: 0,
+      behavior: 'instant',
+    })
   })
 })
