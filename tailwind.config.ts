@@ -18,6 +18,11 @@ const config = {
     },
     extend: {
       fontFamily: {
+        geist: [
+          "var(--font-geist)",
+          "Geist",
+          "sans-serif",
+        ],
         sans: [
           "var(--font-sans)",
           "ui-sans-serif",
