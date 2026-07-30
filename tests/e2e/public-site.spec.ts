@@ -75,6 +75,84 @@ test("public article navigation remains available without authentication", async
   }
 })
 
+test("about page presents the profile and sites within one viewport", async ({
+  page,
+}) => {
+  await page.goto("/about")
+  await expect(page.getByRole("status", { name: "网站正在加载" })).toBeHidden({
+    timeout: 10_000,
+  })
+
+  await expect(
+    page.getByRole("heading", { name: /你好，我是 SuziJay/ })
+  ).toBeVisible()
+  await expect(page.getByText(/AISTATS 2026 论文作者/)).toBeVisible()
+  await expect(page.getByRole("link", { name: /808 Page/ })).toHaveAttribute(
+    "href",
+    "https://808-page.vercel.app"
+  )
+
+  const viewport = await page.evaluate(() => ({
+    clientHeight: document.documentElement.clientHeight,
+    scrollHeight: document.documentElement.scrollHeight,
+  }))
+
+  expect(viewport.scrollHeight).toBeLessThanOrEqual(viewport.clientHeight + 1)
+
+  const layout = await page.evaluate(() => {
+    const navbarContainer = document.querySelector("header > div")
+    const aboutContainer = document.querySelector(
+      '[data-testid="about-content"]'
+    )
+    const poster = document.querySelector('[data-testid="about-poster"]')
+    const video = document.querySelector<HTMLVideoElement>(
+      '[data-testid="about-video"]'
+    )
+    const navbarRect = navbarContainer?.getBoundingClientRect()
+    const aboutRect = aboutContainer?.getBoundingClientRect()
+
+    return {
+      leftDifference:
+        navbarRect && aboutRect
+          ? Math.abs(navbarRect.left - aboutRect.left)
+          : Number.POSITIVE_INFINITY,
+      rightDifference:
+        navbarRect && aboutRect
+          ? Math.abs(navbarRect.right - aboutRect.right)
+          : Number.POSITIVE_INFINITY,
+      poster: video?.poster || "",
+      source: video?.currentSrc || video?.src || "",
+      fallbackImage: poster ? getComputedStyle(poster).backgroundImage : "",
+    }
+  })
+
+  expect(layout.leftDifference).toBeLessThanOrEqual(1)
+  expect(layout.rightDifference).toBeLessThanOrEqual(1)
+  expect(layout.source).toContain("/videos/about/aquarium-loop-v1.mp4")
+  expect(layout.poster).toContain("/videos/about/aquarium-poster-v1.jpg")
+  expect(layout.fallbackImage).toContain("/videos/about/aquarium-poster-v1.jpg")
+})
+
+test("about page keeps the fish poster when the video request fails", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "chromium")
+
+  await page.route("**/videos/about/aquarium-loop-v1.mp4", (route) =>
+    route.abort()
+  )
+  await page.goto("/about")
+  await expect(page.getByRole("status", { name: "网站正在加载" })).toBeHidden({
+    timeout: 10_000,
+  })
+
+  await expect(page.getByTestId("about-poster")).toHaveCSS(
+    "background-image",
+    /aquarium-poster-v1\.jpg/
+  )
+  await expect(page.getByTestId("about-video")).toHaveCSS("opacity", "0")
+})
+
 test("published article detail pages render without server errors", async ({
   page,
   request,

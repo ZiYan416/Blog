@@ -1,13 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { Instrument_Serif } from "next/font/google";
 import "./globals.css";
-import { Navbar } from "@/components/layout/navbar";
-import { Footer } from "@/components/layout/footer";
 import { Toaster } from "@/components/ui/toaster";
 import { AppProviders } from "@/app/providers";
 import { cn } from "@/lib/utils";
 import { siteConfig } from "@/lib/site-config";
 import { SiteLoader } from "@/components/layout/site-loader";
+import { SiteChrome } from "@/components/layout/site-chrome";
 
 const instrumentSerif = Instrument_Serif({
   weight: ["400"],
@@ -56,11 +55,7 @@ export default function RootLayout({
       )}>
         <SiteLoader />
         <AppProviders>
-          <Navbar />
-          <main className="flex-1 flex flex-col">
-            {children}
-          </main>
-          <Footer />
+          <SiteChrome>{children}</SiteChrome>
           <Toaster />
         </AppProviders>
       </body>
