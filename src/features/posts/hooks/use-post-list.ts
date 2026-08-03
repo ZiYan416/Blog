@@ -3,12 +3,15 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import type { Post } from "@/features/posts/components/post-card"
 import { isAbortError } from "@/lib/errors"
+import {
+  LEGACY_POST_LIST_STATE_KEYS,
+  POST_LIST_HISTORY_ENTRY_KEY,
+  POST_LIST_RETURN_STATE_KEY,
+  readPostListReturnState,
+  type PostSort,
+} from "@/features/posts/post-list-return-state"
 
-export type PostSort = "latest" | "oldest" | "views"
-
-const POST_LIST_RETURN_STATE_KEY = "post_list_return_state_v2"
-const LEGACY_POST_LIST_STATE_KEY = "post_list_state"
-const POST_LIST_HISTORY_ENTRY_KEY = "__blogPostListReturnKey"
+export type { PostSort } from "@/features/posts/post-list-return-state"
 
 function getHistoryState() {
   const state = window.history.state
@@ -133,10 +136,8 @@ export function usePostList({
       const target = event.target
       if (!(target instanceof Element)) return
       const anchor = target.closest("a")
-      if (
-        !anchor?.getAttribute("href")?.startsWith("/post/") ||
-        anchor.target === "_blank"
-      ) {
+      const href = anchor?.getAttribute("href")
+      if (!href?.startsWith("/post/") || anchor?.target === "_blank") {
         return
       }
 
@@ -156,6 +157,7 @@ export function usePostList({
           sort,
           scrollY: window.scrollY,
           pathname: window.location.pathname,
+          detailPathname: new URL(href, window.location.origin).pathname,
           returnKey,
         })
       )
@@ -174,20 +176,14 @@ export function usePostList({
       }
 
       try {
-        sessionStorage.removeItem(LEGACY_POST_LIST_STATE_KEY)
-        const raw = sessionStorage.getItem(POST_LIST_RETURN_STATE_KEY)
-        if (!raw) {
+        LEGACY_POST_LIST_STATE_KEYS.forEach((key) => sessionStorage.removeItem(key))
+        const saved = readPostListReturnState()
+        if (!saved) {
+          sessionStorage.removeItem(POST_LIST_RETURN_STATE_KEY)
           scrollTo(0)
           return
         }
         sessionStorage.removeItem(POST_LIST_RETURN_STATE_KEY)
-        const saved = JSON.parse(raw) as {
-          page?: number
-          sort?: PostSort
-          scrollY?: number
-          pathname?: string
-          returnKey?: string
-        }
         if (saved.pathname !== window.location.pathname) {
           scrollTo(0)
           return
@@ -201,8 +197,8 @@ export function usePostList({
         }
         clearPostListHistoryMarker()
 
-        const targetPage = saved.page || 1
-        const targetSort = saved.sort || "latest"
+        const targetPage = saved.page
+        const targetSort = saved.sort
         if (targetPage > 1 || targetSort !== "latest") {
           const result = await requestPage(targetPage, targetSort)
           if (result) {
@@ -213,7 +209,7 @@ export function usePostList({
             setHasMore(result.posts.length < result.total)
           }
         }
-        scrollTo(saved.scrollY || 0)
+        scrollTo(saved.scrollY)
       } catch (error) {
         console.error("Error restoring post list state", error)
         scrollTo(0)
@@ -274,6 +270,11 @@ export function usePostList({
     [requestPage, sort]
   )
 
+  const removePost = useCallback((postId: string) => {
+    setPosts((current) => current.filter((post) => post.id !== postId))
+    setTotal((current) => Math.max(0, current - 1))
+  }, [])
+
   return {
     posts,
     page,
@@ -284,5 +285,6 @@ export function usePostList({
     loadMore,
     changePage,
     changeSort,
+    removePost,
   }
 }

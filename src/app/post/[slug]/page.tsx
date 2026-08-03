@@ -1,9 +1,8 @@
 import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
 import Link from 'next/link'
-import { ArrowLeft, Calendar, Tag, Eye, Clock, User } from 'lucide-react'
+import { Calendar, Tag, Eye, Clock, User } from 'lucide-react'
 import { calculateReadingTime, formatDateString } from '@/lib/markdown'
-import { Button } from '@/components/ui/button'
 import { ViewCounter } from '@/features/posts/components/view-counter'
 import { CommentSection } from '@/features/posts/components/comment-section'
 import { getComments } from '@/server/repositories/comments'
@@ -16,6 +15,7 @@ import Image from 'next/image'
 import { getVisiblePost } from '@/server/repositories/posts'
 import { getPublicProfile } from '@/server/repositories/profiles'
 import { PostPageBackground } from '@/features/posts/components/post-page-background'
+import { PostListReturnButton } from '@/features/posts/components/post-list-return-button'
 
 import { BackToTop } from '@/components/ui/back-to-top'
 import { GoToComments } from '@/components/ui/go-to-comments'
@@ -134,12 +134,7 @@ export default async function PostPage({
           <div className="flex min-h-[320px] md:min-h-[380px] items-end pt-10 pb-16 md:pt-14 md:pb-24">
             <div className="post-hero-copy w-full max-w-4xl space-y-4">
               <div className="relative z-30">
-                <Button variant="ghost" asChild className="post-hero-supporting text-white hover:text-white hover:bg-white/20 rounded-full h-10 w-auto px-4 gap-2 bg-black/50 backdrop-blur-md md:bg-transparent md:backdrop-blur-none">
-                  <Link href="/post">
-                    <ArrowLeft className="w-4 h-4" />
-                    <span className="text-sm font-medium">返回列表</span>
-                  </Link>
-                </Button>
+                <PostListReturnButton />
               </div>
             <h1 className="post-hero-title text-2xl sm:text-3xl md:text-5xl font-bold text-white leading-tight tracking-tight break-words" style={{ overflowWrap: 'anywhere' }}>
               {post.title}

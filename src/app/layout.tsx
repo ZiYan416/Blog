@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 import { siteConfig } from "@/lib/site-config";
 import { SiteLoader } from "@/components/layout/site-loader";
 import { SiteChrome } from "@/components/layout/site-chrome";
+import Script from "next/script";
+import { THEME_INIT_SCRIPT } from "@/features/settings/theme-init";
 
 const instrumentSerif = Instrument_Serif({
   weight: ["400"],
@@ -49,6 +51,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN" suppressHydrationWarning>
+      <head>
+        <Script id="theme-init" strategy="beforeInteractive">
+          {THEME_INIT_SCRIPT}
+        </Script>
+      </head>
       <body className={cn(
         "min-h-screen bg-[#fafafa] dark:bg-[#050505] text-neutral-900 dark:text-neutral-100 selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black antialiased flex flex-col font-sans",
         instrumentSerif.variable

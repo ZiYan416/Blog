@@ -126,7 +126,11 @@ export default function PostList({
         </div>
       </div>
 
-      <PostGrid posts={list.posts} isLoading={list.loading && isDesktop} />
+      <PostGrid
+        posts={list.posts}
+        isLoading={list.loading && isDesktop}
+        onPostDeleted={list.removePost}
+      />
 
       {!isDesktop && (
         <div className="flex justify-center py-8" aria-live="polite">
