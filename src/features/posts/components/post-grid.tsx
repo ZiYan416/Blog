@@ -4,9 +4,10 @@ import { PostGridSkeleton } from './post-grid-skeleton'
 interface PostGridProps {
   posts: Post[]
   isLoading?: boolean
+  onPostDeleted?: (postId: string) => void
 }
 
-export function PostGrid({ posts, isLoading }: PostGridProps) {
+export function PostGrid({ posts, isLoading, onPostDeleted }: PostGridProps) {
   if (isLoading) {
     return <PostGridSkeleton />
   }
@@ -22,7 +23,12 @@ export function PostGrid({ posts, isLoading }: PostGridProps) {
   return (
     <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
       {posts.map((post, index) => (
-        <PostCard key={post.id} post={post} preloadCover={index === 0} />
+        <PostCard
+          key={post.id}
+          post={post}
+          preloadCover={index === 0}
+          onPostDeleted={onPostDeleted}
+        />
       ))}
     </div>
   )
