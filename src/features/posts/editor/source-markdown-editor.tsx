@@ -15,6 +15,7 @@ import {
   type EditorMenuGroup,
 } from "@/features/posts/editor/editor-context-menu"
 import type { MarkdownAction } from "@/features/posts/editor/toolbar"
+import { insertMarkdownBlocks } from "@/features/posts/markdown-normalization"
 
 export function SourceMarkdownEditor({
   content,
@@ -72,11 +73,13 @@ export function SourceMarkdownEditor({
         (_, index) =>
           `![图片上传中…… ${crypto.randomUUID()}-${index}]()`
       )
-      const pendingContent =
-        contentRef.current.substring(0, start) +
-        markers.join("\n") +
-        contentRef.current.substring(end)
-      updateContent(pendingContent)
+      const insertion = insertMarkdownBlocks(
+        contentRef.current,
+        start,
+        end,
+        markers
+      )
+      updateContent(insertion.content)
 
       pendingUploads.current += 1
       onUploadStateChange?.(true)
@@ -121,9 +124,9 @@ export function SourceMarkdownEditor({
             return
           }
           const cursor =
-            start +
+            insertion.blockStart +
             insertedLength +
-            Math.max(0, results.length - 1)
+            Math.max(0, results.length - 1) * 2
           current.setSelectionRange(cursor, cursor)
         })
       } finally {

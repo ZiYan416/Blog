@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { useDataSaver } from "@/features/settings/hooks/use-data-saver";
 
 // Swapped Day and Night video groups per user request:
 // Light Mode (Day) plays deep woods & quiet dawn scenery.
@@ -72,10 +73,47 @@ function GroupVideoLoop({
   const isTransitioningRef = useRef(false);
   const hasTriggeredReadyRef = useRef<boolean[]>([false, false]);
   const hasTriggeredBufferedRef = useRef(false);
+  const transitionTimersRef = useRef<ReturnType<typeof globalThis.setTimeout>[]>([]);
+  const pendingReleaseRef = useRef<{
+    timer: ReturnType<typeof globalThis.setTimeout>;
+    videos: HTMLVideoElement[];
+  } | null>(null);
 
   const ref0 = useRef<HTMLVideoElement>(null);
   const ref1 = useRef<HTMLVideoElement>(null);
   const getVideo = (idx: number) => (idx === 0 ? ref0.current : ref1.current);
+
+  useEffect(() => {
+    const videos = [ref0.current, ref1.current].filter(
+      (video): video is HTMLVideoElement => video !== null
+    );
+    if (
+      pendingReleaseRef.current &&
+      pendingReleaseRef.current.videos.every((video, index) => video === videos[index])
+    ) {
+      globalThis.clearTimeout(pendingReleaseRef.current.timer);
+      pendingReleaseRef.current = null;
+    }
+
+    return () => {
+      transitionTimersRef.current.forEach(globalThis.clearTimeout);
+      transitionTimersRef.current = [];
+
+      const timer = globalThis.setTimeout(() => {
+        videos.forEach((video) => {
+          video.pause();
+          video.querySelectorAll("source").forEach((source) => {
+            source.removeAttribute("src");
+          });
+          video.load();
+        });
+        if (pendingReleaseRef.current?.videos === videos) {
+          pendingReleaseRef.current = null;
+        }
+      }, 0);
+      pendingReleaseRef.current = { timer, videos };
+    };
+  }, []);
 
   // Strictly control video play/pause
   useEffect(() => {
@@ -139,20 +177,22 @@ function GroupVideoLoop({
       nextVideo.play().catch(() => {});
 
       // 3. Wait 250ms for browser hardware decoder to spin up to active 60fps playback before triggering CSS opacity dissolve
-      setTimeout(() => {
+      const transitionTimer = globalThis.setTimeout(() => {
         setActiveIdx(nextIdx);
       }, 250);
+      transitionTimersRef.current.push(transitionTimer);
     } else {
       setActiveIdx(nextIdx);
     }
 
     // 4. Pause previous video after 2.2s (250ms pre-roll + 1500ms opacity transition + buffer safety)
-    setTimeout(() => {
+    const cleanupTimer = globalThis.setTimeout(() => {
       if (currVideo && currVideo !== getVideo(nextIdx)) {
         currVideo.pause();
       }
       isTransitioningRef.current = false;
     }, 2200);
+    transitionTimersRef.current.push(cleanupTimer);
   };
 
   const handleTimeUpdate = (idx: number) => {
@@ -218,7 +258,7 @@ function GroupVideoLoop({
                 />
                 <source
                   src={vid.modern}
-                  type='video/webm; codecs="av01"'
+                  type='video/webm; codecs="av01.0.05M.08"'
                 />
                 <source src={vid.local} type="video/mp4" />
                 <source src={vid.remote} type="video/mp4" />
@@ -247,17 +287,18 @@ export function CinematicHero({
   ctaNode,
 }: CinematicHeroProps) {
   const [isDark, setIsDark] = useState(false);
-  const [initialDark, setInitialDark] = useState<boolean | null>(null);
+  const [isThemeReady, setIsThemeReady] = useState(false);
   const [isInitialVideoReady, setIsInitialVideoReady] = useState(false);
   const [isInitialVideoBuffered, setIsInitialVideoBuffered] = useState(false);
   const [allowBackgroundPreload, setAllowBackgroundPreload] = useState(false);
   const [videoEnabled, setVideoEnabled] = useState<boolean | null>(null);
+  const { isDataSaverActive, isNetworkStatusReady } = useDataSaver();
 
   useEffect(() => {
     const checkDark = () => {
       const dark = document.documentElement.classList.contains("dark");
       setIsDark(dark);
-      setInitialDark((prev) => (prev === null ? dark : prev));
+      setIsThemeReady(true);
     };
     checkDark();
 
@@ -299,18 +340,9 @@ export function CinematicHero({
 
   useEffect(() => {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const connection = (
-      navigator as Navigator & {
-        connection?: {
-          saveData?: boolean;
-          addEventListener?: (type: "change", listener: () => void) => void;
-          removeEventListener?: (type: "change", listener: () => void) => void;
-        };
-      }
-    ).connection;
-
     const updateVideoPreference = () => {
-      const enabled = !reducedMotion.matches && !connection?.saveData;
+      if (!isNetworkStatusReady) return;
+      const enabled = !reducedMotion.matches && !isDataSaverActive;
       setVideoEnabled(enabled);
 
       if (!enabled) {
@@ -321,13 +353,11 @@ export function CinematicHero({
 
     updateVideoPreference();
     reducedMotion.addEventListener("change", updateVideoPreference);
-    connection?.addEventListener?.("change", updateVideoPreference);
 
     return () => {
       reducedMotion.removeEventListener("change", updateVideoPreference);
-      connection?.removeEventListener?.("change", updateVideoPreference);
     };
-  }, []);
+  }, [isDataSaverActive, isNetworkStatusReady]);
 
   return (
     <section className="relative w-full h-[calc(100dvh-4rem)] min-h-[480px] max-h-[1080px] overflow-hidden bg-black flex flex-col justify-between py-4 sm:py-6 md:py-8 px-4 sm:px-6 isolate select-none">
@@ -338,27 +368,29 @@ export function CinematicHero({
           isInitialVideoReady ? "opacity-100" : "opacity-0"
         )}
       >
-        {/* Render BOTH Day and Night groups to allow seamless background preloading of all 4 videos */}
+        {/* Keep a poster visible while the active scene buffers or data saving is enabled. */}
         <div className="absolute -inset-1 z-0">
-          {videoEnabled && initialDark !== null && (
-            <>
-              <GroupVideoLoop
-                videos={DAY_VIDEOS}
-                isActiveGroup={!isDark}
-                isPrimaryGroup={!initialDark}
-                onPrimaryReady={() => setIsInitialVideoReady(true)}
-                onPrimaryBuffered={() => setIsInitialVideoBuffered(true)}
-                allowBackgroundPreload={allowBackgroundPreload}
-              />
-              <GroupVideoLoop
-                videos={NIGHT_VIDEOS}
-                isActiveGroup={isDark}
-                isPrimaryGroup={initialDark}
-                onPrimaryReady={() => setIsInitialVideoReady(true)}
-                onPrimaryBuffered={() => setIsInitialVideoBuffered(true)}
-                allowBackgroundPreload={allowBackgroundPreload}
-              />
-            </>
+          {isThemeReady && (
+            <Image
+              src={(isDark ? NIGHT_VIDEOS : DAY_VIDEOS)[0].poster}
+              alt=""
+              aria-hidden="true"
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover"
+            />
+          )}
+          {videoEnabled && isThemeReady && (
+            <GroupVideoLoop
+              key={isDark ? "night" : "day"}
+              videos={isDark ? NIGHT_VIDEOS : DAY_VIDEOS}
+              isActiveGroup
+              isPrimaryGroup
+              onPrimaryReady={() => setIsInitialVideoReady(true)}
+              onPrimaryBuffered={() => setIsInitialVideoBuffered(true)}
+              allowBackgroundPreload={allowBackgroundPreload}
+            />
           )}
         </div>
 

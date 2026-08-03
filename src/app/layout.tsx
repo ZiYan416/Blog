@@ -8,6 +8,7 @@ import { siteConfig } from "@/lib/site-config";
 import { SiteLoader } from "@/components/layout/site-loader";
 import { SiteChrome } from "@/components/layout/site-chrome";
 import { THEME_INIT_SCRIPT } from "@/features/settings/theme-init";
+import { DataSaverNotice } from "@/features/settings/components/data-saver-notice";
 
 const instrumentSerif = Instrument_Serif({
   weight: ["400"],
@@ -63,6 +64,7 @@ export default function RootLayout({
         <SiteLoader />
         <AppProviders>
           <SiteChrome>{children}</SiteChrome>
+          <DataSaverNotice />
           <Toaster />
         </AppProviders>
       </body>

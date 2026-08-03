@@ -33,6 +33,7 @@ import {
 import type { EditorView } from '@tiptap/pm/view'
 import { TextSelection } from '@tiptap/pm/state'
 import { CellSelection } from '@tiptap/pm/tables'
+import { normalizeMarkdownBlockBoundaries } from '@/features/posts/markdown-normalization'
 
 // Create lowlight instance with common languages
 const lowlight = createLowlight(common)
@@ -40,7 +41,9 @@ lowlight.register('powershell', powershell)
 lowlight.registerAlias('powershell', ['pwsh', 'ps1'])
 
 function getMarkdown(editor: Editor) {
-  return (editor.storage as unknown as { markdown: MarkdownStorage }).markdown.getMarkdown()
+  return normalizeMarkdownBlockBoundaries(
+    (editor.storage as unknown as { markdown: MarkdownStorage }).markdown.getMarkdown()
+  )
 }
 
 interface RichEditorProps {
@@ -282,7 +285,7 @@ export function RichEditor({
     onCreate: ({ editor }) => {
       onEditorReady(editor)
       if (content) {
-        editor.commands.setContent(content)
+        editor.commands.setContent(normalizeMarkdownBlockBoundaries(content))
       }
     },
     immediatelyRender: false, // Fix hydration mismatch
@@ -295,11 +298,12 @@ export function RichEditor({
     // Skip if this content was just produced internally by the editor
     if (content === lastInternalContent.current) return
 
+    const normalizedContent = normalizeMarkdownBlockBoundaries(content)
     const currentContent = getMarkdown(editor)
-    if (content !== currentContent) {
+    if (normalizedContent !== currentContent) {
       // Save cursor position before resetting content
       const { from, to } = editor.state.selection
-      editor.commands.setContent(content, { emitUpdate: false })
+      editor.commands.setContent(normalizedContent, { emitUpdate: false })
       // Restore cursor position (clamped to new doc length)
       try {
         const maxPos = editor.state.doc.content.size

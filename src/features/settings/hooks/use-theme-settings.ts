@@ -2,16 +2,23 @@
 
 import { useSyncExternalStore } from "react";
 
-const STORAGE_KEY = "cinematic_hero_theme_enabled";
+const CINEMATIC_HERO_STORAGE_KEY = "cinematic_hero_theme_enabled";
+const DATA_SAVER_STORAGE_KEY = "media_data_saver_enabled";
 const CHANGE_EVENT = "theme-settings-changed";
 
-function getSnapshot() {
+function getStoredBoolean(key: string, fallback: boolean) {
   try {
-    return localStorage.getItem(STORAGE_KEY) !== "false";
+    const value = localStorage.getItem(key);
+    return value === null ? fallback : value !== "false";
   } catch {
-    return true;
+    return fallback;
   }
 }
+
+const getCinematicHeroSnapshot = () =>
+  getStoredBoolean(CINEMATIC_HERO_STORAGE_KEY, true);
+const getDataSaverSnapshot = () =>
+  getStoredBoolean(DATA_SAVER_STORAGE_KEY, true);
 
 function subscribe(onStoreChange: () => void) {
   window.addEventListener(CHANGE_EVENT, onStoreChange);
@@ -23,20 +30,33 @@ function subscribe(onStoreChange: () => void) {
 }
 
 export function useThemeSettings() {
-  const cinematicHeroEnabled = useSyncExternalStore(subscribe, getSnapshot, () => true);
+  const cinematicHeroEnabled = useSyncExternalStore(
+    subscribe,
+    getCinematicHeroSnapshot,
+    () => true
+  );
+  const dataSaverEnabled = useSyncExternalStore(
+    subscribe,
+    getDataSaverSnapshot,
+    () => true
+  );
 
-  const toggleCinematicHero = (enabled: boolean) => {
+  const savePreference = (key: string, enabled: boolean) => {
     try {
-      localStorage.setItem(STORAGE_KEY, String(enabled));
+      localStorage.setItem(key, String(enabled));
       window.dispatchEvent(new Event(CHANGE_EVENT));
     } catch (error) {
-      console.error("Failed to save theme settings to localStorage", error);
+      console.error("Failed to save preference to localStorage", error);
     }
   };
 
   return {
     cinematicHeroEnabled,
-    toggleCinematicHero,
+    dataSaverEnabled,
+    toggleCinematicHero: (enabled: boolean) =>
+      savePreference(CINEMATIC_HERO_STORAGE_KEY, enabled),
+    toggleDataSaver: (enabled: boolean) =>
+      savePreference(DATA_SAVER_STORAGE_KEY, enabled),
     isLoaded: true,
   };
 }
