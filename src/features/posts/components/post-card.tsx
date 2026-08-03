@@ -31,6 +31,7 @@ export interface Post {
 interface PostCardProps {
   post: Post
   preloadCover?: boolean
+  onPostDeleted?: (postId: string) => void
 }
 
 const POST_CARD_COVER_SIZES =
@@ -86,7 +87,7 @@ function FeaturedToggle({ id, isFeatured }: { id: string, isFeatured: boolean })
   )
 }
 
-export default function PostCard({ post, preloadCover = false }: PostCardProps) {
+export default function PostCard({ post, preloadCover = false, onPostDeleted }: PostCardProps) {
   const { isAdmin } = useUser()
   const formattedDate = formatDateString(post.created_at)
   const tags = post.tags || []
@@ -153,7 +154,11 @@ export default function PostCard({ post, preloadCover = false }: PostCardProps) 
               <Edit2 className="w-4 h-4" />
             </Link>
             <FeaturedToggle id={post.id} isFeatured={post.featured} />
-            <DeletePostButton slug={post.slug || post.id} title={post.title} />
+            <DeletePostButton
+              slug={post.slug || post.id}
+              title={post.title}
+              onDeleted={onPostDeleted ? () => onPostDeleted(post.id) : undefined}
+            />
           </div>
 
           {/* Mobile Version - Inside Content Area */}
@@ -166,7 +171,11 @@ export default function PostCard({ post, preloadCover = false }: PostCardProps) 
               <Edit2 className="w-4 h-4" />
             </Link>
             <FeaturedToggle id={post.id} isFeatured={post.featured} />
-            <DeletePostButton slug={post.slug || post.id} title={post.title} />
+            <DeletePostButton
+              slug={post.slug || post.id}
+              title={post.title}
+              onDeleted={onPostDeleted ? () => onPostDeleted(post.id) : undefined}
+            />
           </div>
         </>
       )}

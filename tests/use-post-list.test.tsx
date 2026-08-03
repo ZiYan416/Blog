@@ -3,6 +3,7 @@
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { usePostList } from '../src/features/posts/hooks/use-post-list'
+import { POST_LIST_RETURN_STATE_KEY } from '../src/features/posts/post-list-return-state'
 
 const post = {
   id: 'post-1',
@@ -48,12 +49,13 @@ describe('usePostList scroll restoration', () => {
 
   it('consumes saved detail-return state after restoring it once', async () => {
     sessionStorage.setItem(
-      'post_list_return_state_v2',
+      POST_LIST_RETURN_STATE_KEY,
       JSON.stringify({
         page: 1,
         sort: 'latest',
         scrollY: 420,
         pathname: '/post',
+        detailPathname: '/post/post-1',
         returnKey: 'return-to-post-list',
       }),
     )
@@ -71,7 +73,7 @@ describe('usePostList scroll restoration', () => {
         behavior: 'instant',
       })
     })
-    expect(sessionStorage.getItem('post_list_return_state_v2')).toBeNull()
+    expect(sessionStorage.getItem(POST_LIST_RETURN_STATE_KEY)).toBeNull()
     expect(window.history.state.__blogPostListReturnKey).toBeUndefined()
 
     firstRender.unmount()
@@ -89,12 +91,13 @@ describe('usePostList scroll restoration', () => {
 
   it('starts at the top instead of restoring stale state from another page', async () => {
     sessionStorage.setItem(
-      'post_list_return_state_v2',
+      POST_LIST_RETURN_STATE_KEY,
       JSON.stringify({
         page: 1,
         sort: 'latest',
         scrollY: 420,
         pathname: '/post',
+        detailPathname: '/post/post-1',
         returnKey: 'stale-return-entry',
       }),
     )
@@ -103,7 +106,7 @@ describe('usePostList scroll restoration', () => {
     renderPostListHook()
 
     await waitFor(() => {
-      expect(sessionStorage.getItem('post_list_return_state_v2')).toBeNull()
+      expect(sessionStorage.getItem(POST_LIST_RETURN_STATE_KEY)).toBeNull()
     })
     expect(window.scrollTo).toHaveBeenCalledWith({
       top: 0,
@@ -127,8 +130,39 @@ describe('usePostList scroll restoration', () => {
       }),
     )
 
-    expect(sessionStorage.getItem('post_list_return_state_v2')).toBeNull()
+    expect(sessionStorage.getItem(POST_LIST_RETURN_STATE_KEY)).toBeNull()
     link.remove()
+  })
+
+  it('records the clicked detail route with the current list position', () => {
+    Object.defineProperty(window, 'scrollY', { configurable: true, value: 420 })
+    window.history.replaceState({}, '', '/post')
+    renderPostListHook()
+    const link = document.createElement('a')
+    link.href = '/post/post-1'
+    link.addEventListener('click', (event) => event.preventDefault())
+    document.body.appendChild(link)
+
+    link.click()
+
+    expect(JSON.parse(sessionStorage.getItem(POST_LIST_RETURN_STATE_KEY) || '{}')).toMatchObject({
+      page: 1,
+      scrollY: 420,
+      pathname: '/post',
+      detailPathname: '/post/post-1',
+    })
+    expect(window.history.state.__blogPostListReturnKey).toBeTruthy()
+    link.remove()
+  })
+
+  it('removes a deleted card without resetting the current list state', () => {
+    const { result } = renderPostListHook()
+
+    act(() => result.current.removePost(post.id))
+
+    expect(result.current.posts).toEqual([])
+    expect(result.current.total).toBe(0)
+    expect(window.scrollTo).toHaveBeenCalledTimes(1)
   })
 
   it('discards stale restoration data from the previous implementation', async () => {

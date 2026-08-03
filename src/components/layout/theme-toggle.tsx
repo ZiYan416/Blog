@@ -4,22 +4,25 @@ import { useEffect, useSyncExternalStore } from 'react'
 import { Moon, Sun } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { THEME_STORAGE_KEY } from '@/features/settings/theme-init'
 
 export function ThemeToggle({ className }: { className?: string }) {
   const isDark = useSyncExternalStore(subscribeToTheme, getThemeSnapshot, () => false)
 
   useEffect(() => {
     // Initialize theme from localStorage
-    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null
+    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) as 'light' | 'dark' | null
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
     const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light')
     document.documentElement.classList.toggle('dark', initialTheme === 'dark')
+    document.documentElement.style.colorScheme = initialTheme
   }, [])
 
   const toggleTheme = () => {
     const newTheme = isDark ? 'light' : 'dark'
-    localStorage.setItem('theme', newTheme)
+    localStorage.setItem(THEME_STORAGE_KEY, newTheme)
     document.documentElement.classList.toggle('dark', newTheme === 'dark')
+    document.documentElement.style.colorScheme = newTheme
   }
 
   return (

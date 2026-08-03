@@ -16,7 +16,15 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 
-export function DeletePostButton({ slug, title }: { slug: string, title: string }) {
+export function DeletePostButton({
+  slug,
+  title,
+  onDeleted,
+}: {
+  slug: string
+  title: string
+  onDeleted?: () => void
+}) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [open, setOpen] = useState(false);
   const router = useRouter();
@@ -41,7 +49,11 @@ export function DeletePostButton({ slug, title }: { slug: string, title: string 
             : `文章 "${title}" 及其未被引用的托管图片已删除。`,
         });
         setOpen(false);
-        router.refresh();
+        if (onDeleted) {
+          onDeleted();
+        } else {
+          router.refresh();
+        }
       } else {
         const data = await res.json();
         toast({
@@ -67,6 +79,7 @@ export function DeletePostButton({ slug, title }: { slug: string, title: string 
         <Button
           variant="ghost"
           size="icon"
+          aria-label={`删除文章：${title}`}
           className="w-10 h-10 rounded-full bg-white/90 dark:bg-black/90 backdrop-blur-md shadow-sm hover:scale-110 transition-all text-red-500 hover:text-red-600 hover:bg-white dark:hover:bg-black"
         >
           <Trash2 className="w-4 h-4" />
