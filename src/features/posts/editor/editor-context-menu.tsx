@@ -74,19 +74,28 @@ function ContextMenuSurface({
     const closeForEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose()
     }
+    const closeForOutsideScroll = (event: Event) => {
+      if (
+        event.target instanceof Node &&
+        menuRef.current?.contains(event.target)
+      ) {
+        return
+      }
+      onClose()
+    }
 
     document.addEventListener("pointerdown", closeForOutsidePointer)
     document.addEventListener("keydown", closeForEscape)
     window.addEventListener("blur", onClose)
     window.addEventListener("resize", onClose)
-    window.addEventListener("scroll", onClose, true)
+    window.addEventListener("scroll", closeForOutsideScroll, true)
 
     return () => {
       document.removeEventListener("pointerdown", closeForOutsidePointer)
       document.removeEventListener("keydown", closeForEscape)
       window.removeEventListener("blur", onClose)
       window.removeEventListener("resize", onClose)
-      window.removeEventListener("scroll", onClose, true)
+      window.removeEventListener("scroll", closeForOutsideScroll, true)
     }
   }, [onClose])
 
@@ -95,9 +104,11 @@ function ContextMenuSurface({
       ref={menuRef}
       role="menu"
       aria-label={ariaLabel}
-      className="fixed z-[100] w-64 max-h-[min(620px,calc(100vh-16px))] overflow-y-auto rounded-xl border border-black/10 bg-white p-1.5 text-sm shadow-2xl dark:border-white/10 dark:bg-neutral-900"
+      className="fixed z-[100] w-64 max-h-[min(620px,calc(100vh-16px))] touch-pan-y overflow-y-auto overscroll-contain rounded-xl border border-black/10 bg-white p-1.5 text-sm shadow-2xl dark:border-white/10 dark:bg-neutral-900"
       style={coordinates}
       onContextMenu={(event) => event.preventDefault()}
+      onWheel={(event) => event.stopPropagation()}
+      onTouchMove={(event) => event.stopPropagation()}
     >
       {groups.map((group, groupIndex) => (
         <div
@@ -318,7 +329,7 @@ export function EditorContextMenu({
   ]
 
   if (inTable) {
-    groups.push(
+    groups.unshift(
       {
         label: "表格行列",
         actions: [
