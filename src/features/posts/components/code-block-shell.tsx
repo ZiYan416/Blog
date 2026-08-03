@@ -2,50 +2,23 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Check, ChevronDown, Copy, Sparkles } from 'lucide-react'
-import hljs from 'highlight.js'
 import { cn } from '@/lib/utils'
+import { detectCodeLanguage } from '@/features/posts/code-block-language'
 
 interface CodeBlockShellProps {
   children: React.ReactNode
   language?: string
   onCopy?: () => Promise<void> | void
+  copyText?: string
   className?: string
   bodyClassName?: string
-}
-
-export function extractCodeBlockLanguage(className?: string | null) {
-  if (!className) return 'text'
-  const match = /language-([\w-]+)/.exec(className)
-  return match?.[1]?.toLowerCase() || 'text'
-}
-
-function hasPowerShellSignature(codeText: string) {
-  return (
-    /(?:^|\n)\s*(?:pwsh|powershell|winget)\b/im.test(codeText) ||
-    /(?:^|\n)\s*(?:Get|Set|New|Remove|Start|Stop|Write|Where|ForEach)-[A-Za-z]+\b/m.test(codeText) ||
-    /(?:^|[^\w])\$[A-Za-z_][\w:]*/.test(codeText) ||
-    /\s-(?:eq|ne|gt|ge|lt|le|like|match|contains|not)\b/i.test(codeText)
-  )
-}
-
-export function detectCodeLanguage(codeText: string): string | null {
-  if (!codeText || codeText.trim().length < 3) return null
-  if (hasPowerShellSignature(codeText)) return 'powershell'
-  try {
-    const result = hljs.highlightAuto(codeText)
-    if (result && result.language && (result.relevance === undefined || result.relevance > 0)) {
-      return result.language
-    }
-  } catch {
-    // Ignore detection errors
-  }
-  return null
 }
 
 export function CodeBlockShell({
   children,
   language = 'text',
   onCopy,
+  copyText,
   className,
   bodyClassName,
 }: CodeBlockShellProps) {
@@ -126,8 +99,13 @@ export function CodeBlockShell({
   }, [expanded])
 
   const handleCopy = async () => {
-    if (!onCopy) return
-    await onCopy()
+    if (onCopy) {
+      await onCopy()
+    } else if (copyText !== undefined) {
+      await navigator.clipboard.writeText(copyText)
+    } else {
+      return
+    }
     setCopied(true)
     window.setTimeout(() => setCopied(false), 2000)
   }

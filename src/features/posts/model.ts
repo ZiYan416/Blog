@@ -13,6 +13,11 @@ export interface PostTagRelation {
   } | null
 }
 
+export interface PostTagLink {
+  name: string
+  slug: string
+}
+
 export type PostRow = Database["public"]["Tables"]["posts"]["Row"]
 
 export type PostWithTagRelations = PostRow & {
@@ -29,6 +34,18 @@ export function getTagNames(
   )
 }
 
+export function getTagLinks(
+  relations: readonly PostTagRelation[] | null | undefined
+): PostTagLink[] {
+  if (!relations) return []
+
+  return relations.flatMap((relation) =>
+    relation.tag?.name && relation.tag.slug
+      ? [{ name: relation.tag.name, slug: relation.tag.slug }]
+      : []
+  )
+}
+
 export function mapPostTags<T extends { post_tags?: PostTagRelation[] | null }>(
   post: T
 ): Omit<T, "post_tags"> & { tags: string[] } {
@@ -37,5 +54,21 @@ export function mapPostTags<T extends { post_tags?: PostTagRelation[] | null }>(
   return {
     ...rest,
     tags: getTagNames(relations),
+  }
+}
+
+export function mapPostTagsWithLinks<
+  T extends { post_tags?: PostTagRelation[] | null },
+>(post: T): Omit<T, "post_tags"> & {
+  tags: string[]
+  tagLinks: PostTagLink[]
+} {
+  const { post_tags: relations, ...rest } = post
+  const tagLinks = getTagLinks(relations)
+
+  return {
+    ...rest,
+    tags: tagLinks.map((tag) => tag.name),
+    tagLinks,
   }
 }

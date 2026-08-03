@@ -18,6 +18,7 @@ interface EditorProps {
   content: string
   onChange: (content: string) => void
   articleSlug?: string
+  articleTitle?: string
   onUploadStateChange?: (uploading: boolean) => void
   placeholder?: string
 }
@@ -26,6 +27,7 @@ export default function Editor({
   content,
   onChange,
   articleSlug,
+  articleTitle,
   onUploadStateChange,
   placeholder = '开始创作吧...',
 }: EditorProps) {
@@ -118,7 +120,10 @@ export default function Editor({
       }
 
       try {
-        const results = await uploadBlogImages(files, { articleSlug })
+        const results = await uploadBlogImages(files, {
+          articleSlug,
+          articleTitle,
+        })
         const failed = results.filter((result) => !result.url)
 
         if (sourceMode) {
@@ -175,7 +180,7 @@ export default function Editor({
         setToolbarUploading(false)
       }
     },
-    [articleSlug, tiptapEditor, toast, updateContent, viewMode]
+    [articleSlug, articleTitle, tiptapEditor, toast, updateContent, viewMode]
   )
 
   const handleAction = (action: MarkdownAction) => {
@@ -275,6 +280,7 @@ export default function Editor({
             onChange={updateContent}
             containerRef={containerRef}
             articleSlug={articleSlug}
+            articleTitle={articleTitle}
             onUploadStateChange={setSourceUploading}
             onAction={handleAction}
           />
@@ -294,6 +300,7 @@ export default function Editor({
               onChange={updateContent}
               onEditorReady={setTiptapEditor}
               articleSlug={articleSlug}
+              articleTitle={articleTitle}
               onUploadStateChange={setRichUploading}
               placeholder={placeholder}
             />

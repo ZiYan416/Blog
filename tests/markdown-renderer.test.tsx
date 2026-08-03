@@ -71,6 +71,21 @@ describe('MarkdownRenderer', () => {
     expect(container.querySelector('.hljs-built_in, .hljs-keyword, .hljs-variable')).not.toBeNull()
   })
 
+  it('copies the original code text without toolbar content', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    })
+    render(<MarkdownRenderer content={'```typescript\nconst answer = 42\n```'} />)
+
+    fireEvent.click(screen.getByTitle('Copy code'))
+
+    await waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith('const answer = 42\n')
+    })
+  })
+
   it('corrects legacy JavaScript labels on PowerShell command blocks', async () => {
     const content = "```javascript\nwinget search --id Microsoft.PowerShell --exact\n```"
     const { container } = render(<MarkdownRenderer content={content} />)

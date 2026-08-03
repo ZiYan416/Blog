@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
 import { Plus, User, Search, Settings, LayoutDashboard, FileText, Menu, ChevronUp, ChevronDown } from "lucide-react";
 import { type User as SupabaseUser } from "@supabase/supabase-js";
@@ -29,8 +30,19 @@ import { SignOutButton } from "@/features/auth/components/sign-out-button";
 import { LoginModal } from "@/features/auth/components/login-modal";
 import { Logo } from "@/components/ui/logo";
 
-import { SettingsModal } from "@/features/settings/components/settings-modal";
 import { SafeImage } from "@/components/ui/safe-image";
+
+const SettingsModal = dynamic(
+  () =>
+    import("@/features/settings/components/settings-modal").then(
+      (module) => module.SettingsModal,
+    ),
+  { ssr: false },
+);
+
+function preloadSettingsModal() {
+  void import("@/features/settings/components/settings-modal");
+}
 
 const navItems = [
   { href: "/", label: "首页" },
@@ -176,6 +188,8 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
                             setIsSheetOpen(false);
                             setIsSettingsOpen(true);
                           }}
+                          onMouseEnter={preloadSettingsModal}
+                          onFocus={preloadSettingsModal}
                           className="px-4 py-3 text-sm font-medium text-neutral-500 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all flex items-center gap-3 w-full text-left"
                         >
                            <Settings className="w-4 h-4" />
@@ -298,6 +312,8 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
                 )}
                 <DropdownMenuItem
                   onClick={() => setIsSettingsOpen(true)}
+                  onMouseEnter={preloadSettingsModal}
+                  onFocus={preloadSettingsModal}
                   className="cursor-pointer flex items-center w-full"
                 >
                   <Settings className="w-4 h-4 mr-2" />
@@ -361,7 +377,9 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
       )} />
 
       {/* Settings Modal */}
-      <SettingsModal open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
+      {isSettingsOpen ? (
+        <SettingsModal open onOpenChange={setIsSettingsOpen} />
+      ) : null}
     </>
   );
 }

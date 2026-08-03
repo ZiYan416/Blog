@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowLeft, Calendar, Tag, Eye, Clock, User } from 'lucide-react'
-import { calculateReadingTime, formatDateString, generatePostSlug } from '@/lib/markdown'
+import { calculateReadingTime, formatDateString } from '@/lib/markdown'
 import { Button } from '@/components/ui/button'
 import { ViewCounter } from '@/features/posts/components/view-counter'
 import { CommentSection } from '@/features/posts/components/comment-section'
@@ -19,6 +19,29 @@ import { PostPageBackground } from '@/features/posts/components/post-page-backgr
 
 import { BackToTop } from '@/components/ui/back-to-top'
 import { GoToComments } from '@/components/ui/go-to-comments'
+import { Suspense } from 'react'
+
+async function PostComments({
+  postId,
+  commentsPromise,
+}: {
+  postId: string
+  commentsPromise: ReturnType<typeof getComments>
+}) {
+  const comments = await commentsPromise
+  return <CommentSection postId={postId} initialComments={comments} />
+}
+
+function PostCommentsFallback() {
+  return (
+    <div
+      id="comments"
+      aria-busy="true"
+      aria-label="评论加载中"
+      className="mt-8 min-h-32 border-t border-black/5 pt-8 dark:border-white/5 md:mt-16 md:pt-12"
+    />
+  )
+}
 
 export async function generateMetadata({
   params,
@@ -68,13 +91,14 @@ export default async function PostPage({
   const post = await getVisiblePost(decodedSlug)
   if (!post) notFound()
 
-  const [author, comments] = await Promise.all([
-    post.author_id ? getPublicProfile(post.author_id) : Promise.resolve(null),
-    getComments(post.id),
-  ])
+  const commentsPromise = getComments(post.id)
+  const authorPromise = post.author_id
+    ? getPublicProfile(post.author_id)
+    : Promise.resolve(null)
+  const author = await authorPromise
 
   const content = post.content || ''
-  const tags = post.tags
+  const tags = post.tagLinks
 
   const readingTime = calculateReadingTime(content)
   const formattedDate = formatDateString(post.created_at)
@@ -143,10 +167,10 @@ export default async function PostPage({
 
             {tags.length > 0 && (
               <div className="post-hero-emphasis flex flex-wrap gap-2 pt-1">
-                {tags.map((tag: string) => {
-                  const styles = getTagStyles(tag)
+                {tags.map((tag) => {
+                  const styles = getTagStyles(tag.name)
                   return (
-                    <Link key={tag} href={'/tag/' + generatePostSlug(tag)}>
+                    <Link key={tag.slug} href={'/tag/' + tag.slug}>
                       <span
                         className="group relative overflow-hidden backdrop-blur-md px-3 py-1 rounded-full transition-all flex items-center gap-1.5 hover:scale-105 duration-300"
                         style={{
@@ -157,7 +181,7 @@ export default async function PostPage({
                       >
                         <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent opacity-50 group-hover:opacity-70 transition-opacity" />
                         <Tag className="w-3 h-3 relative z-10 opacity-70" />
-                        <span className="text-xs font-bold uppercase tracking-wider relative z-10 shadow-sm">{tag}</span>
+                        <span className="text-xs font-bold uppercase tracking-wider relative z-10 shadow-sm">{tag.name}</span>
                       </span>
                     </Link>
                   )
@@ -225,10 +249,12 @@ export default async function PostPage({
               </div>
             </div>
 
-            <CommentSection
-              postId={post.id}
-              initialComments={comments}
-            />
+            <Suspense fallback={<PostCommentsFallback />}>
+              <PostComments
+                postId={post.id}
+                commentsPromise={commentsPromise}
+              />
+            </Suspense>
           </div>
 
           {/* Sidebar */}

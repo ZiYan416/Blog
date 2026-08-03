@@ -3,6 +3,7 @@ import "server-only"
 import { unstable_cache } from "next/cache"
 import {
   mapPostTags,
+  mapPostTagsWithLinks,
   POST_CARD_SELECT,
   POST_DETAIL_SELECT,
 } from "@/features/posts/model"
@@ -51,7 +52,7 @@ export async function getVisiblePost(slug: string) {
     .maybeSingle()
 
   if (error) throw error
-  return data ? mapPostTags(data) : null
+  return data ? mapPostTagsWithLinks(data) : null
 }
 
 async function queryTag(slug: string) {

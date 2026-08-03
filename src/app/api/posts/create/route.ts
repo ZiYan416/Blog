@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse, type NextRequest } from 'next/server'
-import { generatePostSlug, getPostExcerpt } from '@/lib/markdown'
+import { getPostExcerpt } from '@/lib/markdown'
+import { generatePostSlug } from '@/server/slug'
 import { AccessError, requireAdmin } from '@/lib/server-auth'
 import { getValidationMessage, postPayloadSchema } from '@/lib/validation'
 import { invalidatePublishedPosts } from '@/server/cache'

@@ -189,7 +189,8 @@ function GroupVideoLoop({
     >
       {videos.map((vid, idx) => {
         const isPreloadAllowed =
-          allowBackgroundPreload || (isPrimaryGroup && idx === 0);
+          (idx === 0 && (isPrimaryGroup || isActiveGroup)) ||
+          (allowBackgroundPreload && (isActiveGroup || idx === 0));
         return (
           <video
             key={vid.local}
@@ -249,6 +250,7 @@ export function CinematicHero({
   const [initialDark, setInitialDark] = useState<boolean | null>(null);
   const [isInitialVideoReady, setIsInitialVideoReady] = useState(false);
   const [isInitialVideoBuffered, setIsInitialVideoBuffered] = useState(false);
+  const [allowBackgroundPreload, setAllowBackgroundPreload] = useState(false);
   const [videoEnabled, setVideoEnabled] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -273,6 +275,27 @@ export function CinematicHero({
     document.documentElement.dataset.heroReady = "true"
     window.dispatchEvent(new Event("site-critical-ready"))
   }, [isInitialVideoReady])
+
+  useEffect(() => {
+    if (!isInitialVideoBuffered || !videoEnabled) return
+
+    const enableBackgroundPreload = () => setAllowBackgroundPreload(true)
+    let fallbackTimer: ReturnType<typeof globalThis.setTimeout> | undefined
+    let idleCallback: number | undefined
+
+    if ("requestIdleCallback" in window) {
+      idleCallback = window.requestIdleCallback(enableBackgroundPreload, {
+        timeout: 4000,
+      })
+    } else {
+      fallbackTimer = globalThis.setTimeout(enableBackgroundPreload, 1500)
+    }
+
+    return () => {
+      if (idleCallback !== undefined) window.cancelIdleCallback(idleCallback)
+      if (fallbackTimer !== undefined) globalThis.clearTimeout(fallbackTimer)
+    }
+  }, [isInitialVideoBuffered, videoEnabled])
 
   useEffect(() => {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -325,7 +348,7 @@ export function CinematicHero({
                 isPrimaryGroup={!initialDark}
                 onPrimaryReady={() => setIsInitialVideoReady(true)}
                 onPrimaryBuffered={() => setIsInitialVideoBuffered(true)}
-                allowBackgroundPreload={isInitialVideoBuffered}
+                allowBackgroundPreload={allowBackgroundPreload}
               />
               <GroupVideoLoop
                 videos={NIGHT_VIDEOS}
@@ -333,7 +356,7 @@ export function CinematicHero({
                 isPrimaryGroup={initialDark}
                 onPrimaryReady={() => setIsInitialVideoReady(true)}
                 onPrimaryBuffered={() => setIsInitialVideoBuffered(true)}
-                allowBackgroundPreload={isInitialVideoBuffered}
+                allowBackgroundPreload={allowBackgroundPreload}
               />
             </>
           )}

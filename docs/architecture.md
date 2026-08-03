@@ -98,4 +98,6 @@ git diff --check
 npm run build
 ```
 
+页面加载、Markdown 服务端化、slug 服务端边界和客户端分块的详细约束见 [页面加载性能与服务端边界](performance.md)。
+
 数据库改动还必须遵循 [审计与整改计划](audit-remediation-plan.md) 中的 Supabase 验证要求。

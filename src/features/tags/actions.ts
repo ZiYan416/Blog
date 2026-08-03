@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { generatePostSlug } from '@/lib/markdown'
+import { generatePostSlug } from '@/server/slug'
 
 // Helper to check admin status
 async function checkAdmin() {

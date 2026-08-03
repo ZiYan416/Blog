@@ -7,7 +7,8 @@ import { uploadBlogImage } from "@/features/posts/image-upload"
 
 export function usePostCoverUpload(
   onUploaded: (url: string) => void,
-  articleSlug?: string
+  articleSlug?: string,
+  articleTitle?: string
 ) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
@@ -20,7 +21,7 @@ export function usePostCoverUpload(
 
       setUploading(true)
       try {
-        const url = await uploadBlogImage(file, { articleSlug })
+        const url = await uploadBlogImage(file, { articleSlug, articleTitle })
         onUploaded(url)
         toast({
           title: "封面上传成功",
@@ -37,7 +38,7 @@ export function usePostCoverUpload(
         if (inputRef.current) inputRef.current.value = ""
       }
     },
-    [articleSlug, onUploaded, toast]
+    [articleSlug, articleTitle, onUploaded, toast]
   )
 
   return { inputRef, uploading, uploadCover }

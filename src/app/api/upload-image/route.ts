@@ -8,6 +8,7 @@ import {
   ImageStorageError,
   storeBlogImage,
 } from "@/server/image-storage"
+import { resolveArticleUploadSlug } from "@/server/slug"
 
 export const runtime = "nodejs"
 
@@ -46,15 +47,15 @@ export async function POST(request: NextRequest) {
       return apiError("未选择图片文件", 400, "IMAGE_REQUIRED")
     }
 
+    const folder = formData.get("folder")
+    const articleSlug = formData.get("articleSlug")
+    const articleTitle = formData.get("articleTitle")
     const stored = await storeBlogImage(supabase, value, {
-      folder:
-        typeof formData.get("folder") === "string"
-          ? String(formData.get("folder"))
-          : null,
-      articleSlug:
-        typeof formData.get("articleSlug") === "string"
-          ? String(formData.get("articleSlug"))
-          : null,
+      folder: typeof folder === "string" ? folder : null,
+      articleSlug: resolveArticleUploadSlug({
+        articleSlug: typeof articleSlug === "string" ? articleSlug : null,
+        articleTitle: typeof articleTitle === "string" ? articleTitle : null,
+      }),
     })
 
     return NextResponse.json(stored)

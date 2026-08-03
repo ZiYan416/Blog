@@ -20,6 +20,7 @@ interface UploadImageResponse {
 
 export interface UploadBlogImageOptions {
   articleSlug?: string
+  articleTitle?: string
   folder?: string
 }
 
@@ -112,6 +113,7 @@ async function uploadBlogImageWithoutDeduplication(
   const body = new FormData()
   body.append("file", file)
   if (options.articleSlug) body.append("articleSlug", options.articleSlug)
+  if (options.articleTitle) body.append("articleTitle", options.articleTitle)
   if (options.folder) body.append("folder", options.folder)
 
   const response = await fetch("/api/upload-image", {
