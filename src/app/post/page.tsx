@@ -21,6 +21,7 @@ export default async function PostsPage() {
         extraActions={
           <CreatePostButton />
         }
+        extraActionsRequireAdmin
       />
     </div>
   );

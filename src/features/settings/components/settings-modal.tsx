@@ -9,10 +9,9 @@ import {
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Settings, Tv } from "lucide-react";
+import { Gauge, Settings, Tv } from "lucide-react";
 import { useThemeSettings } from "@/features/settings/hooks/use-theme-settings";
 import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
 
 interface SettingsModalProps {
   open: boolean;
@@ -20,16 +19,19 @@ interface SettingsModalProps {
 }
 
 export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
-  const { cinematicHeroEnabled, toggleCinematicHero } = useThemeSettings();
+  const {
+    cinematicHeroEnabled,
+    dataSaverEnabled,
+    toggleCinematicHero,
+    toggleDataSaver,
+  } = useThemeSettings();
   const { toast } = useToast();
 
   const handleToggle = (checked: boolean) => {
     toggleCinematicHero(checked);
     toast({
-      title: checked ? "已开启列车窗景主题" : "已切换为极简首屏",
-      description: checked
-        ? "首页将呈现在列车车窗内漫游四季风景的沉浸式效果。"
-        : "首页已切换为简约干净的无车窗首屏。",
+      title: checked ? "已开启首页动态背景" : "已关闭首页动态背景",
+      description: checked ? "首页将播放背景视频。" : "首页将显示静态内容。",
     });
   };
 
@@ -44,34 +46,24 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
             <span>偏好设置</span>
           </DialogTitle>
           <DialogDescription className="text-xs text-neutral-500 pt-1">
-            自定义您的数字花园探索外观与沉浸视觉效果。
+            调整首页显示和媒体加载方式。
           </DialogDescription>
         </DialogHeader>
 
         <div className="py-4 space-y-4">
           <div className="flex items-start justify-between p-4 sm:p-5 rounded-2xl bg-neutral-50 dark:bg-neutral-800/60 border border-black/5 dark:border-white/5 transition-all hover:border-black/10 dark:hover:border-white/10">
             <div className="flex gap-3.5 min-w-0 pr-4">
-              <div className={cn(
-                "w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 transition-colors",
-                cinematicHeroEnabled
-                  ? "bg-amber-500/10 text-amber-500 border border-amber-500/20"
-                  : "bg-neutral-200/50 dark:bg-neutral-700/50 text-neutral-400"
-              )}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-neutral-200/50 text-neutral-500 dark:bg-neutral-700/50 dark:text-neutral-300">
                 <Tv className="w-5 h-5" />
               </div>
               <div className="flex flex-col min-w-0">
                 <div className="flex items-center gap-2">
-                  <Label htmlFor="hero-theme-toggle" className="text-sm font-bold cursor-pointer">
-                    列车窗景首屏主题
+                  <Label htmlFor="hero-theme-toggle" className="text-sm font-semibold cursor-pointer">
+                    首页动态背景
                   </Label>
-                  {cinematicHeroEnabled && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                      ACTIVE
-                    </span>
-                  )}
                 </div>
                 <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 leading-relaxed">
-                  开启后，首页将呈现全屏列车车窗与动态沉浸日夜风光；关闭后展示极简文字首屏。
+                  开启后在首页播放背景视频；关闭后显示静态首页。
                 </p>
               </div>
             </div>
@@ -84,6 +76,35 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
               />
             </div>
           </div>
+
+          <div className="flex items-start justify-between p-4 sm:p-5 rounded-2xl bg-neutral-50 dark:bg-neutral-800/60 border border-black/5 dark:border-white/5 transition-all hover:border-black/10 dark:hover:border-white/10">
+            <div className="flex gap-3.5 min-w-0 pr-4">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-neutral-200/50 text-neutral-500 dark:bg-neutral-700/50 dark:text-neutral-300">
+                <Gauge className="w-5 h-5" />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <Label htmlFor="data-saver-toggle" className="text-sm font-semibold cursor-pointer">
+                  自动节省流量
+                </Label>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 leading-relaxed">
+                  在移动网络或慢速网络下暂停背景视频。
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-1">
+              <Switch
+                id="data-saver-toggle"
+                checked={dataSaverEnabled}
+                onCheckedChange={(checked) => {
+                  toggleDataSaver(checked);
+                  toast({
+                    title: checked ? "已开启自动节省流量" : "已关闭自动节省流量",
+                  });
+                }}
+              />
+            </div>
+          </div>
         </div>
 
         <div className="pt-2 flex justify-end">
@@ -91,7 +112,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
             onClick={() => onOpenChange(false)}
             className="px-5 py-2 text-xs font-bold rounded-full bg-black dark:bg-white text-white dark:text-black hover:opacity-90 transition-opacity"
           >
-            保存
+            完成
           </button>
         </div>
       </DialogContent>

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import GithubSlugger from 'github-slugger'
 import { cn } from '@/lib/utils'
+import { normalizeMarkdownBlockBoundaries } from '@/features/posts/markdown-normalization'
 
 interface TOCProps {
   content: string
@@ -17,7 +18,7 @@ interface Header {
 }
 
 function extractHeaders(content: string): Header[] {
-  const cleanContent = content
+  const cleanContent = normalizeMarkdownBlockBoundaries(content)
     .replace(/```[\s\S]*?```/g, '')
     .replace(/`[^`\n]+`/g, '')
   const regex = /^(#{1,4})\s+(.+)$/gm

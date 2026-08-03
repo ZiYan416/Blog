@@ -16,7 +16,7 @@ export function getLinkFaviconUrl(href: string) {
     const url = new URL(href.startsWith("//") ? `https:${href}` : href)
     if (!["http:", "https:"].includes(url.protocol)) return null
 
-    return `https://icons.duckduckgo.com/ip3/${encodeURIComponent(url.hostname)}.ico`
+    return new URL("/favicon.ico", url.origin).toString()
   } catch {
     return null
   }
@@ -25,6 +25,7 @@ export function getLinkFaviconUrl(href: string) {
 export function LinkFavicon({ href, className }: LinkFaviconProps) {
   const faviconUrl = getLinkFaviconUrl(href)
   const [failedUrl, setFailedUrl] = useState<string | null>(null)
+  const [loadedUrl, setLoadedUrl] = useState<string | null>(null)
   const failed = !faviconUrl || failedUrl === faviconUrl
 
   return (
@@ -34,22 +35,23 @@ export function LinkFavicon({ href, className }: LinkFaviconProps) {
       data-copy-exclude="true"
       aria-hidden="true"
     >
-      {failed ? (
-        <Link2 className="link-favicon__fallback" />
-      ) : (
+      <Link2 className="link-favicon__fallback" />
+      {!failed ? (
         // Favicons are small remote assets with unknown intrinsic dimensions.
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={faviconUrl}
           alt=""
           className="link-favicon__image"
+          data-loaded={loadedUrl === faviconUrl}
           loading="lazy"
           decoding="async"
           draggable={false}
           referrerPolicy="no-referrer"
+          onLoad={() => setLoadedUrl(faviconUrl)}
           onError={() => setFailedUrl(faviconUrl)}
         />
-      )}
+      ) : null}
     </span>
   )
 }

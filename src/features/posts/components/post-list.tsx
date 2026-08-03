@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { usePostList } from "@/features/posts/hooks/use-post-list"
+import { useAuth } from "@/features/auth/components/auth-provider"
 
 interface PostListProps {
   posts?: Post[]
@@ -29,6 +30,7 @@ interface PostListProps {
   error?: string
   header?: React.ReactNode
   extraActions?: React.ReactNode
+  extraActionsRequireAdmin?: boolean
   alignment?: "start" | "between" | "end"
 }
 
@@ -43,6 +45,7 @@ export default function PostList({
   error,
   header,
   extraActions,
+  extraActionsRequireAdmin = false,
   alignment = "between",
 }: PostListProps) {
   const startPosts = initialPosts || legacyPosts || []
@@ -53,6 +56,7 @@ export default function PostList({
     filters: { category, tag, search, limit },
   })
   const isDesktop = useMediaQuery("(min-width: 768px)")
+  const { isAdmin } = useAuth()
   const { ref, inView } = useInView()
   const { hasMore, loading, loadMore } = list
 
@@ -71,12 +75,15 @@ export default function PostList({
   }
 
   const totalPages = Math.ceil(list.total / limit)
+  const showExtraActions = Boolean(extraActions) &&
+    (!extraActionsRequireAdmin || isAdmin)
 
   return (
     <div className="space-y-8">
       <div
         className={cn(
-          "flex flex-col md:flex-row md:items-end gap-4",
+          "flex md:flex-row md:items-end gap-4",
+          showExtraActions ? "flex-col" : "flex-row items-start",
           alignment === "between"
             ? "justify-between"
             : alignment === "start"
@@ -95,8 +102,10 @@ export default function PostList({
           </div>
         )}
 
-        <div className="flex items-center gap-3">
-          <div className="flex-1 md:flex-none flex">{extraActions}</div>
+        <div className="flex shrink-0 items-center gap-3">
+          {showExtraActions && (
+            <div className="flex flex-1 md:flex-none">{extraActions}</div>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -106,7 +115,7 @@ export default function PostList({
                 className="gap-2 rounded-full h-9 md:h-10"
               >
                 <ArrowUpDown className="w-4 h-4" />
-                <span className="hidden sm:inline">排序</span>
+                <span className="hidden md:inline">排序</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">

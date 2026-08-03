@@ -75,6 +75,27 @@ test("public article navigation remains available without authentication", async
   }
 })
 
+test("mobile public post list aligns sorting with the page heading", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile-chromium")
+  await page.goto("/post")
+
+  await expect(page.getByRole("link", { name: "新建文章" })).toHaveCount(0)
+  const heading = page.getByRole("heading", { name: "全部文章" })
+  const sortButton = page.getByRole("button", { name: "选择文章排序方式" })
+  await expect(heading).toBeVisible()
+  await expect(sortButton).toBeVisible()
+
+  const [headingBox, sortBox] = await Promise.all([
+    heading.boundingBox(),
+    sortButton.boundingBox(),
+  ])
+  expect(headingBox).not.toBeNull()
+  expect(sortBox).not.toBeNull()
+  expect(Math.abs((headingBox?.y ?? 0) - (sortBox?.y ?? 0))).toBeLessThan(12)
+})
+
 test("about page presents the profile and sites within one viewport", async ({
   page,
 }) => {
@@ -131,6 +152,33 @@ test("about page presents the profile and sites within one viewport", async ({
   expect(layout.source).toContain("/videos/about/aquarium-loop-v1.mp4")
   expect(layout.poster).toContain("/videos/about/aquarium-poster-v1.jpg")
   expect(layout.fallbackImage).toContain("/videos/about/aquarium-poster-v1.jpg")
+  await expect(page.getByTestId("about-video-buffer")).toHaveCount(0)
+})
+
+test("first visit shows a global data saver notice on metered connections", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "connection", {
+      configurable: true,
+      value: {
+        effectiveType: "4g",
+        saveData: true,
+        type: "cellular",
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+      },
+    })
+  })
+  await page.goto("/post")
+
+  await expect(page.getByRole("status", { name: "节流模式提示" })).toBeVisible()
+  await expect(page.getByText("当前网络可能按流量计费，背景视频已暂停。")).toBeVisible()
+
+  await page.getByRole("button", { name: "关闭节流" }).click()
+  await expect(page.getByRole("status", { name: "节流模式提示" })).toHaveCount(0)
+  await page.goto("/about")
+  await expect(page.getByTestId("about-video")).toHaveCount(1)
 })
 
 test("about page keeps the fish poster when the video request fails", async ({
@@ -171,7 +219,7 @@ test("published article detail pages render without server errors", async ({
     )
     expect(response?.status(), post.title).toBeLessThan(500)
     await expect(
-      page.locator("[data-post-hero]"),
+      page.locator("[data-post-hero]:visible"),
       post.title
     ).toBeVisible()
   }
