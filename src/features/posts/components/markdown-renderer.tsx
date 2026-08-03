@@ -344,13 +344,19 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
           opacity: 1;
         }
         .markdown-article .link-favicon__fallback {
-          color: currentColor;
+          color: #7693b5;
+          transform: rotate(-8deg);
         }
         .dark .markdown-article .link-favicon {
+          opacity: 1;
+        }
+        .dark .markdown-article .link-favicon__image[data-loaded="true"] {
           border-radius: 0.2em;
           background: rgba(255, 255, 255, 0.92);
           box-shadow: 0 0 0 0.08em rgba(255, 255, 255, 0.92);
-          opacity: 1;
+        }
+        .dark .markdown-article .link-favicon__fallback {
+          color: #9cb8d8;
         }
 
         /* === Horizontal Rule === */
