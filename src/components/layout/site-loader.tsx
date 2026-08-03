@@ -1,8 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { motion } from "framer-motion"
 import { BrandedLoaderVisual } from "@/components/layout/branded-loader"
+import { cn } from "@/lib/utils"
 
 const MIN_VISIBLE_MS = 650
 const MAX_VISIBLE_MS = 5000
@@ -58,15 +58,16 @@ export function SiteLoader() {
   if (phase === "hidden") return null
 
   return (
-    <motion.div
+    <div
       role="status"
       aria-label="网站正在加载"
-      initial={{ opacity: 1 }}
-      animate={{ opacity: phase === "exiting" ? 0 : 1 }}
-      transition={{ duration: EXIT_DURATION_MS / 1000, ease: "easeInOut" }}
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#fafafa] dark:bg-[#050505]"
+      className={cn(
+        "fixed inset-0 z-[9999] flex items-center justify-center bg-[#fafafa] opacity-100 transition-opacity ease-in-out dark:bg-[#050505]",
+        phase === "exiting" && "opacity-0",
+      )}
+      style={{ transitionDuration: `${EXIT_DURATION_MS}ms` }}
     >
       <BrandedLoaderVisual />
-    </motion.div>
+    </div>
   )
 }

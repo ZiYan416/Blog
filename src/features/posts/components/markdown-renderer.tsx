@@ -1,5 +1,3 @@
-"use client"
-
 import ReactMarkdown, { type Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
@@ -9,17 +7,13 @@ import rehypeSlug from 'rehype-slug'
 import {
   Children,
   isValidElement,
-  useEffect,
-  useRef,
-  type ClipboardEvent,
   type ComponentPropsWithoutRef,
+  type ReactNode,
 } from 'react'
-import { CodeBlockShell, extractCodeBlockLanguage } from '@/features/posts/components/code-block-shell'
+import { CodeBlockShell } from '@/features/posts/components/code-block-shell'
+import { extractCodeBlockLanguage } from '@/features/posts/code-block-language'
 import { LinkFavicon } from '@/features/posts/components/link-favicon'
-import {
-  getMarkdownSelectionText,
-  removeCopyExcludedElements,
-} from '@/features/posts/markdown-copy'
+import { MarkdownCopyController } from '@/features/posts/components/markdown-copy-controller'
 import type { Schema } from 'hast-util-sanitize'
 import { common } from 'lowlight'
 import powershell from 'highlight.js/lib/languages/powershell'
@@ -28,6 +22,8 @@ import { getHighResolutionImageUrl } from '@/features/posts/image-url'
 interface MarkdownRendererProps {
   content: string
 }
+
+const MARKDOWN_ARTICLE_ID = 'markdown-article-content'
 
 const markdownSchema: Schema = {
   ...defaultSchema,
@@ -69,49 +65,11 @@ const articleHighlightLanguages = {
 }
 
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
-  useEffect(() => {
-    const legacyThemeLink = document.getElementById('highlight-theme')
-    if (legacyThemeLink) {
-      legacyThemeLink.remove()
-    }
-
-    document
-      .querySelectorAll('link[rel="stylesheet"]')
-      .forEach((link) => {
-        if (link instanceof HTMLLinkElement && link.href.includes('highlight.js')) {
-          link.remove()
-        }
-      })
-  }, [])
-
-  const handleCopy = (event: ClipboardEvent<HTMLElement>) => {
-    const selection = window.getSelection()
-    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return
-    if (
-      !event.currentTarget.contains(selection.anchorNode) ||
-      !event.currentTarget.contains(selection.focusNode)
-    ) {
-      return
-    }
-
-    const fragment = selection.getRangeAt(0).cloneContents()
-    removeCopyExcludedElements(fragment)
-    const plainText = getMarkdownSelectionText(fragment)
-    if (!plainText || !event.clipboardData) return
-
-    const htmlContainer = document.createElement('div')
-    htmlContainer.append(fragment.cloneNode(true))
-
-    event.preventDefault()
-    event.clipboardData.setData('text/plain', plainText)
-    event.clipboardData.setData('text/html', htmlContainer.innerHTML)
-  }
-
   return (
     <>
       <article
+        id={MARKDOWN_ARTICLE_ID}
         className="markdown-article prose prose-neutral dark:prose-invert max-w-none break-words prose-headings:font-bold prose-headings:tracking-tight prose-headings:leading-tight prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg md:prose-h1:text-3xl md:prose-h2:text-2xl md:prose-h3:text-xl prose-img:rounded-2xl prose-pre:bg-transparent prose-pre:p-0 prose-pre:border-none"
-        onCopy={handleCopy}
       >
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
@@ -132,9 +90,10 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
           {content}
         </ReactMarkdown>
       </article>
+      <MarkdownCopyController targetId={MARKDOWN_ARTICLE_ID} />
 
       {/* Enhanced Typography Styles for Article Detail */}
-      <style jsx global>{`
+      <style>{`
         .markdown-article {
           --code-bg: #f5f7fb;
           --code-panel: #f5f7fb;
@@ -618,22 +577,33 @@ function MarkdownLink({
   )
 }
 
-function PreBlock({ children, ...props }: ComponentPropsWithoutRef<'pre'>) {
-  const preRef = useRef<HTMLPreElement>(null)
+function PreBlock({
+  node: _node,
+  children,
+  ...props
+}: ComponentPropsWithoutRef<'pre'> & { node?: unknown }) {
+  void _node
   const codeElement = Children.toArray(children).find(
-    (child) => isValidElement<{ className?: string }>(child),
+    (child) => isValidElement<{ className?: string; children?: ReactNode }>(child),
   )
   const className = codeElement?.props.className
   const language = extractCodeBlockLanguage(className)
+  const copyText = getReactNodeText(codeElement?.props.children)
 
   return (
-    <CodeBlockShell
-      language={language}
-      onCopy={() => navigator.clipboard.writeText(preRef.current?.innerText || '')}
-    >
-      <pre {...props} ref={preRef} className="article-code-block__pre">
+    <CodeBlockShell language={language} copyText={copyText}>
+      <pre {...props} className="article-code-block__pre">
         {children}
       </pre>
     </CodeBlockShell>
   )
+}
+
+function getReactNodeText(node: ReactNode): string {
+  if (typeof node === 'string' || typeof node === 'number') return String(node)
+  if (Array.isArray(node)) return node.map(getReactNodeText).join('')
+  if (isValidElement<{ children?: ReactNode }>(node)) {
+    return getReactNodeText(node.props.children)
+  }
+  return ''
 }

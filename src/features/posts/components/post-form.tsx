@@ -7,6 +7,7 @@ import {
   useState,
 } from "react"
 import Link from "next/link"
+import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
 import {
   ArrowLeft,
@@ -25,13 +26,11 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import Editor from "@/features/posts/editor/editor"
 import { TagSelector } from "@/features/posts/components/tag-selector"
-import { PostPreviewModal } from "@/features/posts/components/post-preview-modal"
 import { BackToTop } from "@/components/ui/back-to-top"
 import { SafeImage } from "@/components/ui/safe-image"
 import { useToast } from "@/hooks/use-toast"
 import {
   autoClassifyTags,
-  generatePostSlug,
   getPostExcerpt,
 } from "@/lib/markdown"
 import { getErrorMessage } from "@/lib/errors"
@@ -41,6 +40,18 @@ import {
 } from "@/features/posts/model"
 import { usePostTags } from "@/features/posts/hooks/use-post-tags"
 import { usePostCoverUpload } from "@/features/posts/hooks/use-post-cover-upload"
+
+const PostPreviewModal = dynamic(
+  () =>
+    import("@/features/posts/components/post-preview-modal").then(
+      (module) => module.PostPreviewModal,
+    ),
+  { ssr: false },
+)
+
+function preloadPostPreview() {
+  void import("@/features/posts/components/post-preview-modal")
+}
 
 interface PostFormProps {
   mode: "create" | "edit"
@@ -73,7 +84,8 @@ export function PostForm({ mode, postId }: PostFormProps) {
     uploadCover,
   } = usePostCoverUpload(
     handleCoverUploaded,
-    slug || generatePostSlug(title)
+    slug,
+    title
   )
 
   useEffect(() => {
@@ -145,7 +157,7 @@ export function PostForm({ mode, postId }: PostFormProps) {
             : autoClassifyTags(content, availableTags)
         const payload = {
           title: title.trim(),
-          slug: slug || generatePostSlug(title),
+          slug: slug || null,
           content,
           cover_image: coverImage || null,
           published,
@@ -255,6 +267,8 @@ export function PostForm({ mode, postId }: PostFormProps) {
                 variant="outline"
                 className="rounded-full h-9 md:h-10"
                 onClick={() => setPreviewOpen(true)}
+                onMouseEnter={preloadPostPreview}
+                onFocus={preloadPostPreview}
               >
                 <Eye className="w-4 h-4 mr-2" />
                 <span className="hidden sm:inline">预览</span>
@@ -309,7 +323,8 @@ export function PostForm({ mode, postId }: PostFormProps) {
             <Editor
               content={content}
               onChange={setContent}
-              articleSlug={slug || generatePostSlug(title)}
+              articleSlug={slug}
+              articleTitle={title}
               onUploadStateChange={setUploadingEditorImages}
               placeholder={isEditing ? "继续您的创作之旅..." : "开始您的创作之旅..."}
             />
@@ -404,19 +419,21 @@ export function PostForm({ mode, postId }: PostFormProps) {
         </div>
       </div>
 
-      <PostPreviewModal
-        open={previewOpen}
-        onOpenChange={setPreviewOpen}
-        post={{
-          title,
-          content,
-          coverImage,
-          tags: suggestedTags,
-          slug,
-          published: isPublished,
-          created_at: new Date().toISOString(),
-        }}
-      />
+      {previewOpen ? (
+        <PostPreviewModal
+          open
+          onOpenChange={setPreviewOpen}
+          post={{
+            title,
+            content,
+            coverImage,
+            tags: suggestedTags,
+            slug,
+            published: isPublished,
+            created_at: new Date().toISOString(),
+          }}
+        />
+      ) : null}
       <BackToTop
         hideOnDesktop={false}
         positionClassName="lg:right-[24rem] xl:right-[calc((100vw-72rem)/2+23rem)]"

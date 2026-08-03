@@ -49,20 +49,6 @@ export function getPostExcerpt(content: string, maxLength: number = 150): string
   return plainText.slice(0, maxLength).trim() + '...'
 }
 
-import pinyin from 'pinyin'
-
-export function generatePostSlug(title: string): string {
-  const pinyinTitle = pinyin(title, {
-    style: pinyin.STYLE_NORMAL, // No tones
-    heteronym: false
-  }).flat().join('-')
-
-  return pinyinTitle
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-') // Replace non-alphanumeric with hyphens
-    .replace(/^-+|-+$/g, '') // Trim leading/trailing hyphens
-}
-
 export function extractTags(content: string): string[] {
   const tagRegex = /#[\w\u4e00-\u9fa5]+/g // Match hash tags including Chinese
   const tags = content.match(tagRegex) || []

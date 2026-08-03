@@ -21,6 +21,7 @@ export function SourceMarkdownEditor({
   onChange,
   containerRef,
   articleSlug,
+  articleTitle,
   onUploadStateChange,
   onAction,
 }: {
@@ -28,6 +29,7 @@ export function SourceMarkdownEditor({
   onChange: (content: string) => void
   containerRef: React.RefObject<HTMLDivElement | null>
   articleSlug?: string
+  articleTitle?: string
   onUploadStateChange?: (uploading: boolean) => void
   onAction: (action: MarkdownAction) => void
 }) {
@@ -79,7 +81,10 @@ export function SourceMarkdownEditor({
       pendingUploads.current += 1
       onUploadStateChange?.(true)
       try {
-        const results = await uploadBlogImages(files, { articleSlug })
+        const results = await uploadBlogImages(files, {
+          articleSlug,
+          articleTitle,
+        })
         let nextContent = contentRef.current
         let insertedLength = 0
 
@@ -128,6 +133,7 @@ export function SourceMarkdownEditor({
     },
     [
       articleSlug,
+      articleTitle,
       containerRef,
       onUploadStateChange,
       toast,

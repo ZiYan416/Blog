@@ -100,6 +100,7 @@ describe("post repository visibility", () => {
       published: false,
       content: "Draft content",
       tags: [],
+      tagLinks: [],
     })
   })
 })

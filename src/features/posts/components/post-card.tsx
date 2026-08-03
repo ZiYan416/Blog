@@ -10,7 +10,6 @@ import { getTagStyles } from '@/lib/tag-color'
 import { toggleFeaturedStatus } from '@/features/posts/actions'
 import { useState } from 'react'
 import { useToast } from '@/hooks/use-toast'
-import { motion } from 'framer-motion'
 import { getErrorMessage } from '@/lib/errors'
 import { SafeImage } from '@/components/ui/safe-image'
 
@@ -99,33 +98,29 @@ export default function PostCard({ post }: PostCardProps) {
       {post.featured && (
         <div className="absolute inset-0 z-10 pointer-events-none rounded-2xl md:rounded-[2.5rem]">
           <svg className="w-full h-full" style={{ overflow: 'visible' }}>
-            <motion.rect
+            <rect
               width="100%"
               height="100%"
               x="0"
               y="0"
-              rx="16" // Mobile radius
-              className="md:hidden"
+              rx="16"
+              pathLength="1"
+              className="featured-border-draw md:hidden"
               fill="none"
               stroke="#f59e0b"
               strokeWidth="2"
-              initial={{ pathLength: 0, opacity: 0 }}
-              animate={{ pathLength: 1, opacity: 1 }}
-              transition={{ duration: 1.5, ease: "easeInOut" }}
             />
-            <motion.rect
+            <rect
               width="100%"
               height="100%"
               x="0"
               y="0"
-              rx="40" // Desktop radius
-              className="hidden md:block"
+              rx="40"
+              pathLength="1"
+              className="featured-border-draw hidden md:block"
               fill="none"
               stroke="#f59e0b"
               strokeWidth="2"
-              initial={{ pathLength: 0, opacity: 0 }}
-              animate={{ pathLength: 1, opacity: 1 }}
-              transition={{ duration: 1.5, ease: "easeInOut" }}
             />
           </svg>
         </div>
