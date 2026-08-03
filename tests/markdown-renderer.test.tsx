@@ -29,13 +29,14 @@ describe('MarkdownRenderer', () => {
     expect(link.getAttribute('rel')).toBe('noopener noreferrer')
     expect(
       link.querySelector<HTMLImageElement>('.link-favicon__image')?.src,
-    ).toBe('https://example.com/favicon.ico')
+    ).toBe('https://api.freejk.com/gongju/favicon/?url=https%3A%2F%2Fexample.com')
     const favicon = link.querySelector('.link-favicon')
     const faviconImage = favicon?.querySelector<HTMLImageElement>('.link-favicon__image')
     expect(favicon?.querySelector('.link-favicon__fallback')).not.toBeNull()
     expect(faviconImage?.dataset.loaded).toBe('false')
     fireEvent.load(faviconImage!)
     expect(faviconImage?.dataset.loaded).toBe('true')
+    expect(favicon?.querySelector('.link-favicon__fallback')).toBeNull()
     expect(favicon?.nextSibling?.textContent).toBe('\u2060')
     expect(
       (favicon?.nextSibling as HTMLElement | null)?.dataset.copyExclude,
