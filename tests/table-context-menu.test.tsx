@@ -119,4 +119,54 @@ describe("EditorContextMenu", () => {
     ).toBeTruthy()
     expect(screen.getByRole("menuitem", { name: "分割线" })).toBeTruthy()
   })
+
+  it("keeps table operations visible before the general editing actions", () => {
+    render(
+      <EditorContextMenu
+        editor={createEditorMock(vi.fn())}
+        position={{ x: 20, y: 30 }}
+        onClose={vi.fn()}
+        onClipboardError={vi.fn()}
+      />
+    )
+
+    const items = screen.getAllByRole("menuitem")
+    expect(items.indexOf(screen.getByRole("menuitem", { name: "在上方插入行" })))
+      .toBeLessThan(items.indexOf(screen.getByRole("menuitem", { name: "撤销 Ctrl+Z" })))
+  })
+
+  it("allows the menu surface to scroll without closing it", () => {
+    const onClose = vi.fn()
+    render(
+      <EditorContextMenu
+        editor={createEditorMock(vi.fn())}
+        position={{ x: 20, y: 30 }}
+        onClose={onClose}
+        onClipboardError={vi.fn()}
+      />
+    )
+    const menu = screen.getByRole("menu")
+
+    fireEvent.scroll(menu)
+    fireEvent.wheel(menu, { deltaY: 120 })
+
+    expect(onClose).not.toHaveBeenCalled()
+    expect(menu.classList.contains("overscroll-contain")).toBe(true)
+  })
+
+  it("still closes when the editor page itself scrolls", () => {
+    const onClose = vi.fn()
+    render(
+      <EditorContextMenu
+        editor={createEditorMock(vi.fn())}
+        position={{ x: 20, y: 30 }}
+        onClose={onClose}
+        onClipboardError={vi.fn()}
+      />
+    )
+
+    fireEvent.scroll(window)
+
+    expect(onClose).toHaveBeenCalledOnce()
+  })
 })
