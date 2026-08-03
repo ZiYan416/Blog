@@ -12,6 +12,8 @@ export const BLOG_IMAGE_ACCEPT = BLOG_IMAGE_TYPES.join(",")
 export const MAX_BLOG_IMAGE_SIZE = 15 * 1024 * 1024
 export const MAX_CONCURRENT_IMAGE_UPLOADS = 3
 
+export type BlogImagePurpose = "content" | "cover"
+
 interface UploadImageResponse {
   url?: string
   error?: string
@@ -22,6 +24,7 @@ export interface UploadBlogImageOptions {
   articleSlug?: string
   articleTitle?: string
   folder?: string
+  purpose?: BlogImagePurpose
 }
 
 export interface BlogImageUploadResult {
@@ -115,6 +118,7 @@ async function uploadBlogImageWithoutDeduplication(
   if (options.articleSlug) body.append("articleSlug", options.articleSlug)
   if (options.articleTitle) body.append("articleTitle", options.articleTitle)
   if (options.folder) body.append("folder", options.folder)
+  if (options.purpose) body.append("purpose", options.purpose)
 
   const response = await fetch("/api/upload-image", {
     method: "POST",

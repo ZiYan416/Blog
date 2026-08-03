@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server"
 import {
   cleanupUnusedImageAssets,
   ImageStorageError,
+  parseImageUploadPurpose,
   storeBlogImage,
 } from "@/server/image-storage"
 import { resolveArticleUploadSlug } from "@/server/slug"
@@ -50,12 +51,14 @@ export async function POST(request: NextRequest) {
     const folder = formData.get("folder")
     const articleSlug = formData.get("articleSlug")
     const articleTitle = formData.get("articleTitle")
+    const purpose = parseImageUploadPurpose(formData.get("purpose"))
     const stored = await storeBlogImage(supabase, value, {
       folder: typeof folder === "string" ? folder : null,
       articleSlug: resolveArticleUploadSlug({
         articleSlug: typeof articleSlug === "string" ? articleSlug : null,
         articleTitle: typeof articleTitle === "string" ? articleTitle : null,
       }),
+      purpose,
     })
 
     return NextResponse.json(stored)

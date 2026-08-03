@@ -1,4 +1,6 @@
-export const IMGBED_ORIGIN = "https://img.lunalbl.com"
+import { IMGBED_ORIGIN } from "@/lib/image-hosts"
+
+export { IMGBED_ORIGIN }
 export const BLOG_IMAGE_BUCKET = "blog-images"
 
 export type ManagedImageProvider = "imgbed" | "supabase"
