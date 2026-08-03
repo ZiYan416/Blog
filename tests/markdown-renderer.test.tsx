@@ -29,8 +29,13 @@ describe('MarkdownRenderer', () => {
     expect(link.getAttribute('rel')).toBe('noopener noreferrer')
     expect(
       link.querySelector<HTMLImageElement>('.link-favicon__image')?.src,
-    ).toBe('https://icons.duckduckgo.com/ip3/example.com.ico')
+    ).toBe('https://example.com/favicon.ico')
     const favicon = link.querySelector('.link-favicon')
+    const faviconImage = favicon?.querySelector<HTMLImageElement>('.link-favicon__image')
+    expect(favicon?.querySelector('.link-favicon__fallback')).not.toBeNull()
+    expect(faviconImage?.dataset.loaded).toBe('false')
+    fireEvent.load(faviconImage!)
+    expect(faviconImage?.dataset.loaded).toBe('true')
     expect(favicon?.nextSibling?.textContent).toBe('\u2060')
     expect(
       (favicon?.nextSibling as HTMLElement | null)?.dataset.copyExclude,
@@ -109,5 +114,34 @@ describe('MarkdownRenderer', () => {
     )
     expect(image.getAttribute('loading')).toBe('lazy')
     expect(image.classList.contains('markdown-article-image')).toBe(true)
+  })
+
+  it('renders a heading serialized directly after an image as a heading', () => {
+    render(
+      <MarkdownRenderer
+        content={'![配图](https://example.com/image.png)## 图片后的标题'}
+      />,
+    )
+
+    expect(
+      screen.getByRole('heading', { level: 2, name: '图片后的标题' }),
+    ).not.toBeNull()
+  })
+
+  it('opens article images in a zoomable lightbox', () => {
+    render(<MarkdownRenderer content={'![示例图片](https://example.com/image.png)'} />)
+    const articleImage = screen.getByRole('img', { name: '示例图片' })
+
+    fireEvent.click(articleImage)
+
+    const dialog = screen.getByRole('dialog', { name: '图片预览' })
+    const previewImage = dialog.querySelector<HTMLImageElement>('img')
+    expect(previewImage?.style.transform).toContain('scale(1)')
+
+    fireEvent.click(screen.getByRole('button', { name: '放大图片' }))
+    expect(previewImage?.style.transform).toContain('scale(1.25)')
+
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(screen.queryByRole('dialog', { name: '图片预览' })).toBeNull()
   })
 })

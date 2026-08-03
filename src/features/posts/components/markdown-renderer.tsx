@@ -18,6 +18,8 @@ import type { Schema } from 'hast-util-sanitize'
 import { common } from 'lowlight'
 import powershell from 'highlight.js/lib/languages/powershell'
 import { getHighResolutionImageUrl } from '@/features/posts/image-url'
+import { normalizeMarkdownBlockBoundaries } from '@/features/posts/markdown-normalization'
+import { MarkdownImageLightbox } from '@/features/posts/components/markdown-image-lightbox'
 
 interface MarkdownRendererProps {
   content: string
@@ -65,6 +67,8 @@ const articleHighlightLanguages = {
 }
 
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
+  const normalizedContent = normalizeMarkdownBlockBoundaries(content)
+
   return (
     <>
       <article
@@ -87,10 +91,11 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
           ]}
           components={markdownComponents}
         >
-          {content}
+          {normalizedContent}
         </ReactMarkdown>
       </article>
       <MarkdownCopyController targetId={MARKDOWN_ARTICLE_ID} />
+      <MarkdownImageLightbox targetId={MARKDOWN_ARTICLE_ID} />
 
       {/* Enhanced Typography Styles for Article Detail */}
       <style>{`
@@ -310,6 +315,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
         }
         .markdown-article .link-favicon {
           display: inline-flex;
+          position: relative;
           width: 0.9em;
           height: 0.9em;
           align-items: center;
@@ -327,6 +333,18 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
           margin: 0;
           object-fit: contain;
           box-shadow: none;
+        }
+        .markdown-article .link-favicon__image {
+          position: absolute;
+          inset: 0;
+          opacity: 0;
+          transition: opacity 0.15s ease;
+        }
+        .markdown-article .link-favicon__image[data-loaded="true"] {
+          opacity: 1;
+        }
+        .markdown-article .link-favicon__fallback {
+          color: currentColor;
         }
         .dark .markdown-article .link-favicon {
           border-radius: 0.2em;
@@ -470,6 +488,13 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
           image-rendering: auto;
           transition: box-shadow 0.2s ease;
         }
+        .markdown-article img[data-markdown-lightbox="true"] {
+          cursor: zoom-in;
+        }
+        .markdown-article img[data-markdown-lightbox="true"]:focus-visible {
+          outline: 2px solid #6366f1;
+          outline-offset: 4px;
+        }
         .markdown-article img:hover {
           box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
         }
@@ -529,6 +554,9 @@ function MarkdownImage({
       decoding={decoding}
       className={['markdown-article-image', className].filter(Boolean).join(' ')}
       data-original-src={displaySrc !== src ? src : undefined}
+      data-markdown-lightbox="true"
+      tabIndex={0}
+      title={props.title || '点击查看大图'}
     />
   )
 }

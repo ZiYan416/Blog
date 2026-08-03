@@ -12,13 +12,10 @@ import {
   Mail,
   PanelsTopLeft,
 } from "lucide-react";
+import { useDataSaver } from "@/features/settings/hooks/use-data-saver";
 
 const VIDEO_URL = "/videos/about/aquarium-loop-v1.mp4";
 const POSTER_URL = "/videos/about/aquarium-poster-v1.jpg";
-const CROSSFADE_LEAD_SECONDS = 0.42;
-const CROSSFADE_DURATION_MS = 360;
-
-type VideoLayer = 0 | 1;
 
 const destinations = [
   {
@@ -69,106 +66,62 @@ const socialLinks = [
 ];
 
 export function AboutHero() {
-  const primaryVideoRef = useRef<HTMLVideoElement>(null);
-  const bufferVideoRef = useRef<HTMLVideoElement>(null);
-  const activeVideoRef = useRef<VideoLayer>(0);
-  const isCrossfadingRef = useRef(false);
-  const transitionTimerRef = useRef<number | null>(null);
-  const [activeVideo, setActiveVideo] = useState<VideoLayer>(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const pendingReleaseRef = useRef<{
+    timer: ReturnType<typeof globalThis.setTimeout>;
+    video: HTMLVideoElement;
+  } | null>(null);
   const [isVideoReady, setIsVideoReady] = useState(false);
-  const [loopVeilCycle, setLoopVeilCycle] = useState(0);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const { isDataSaverActive, isNetworkStatusReady } = useDataSaver();
+  const videoEnabled =
+    isNetworkStatusReady && !isDataSaverActive && !prefersReducedMotion;
 
-  const startCrossfade = useCallback((fromLayer: VideoLayer) => {
-    if (
-      activeVideoRef.current !== fromLayer ||
-      isCrossfadingRef.current
-    ) {
-      return;
-    }
+  const startWhenBuffered = useCallback((video: HTMLVideoElement) => {
+    if (!Number.isFinite(video.duration) || video.duration <= 0) return;
 
-    const nextLayer: VideoLayer = fromLayer === 0 ? 1 : 0;
-    const currentVideo =
-      fromLayer === 0 ? primaryVideoRef.current : bufferVideoRef.current;
-    const nextVideo =
-      nextLayer === 0 ? primaryVideoRef.current : bufferVideoRef.current;
+    const bufferedEnd = video.buffered.length
+      ? video.buffered.end(video.buffered.length - 1)
+      : 0;
+    const canPlayWithoutWaiting =
+      bufferedEnd >= video.duration - 0.25 ||
+      video.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA;
 
-    if (!currentVideo || !nextVideo) return;
-
-    isCrossfadingRef.current = true;
-    nextVideo.currentTime = 0;
-
-    void nextVideo
-      .play()
-      .then(() => {
-        setLoopVeilCycle((cycle) => cycle + 1);
-        activeVideoRef.current = nextLayer;
-        setActiveVideo(nextLayer);
-        setIsVideoReady(true);
-
-        transitionTimerRef.current = window.setTimeout(() => {
-          currentVideo.pause();
-          currentVideo.currentTime = 0;
-          isCrossfadingRef.current = false;
-          transitionTimerRef.current = null;
-        }, CROSSFADE_DURATION_MS);
-      })
-      .catch(() => {
-        isCrossfadingRef.current = false;
-        currentVideo.currentTime = 0;
-        void currentVideo.play().catch(() => setIsVideoReady(false));
-      });
+    if (!canPlayWithoutWaiting || !video.paused) return;
+    void video.play().catch(() => {
+      // The poster remains visible when autoplay is blocked.
+    });
   }, []);
 
   useEffect(() => {
-    const initialVideo = primaryVideoRef.current;
-    const bufferVideo = bufferVideoRef.current;
-    let animationFrame = 0;
+    const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const updateMotionPreference = () =>
+      setPrefersReducedMotion(motionQuery.matches);
+    updateMotionPreference();
+    motionQuery.addEventListener("change", updateMotionPreference);
+    return () => motionQuery.removeEventListener("change", updateMotionPreference);
+  }, []);
 
-    void initialVideo?.play().catch(() => {
-      // The poster remains visible when autoplay is blocked.
-    });
-    bufferVideo?.load();
-    void bufferVideo
-      ?.play()
-      .then(() => {
-        if (
-          activeVideoRef.current === 0 &&
-          !isCrossfadingRef.current
-        ) {
-          bufferVideo.pause();
-          bufferVideo.currentTime = 0;
-        }
-      })
-      .catch(() => {
-        // The active layer continues normally if the buffer cannot be primed.
-      });
-
-    const monitorPlayback = () => {
-      const layer = activeVideoRef.current;
-      const video =
-        layer === 0 ? primaryVideoRef.current : bufferVideoRef.current;
-
-      if (
-        video &&
-        Number.isFinite(video.duration) &&
-        video.duration > 0 &&
-        video.duration - video.currentTime <= CROSSFADE_LEAD_SECONDS
-      ) {
-        startCrossfade(layer);
-      }
-
-      animationFrame = window.requestAnimationFrame(monitorPlayback);
-    };
-
-    animationFrame = window.requestAnimationFrame(monitorPlayback);
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video && pendingReleaseRef.current?.video === video) {
+      globalThis.clearTimeout(pendingReleaseRef.current.timer);
+      pendingReleaseRef.current = null;
+    }
 
     return () => {
-      window.cancelAnimationFrame(animationFrame);
-      if (transitionTimerRef.current !== null) {
-        window.clearTimeout(transitionTimerRef.current);
-      }
+      if (!video) return;
+      const timer = globalThis.setTimeout(() => {
+        video.pause();
+        video.removeAttribute("src");
+        video.load();
+        if (pendingReleaseRef.current?.video === video) {
+          pendingReleaseRef.current = null;
+        }
+      }, 0);
+      pendingReleaseRef.current = { timer, video };
     };
-  }, [startCrossfade]);
+  }, [videoEnabled]);
 
   return (
     <section
@@ -183,47 +136,30 @@ export function AboutHero() {
           style={{ backgroundImage: `url(${POSTER_URL})` }}
         />
 
-        {([0, 1] as const).map((layer) => (
+        {videoEnabled && (
           <video
-            key={layer}
-            data-testid={layer === 0 ? "about-video" : "about-video-buffer"}
-            ref={layer === 0 ? primaryVideoRef : bufferVideoRef}
+            data-testid="about-video"
+            ref={videoRef}
             aria-hidden="true"
-            autoPlay={layer === 0}
             muted
             playsInline
+            loop
             preload="auto"
-            poster={layer === 0 ? POSTER_URL : undefined}
+            poster={POSTER_URL}
             src={VIDEO_URL}
-            onLoadedData={() => {
-              if (activeVideoRef.current === layer) setIsVideoReady(true);
-            }}
-            onPlaying={() => {
-              if (activeVideoRef.current === layer) setIsVideoReady(true);
-            }}
-            onEnded={() => startCrossfade(layer)}
-            onError={() => {
-              if (activeVideoRef.current === layer) setIsVideoReady(false);
-            }}
-            className={`absolute inset-0 h-full w-full object-cover object-[88%_center] transition-opacity ease-in-out sm:object-[70%_center] ${
-              isVideoReady && activeVideo === layer
-                ? "opacity-100"
-                : "opacity-0"
+            onLoadedMetadata={(event) => startWhenBuffered(event.currentTarget)}
+            onProgress={(event) => startWhenBuffered(event.currentTarget)}
+            onCanPlayThrough={(event) => startWhenBuffered(event.currentTarget)}
+            onLoadStart={() => setIsVideoReady(false)}
+            onPlaying={() => setIsVideoReady(true)}
+            onWaiting={() => setIsVideoReady(false)}
+            onError={() => setIsVideoReady(false)}
+            className={`absolute inset-0 h-full w-full object-cover object-[88%_center] transition-opacity duration-500 ease-in-out sm:object-[70%_center] ${
+              videoEnabled && isVideoReady ? "opacity-100" : "opacity-0"
             }`}
-            style={{ transitionDuration: `${CROSSFADE_DURATION_MS}ms` }}
           />
-        ))}
+        )}
       </div>
-
-      {loopVeilCycle > 0 && (
-        <div
-          key={loopVeilCycle}
-          data-testid="about-loop-veil"
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-black"
-          style={{ animation: "loopVeil 820ms ease-in-out both" }}
-        />
-      )}
 
       <div
         aria-hidden="true"

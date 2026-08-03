@@ -13,6 +13,7 @@ import {
   getImageAltText,
   uploadBlogImages,
 } from '@/features/posts/image-upload'
+import { insertMarkdownBlocks } from '@/features/posts/markdown-normalization'
 
 interface EditorProps {
   content: string
@@ -112,11 +113,17 @@ export default function Editor({
 
       if (sourceMode) {
         const { start, end } = sourceSelectionRef.current
-        updateContent(
-          contentRef.current.slice(0, start) +
-            markers.join('\n') +
-            contentRef.current.slice(end)
+        const insertion = insertMarkdownBlocks(
+          contentRef.current,
+          start,
+          end,
+          markers
         )
+        updateContent(insertion.content)
+        sourceSelectionRef.current = {
+          start: insertion.blockEnd,
+          end: insertion.blockEnd,
+        }
       }
 
       try {
