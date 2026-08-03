@@ -279,18 +279,7 @@ export function PostForm({ mode, postId }: PostFormProps) {
               saving={saving || uploadingEditorImages || uploading}
               published={isPublished}
               onSave={savePost}
-              className="flex lg:hidden"
-            />
-          </div>
-        </div>
-
-        <div className="hidden lg:block fixed left-0 right-0 top-26 z-40 pointer-events-none">
-          <div className="container max-w-6xl mx-auto px-4 sm:px-6 flex justify-end">
-            <PostSaveActions
-              saving={saving || uploadingEditorImages || uploading}
-              published={isPublished}
-              onSave={savePost}
-              className="pointer-events-auto rounded-2xl bg-[#fafafa]/90 dark:bg-[#050505]/90 backdrop-blur-sm px-2 py-2 border shadow-sm"
+              className="flex"
             />
           </div>
         </div>

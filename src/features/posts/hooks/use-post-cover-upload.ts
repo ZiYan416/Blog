@@ -21,7 +21,11 @@ export function usePostCoverUpload(
 
       setUploading(true)
       try {
-        const url = await uploadBlogImage(file, { articleSlug, articleTitle })
+        const url = await uploadBlogImage(file, {
+          articleSlug,
+          articleTitle,
+          purpose: "cover",
+        })
         onUploaded(url)
         toast({
           title: "封面上传成功",

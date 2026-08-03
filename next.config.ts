@@ -1,12 +1,8 @@
 import type { NextConfig } from "next";
-
-function getSupabaseHostname() {
-  try {
-    return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || "").hostname;
-  } catch {
-    return "";
-  }
-}
+import {
+  getSupabaseHostname,
+  IMGBED_HOSTNAME,
+} from "./src/lib/image-hosts";
 
 const supabaseHostname = getSupabaseHostname();
 
@@ -43,6 +39,7 @@ const nextConfig: NextConfig = {
     ];
   },
   images: {
+    minimumCacheTTL: 604800,
     remotePatterns: [
       ...(supabaseHostname
         ? [
@@ -56,6 +53,16 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "avatars.githubusercontent.com",
+      },
+      {
+        protocol: "https",
+        hostname: IMGBED_HOSTNAME,
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "**.bing.net",
+        pathname: "/th/id/**",
       },
     ],
   },

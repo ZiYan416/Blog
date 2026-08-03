@@ -30,7 +30,11 @@ export interface Post {
 
 interface PostCardProps {
   post: Post
+  preloadCover?: boolean
 }
+
+const POST_CARD_COVER_SIZES =
+  "(min-width: 1200px) 352px, (min-width: 1024px) calc((100vw - 96px) / 3), (min-width: 768px) calc((100vw - 72px) / 2), 35vw"
 
 function FeaturedToggle({ id, isFeatured }: { id: string, isFeatured: boolean }) {
   const [loading, setLoading] = useState(false)
@@ -82,7 +86,7 @@ function FeaturedToggle({ id, isFeatured }: { id: string, isFeatured: boolean })
   )
 }
 
-export default function PostCard({ post }: PostCardProps) {
+export default function PostCard({ post, preloadCover = false }: PostCardProps) {
   const { isAdmin } = useUser()
   const formattedDate = formatDateString(post.created_at)
   const tags = post.tags || []
@@ -186,7 +190,8 @@ export default function PostCard({ post }: PostCardProps) {
             src={post.cover_image}
             alt={post.title}
             fill
-            sizes="(min-width: 768px) 33vw, 35vw"
+            preload={preloadCover}
+            sizes={POST_CARD_COVER_SIZES}
             className="object-cover transition-transform duration-700 group-hover:scale-110"
           />
         ) : (

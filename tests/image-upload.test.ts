@@ -66,4 +66,30 @@ describe("blog image upload deduplication", () => {
     )
     expect(fetchMock).toHaveBeenCalledTimes(2)
   })
+
+  it("sends the cover purpose without changing existing upload fields", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ url: "https://img.lunalbl.com/cover.webp" }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      })
+    )
+    vi.stubGlobal("fetch", fetchMock)
+    const file = new File(["unique-cover-content"], "cover.png", {
+      type: "image/png",
+    })
+
+    await uploadBlogImage(file, {
+      articleSlug: "media-loading",
+      articleTitle: "媒体加载",
+      purpose: "cover",
+    })
+
+    const request = fetchMock.mock.calls[0][1] as RequestInit
+    const body = request.body as FormData
+    expect(body.get("file")).toBe(file)
+    expect(body.get("articleSlug")).toBe("media-loading")
+    expect(body.get("articleTitle")).toBe("媒体加载")
+    expect(body.get("purpose")).toBe("cover")
+  })
 })

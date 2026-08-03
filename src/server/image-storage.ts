@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
+import sharp from "sharp"
 import type { Database } from "@/lib/types"
 import {
   BLOG_IMAGE_BUCKET,
@@ -25,6 +26,10 @@ const EXTENSION_BY_TYPE: Record<string, string> = {
   "image/avif": "avif",
 }
 const SAFE_FOLDER_SEGMENT = /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$/
+const COVER_MAX_DIMENSION = 3840
+const COVER_WEBP_QUALITY = 82
+
+export type ImageUploadPurpose = "content" | "cover"
 
 interface ImgBedUploadResult {
   src?: string
@@ -116,6 +121,61 @@ export async function validateImageFile(file: File) {
       415,
       "INVALID_IMAGE_CONTENT"
     )
+  }
+}
+
+export function parseImageUploadPurpose(value: FormDataEntryValue | null) {
+  if (value === null || value === "" || value === "content") return "content"
+  if (value === "cover") return "cover"
+
+  throw new ImageStorageError(
+    "图片用途参数无效",
+    400,
+    "INVALID_IMAGE_PURPOSE"
+  )
+}
+
+function getWebpFilename(filename: string) {
+  const basename = filename.replace(/\.[^.]+$/, "").trim() || "cover"
+  return `${basename}.webp`
+}
+
+export async function prepareImageForStorage(
+  file: File,
+  purpose: ImageUploadPurpose
+) {
+  if (purpose !== "cover") return file
+
+  try {
+    const input = Buffer.from(await file.arrayBuffer())
+    const metadata = await sharp(input).metadata()
+
+    // Preserve animation instead of silently flattening it to the first frame.
+    if ((metadata.pages || 1) > 1) return file
+
+    const output = await sharp(input)
+      .rotate()
+      .resize({
+        width: COVER_MAX_DIMENSION,
+        height: COVER_MAX_DIMENSION,
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .webp({
+        quality: COVER_WEBP_QUALITY,
+        smartSubsample: true,
+      })
+      .toBuffer()
+
+    return new File([new Uint8Array(output)], getWebpFilename(file.name), {
+      type: "image/webp",
+      lastModified: file.lastModified,
+    })
+  } catch (error) {
+    console.warn("Cover image optimization failed; uploading original image", {
+      message: error instanceof Error ? error.message : "unknown error",
+    })
+    return file
   }
 }
 
@@ -321,6 +381,7 @@ async function uploadToSupabase(
     const upload = await supabase.storage
       .from(BLOG_IMAGE_BUCKET)
       .upload(filePath, file, {
+        cacheControl: "31536000",
         contentType: file.type,
         upsert: false,
       })
@@ -359,15 +420,23 @@ async function uploadToSupabase(
 export async function storeBlogImage(
   supabase: SupabaseClient<Database>,
   file: File,
-  options: { folder?: string | null; articleSlug?: string | null }
+  options: {
+    folder?: string | null
+    articleSlug?: string | null
+    purpose?: ImageUploadPurpose
+  }
 ): Promise<StoredImage> {
   await validateImageFile(file)
+  const preparedFile = await prepareImageForStorage(
+    file,
+    options.purpose || "content"
+  )
   const folder = buildImageUploadFolder(options)
   const token = process.env.IMGBED_API_TOKEN?.trim()
 
   return token
-    ? uploadToImgBed(file, token, folder)
-    : uploadToSupabase(supabase, file, folder)
+    ? uploadToImgBed(preparedFile, token, folder)
+    : uploadToSupabase(supabase, preparedFile, folder)
 }
 
 async function deleteImgBedAsset(asset: ManagedImageAsset) {
