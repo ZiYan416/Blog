@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Link2 } from "lucide-react"
+import { Link as LinkIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface LinkFaviconProps {
@@ -16,7 +16,7 @@ export function getLinkFaviconUrl(href: string) {
     const url = new URL(href.startsWith("//") ? `https:${href}` : href)
     if (!["http:", "https:"].includes(url.protocol)) return null
 
-    return new URL("/favicon.ico", url.origin).toString()
+    return `https://api.freejk.com/gongju/favicon/?url=${encodeURIComponent(url.origin)}`
   } catch {
     return null
   }
@@ -35,7 +35,9 @@ export function LinkFavicon({ href, className }: LinkFaviconProps) {
       data-copy-exclude="true"
       aria-hidden="true"
     >
-      <Link2 className="link-favicon__fallback" />
+      {faviconUrl && loadedUrl === faviconUrl ? null : (
+        <LinkIcon className="link-favicon__fallback" />
+      )}
       {!failed ? (
         // Favicons are small remote assets with unknown intrinsic dimensions.
         // eslint-disable-next-line @next/next/no-img-element
