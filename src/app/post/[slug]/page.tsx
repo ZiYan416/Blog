@@ -17,6 +17,7 @@ import { getPublicProfile } from '@/server/repositories/profiles'
 import { PostPageBackground } from '@/features/posts/components/post-page-background'
 import { PostListReturnButton } from '@/features/posts/components/post-list-return-button'
 import { getPostPath } from '@/features/posts/post-path'
+import { PostShareButton } from '@/features/posts/components/post-share-button'
 
 import { BackToTop } from '@/components/ui/back-to-top'
 import { GoToComments } from '@/components/ui/go-to-comments'
@@ -124,6 +125,23 @@ export default async function PostPage({
     },
   }
 
+  const sharePostData = {
+    title: post.title,
+    slug: post.slug,
+    public_id: post.public_id,
+    excerpt: post.excerpt,
+    cover_image: post.cover_image,
+    created_at: post.created_at,
+    tags: tags,
+    author: author
+      ? {
+          display_name: author.display_name,
+          avatar_url: author.avatar_url,
+        }
+      : null,
+    url: absoluteSiteUrl(getPostPath(post.public_id)),
+  }
+
   return (
     <div className="relative isolate min-h-screen bg-[#fafafa] pb-8 dark:bg-[#050505] md:pb-24">
       <ViewCounter slug={post.slug} />
@@ -157,6 +175,7 @@ export default async function PostPage({
                 <Eye className="w-3 h-3 md:w-3.5 md:h-3.5" />
                 {post.view_count || 0} 阅读
               </span>
+              <PostShareButton post={sharePostData} />
               {!post.published && (
                 <span className="bg-amber-500/80 backdrop-blur-md px-2 py-1 md:px-3 md:py-1 rounded-full border border-amber-400/50 text-white font-bold uppercase tracking-wider">
                   草稿预览
@@ -298,6 +317,11 @@ export default async function PostPage({
       </div>
       <BackToTop targetId="mobile-toc" />
       <GoToComments />
+      <PostShareButton
+        post={sharePostData}
+        variant="floating"
+        className="fixed bottom-40 right-6 z-50 lg:hidden"
+      />
     </div>
   )
 }
