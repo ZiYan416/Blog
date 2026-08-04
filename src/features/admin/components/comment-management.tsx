@@ -27,6 +27,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { SafeImage } from '@/components/ui/safe-image'
+import { getPostPath } from '@/features/posts/post-path'
 
 interface Comment {
   id: string
@@ -42,7 +43,7 @@ interface Comment {
   post: {
     id: string
     title: string
-    slug: string
+    public_id: number
   }
 }
 
@@ -157,7 +158,7 @@ export function CommentManagement({ initialComments }: CommentManagementProps) {
                 {new Date(comment.created_at).toLocaleString('zh-CN')}
               </div>
               <Link
-                href={`/post/${comment.post.slug}`}
+                href={getPostPath(comment.post.public_id)}
                 className="flex items-center gap-1 hover:text-black dark:hover:text-white transition-colors"
               >
                 <MessageSquare className="w-3 h-3" />

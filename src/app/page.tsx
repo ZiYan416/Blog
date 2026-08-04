@@ -6,6 +6,7 @@ import { HomeHero } from "@/features/home/components/home-hero";
 import type { Metadata } from "next";
 import { getFeaturedPosts } from "@/server/repositories/posts";
 import { Suspense } from "react";
+import { getPostPath } from "@/features/posts/post-path";
 
 export const metadata: Metadata = {
   alternates: {
@@ -40,7 +41,7 @@ async function FeaturedPostsSection() {
               return (
               <Link
                 key={post.id}
-                href={`/post/${post.slug}`}
+                href={getPostPath(post.public_id)}
                 className="group relative block p-5 md:p-8 rounded-2xl md:rounded-3xl bg-white dark:bg-neutral-900 border border-black/[0.03] dark:border-white/[0.03] hover:border-black/10 dark:hover:border-white/10 transition-all duration-500"
               >
                 <div className="flex flex-col h-full">

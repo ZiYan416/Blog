@@ -32,7 +32,7 @@ export default async function CommentsManagementPage() {
     .from('comments')
     .select(`
       *,
-      post:posts(id, title, slug),
+      post:posts(id, title, public_id),
       user:profiles(id, display_name, avatar_url, email)
     `)
     .order('created_at', { ascending: false })

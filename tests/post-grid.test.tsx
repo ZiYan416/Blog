@@ -24,6 +24,7 @@ afterEach(cleanup)
 const posts: Post[] = [
   {
     id: "first",
+    public_id: 100000,
     title: "First",
     slug: "first",
     excerpt: null,
@@ -38,6 +39,7 @@ const posts: Post[] = [
   },
   {
     id: "second",
+    public_id: 100001,
     title: "Second",
     slug: "second",
     excerpt: null,

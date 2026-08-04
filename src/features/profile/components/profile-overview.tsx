@@ -8,6 +8,7 @@ import { type User } from "@supabase/supabase-js";
 import Link from "next/link";
 import type { EditableProfile, ProfileActivity, ProfileStats } from "@/features/profile/model";
 import { SafeImage } from "@/components/ui/safe-image";
+import { getPostPath } from "@/features/posts/post-path";
 
 interface ProfileOverviewProps {
   user: User;
@@ -143,7 +144,7 @@ export function ProfileOverview({ user, profile, stats, recentActivity }: Profil
                                 {/* Right: Article Context */}
                                 {comment.posts && (
                                     <Link
-                                        href={`/post/${comment.posts.slug}`}
+                                        href={getPostPath(comment.posts.public_id)}
                                         className="relative md:w-1/3 border-t md:border-t-0 md:border-l border-black/5 dark:border-white/5 flex flex-col group/article overflow-hidden"
                                     >
                                         {/* Cover Image Background */}

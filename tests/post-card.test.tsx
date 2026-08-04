@@ -18,6 +18,7 @@ afterEach(cleanup)
 
 const post: Post = {
   id: "post",
+  public_id: 100000,
   title: "Responsive cover",
   slug: "responsive-cover",
   excerpt: "excerpt",
@@ -40,5 +41,8 @@ describe("PostCard cover sizing", () => {
     ).toBe(
       "(min-width: 1200px) 352px, (min-width: 1024px) calc((100vw - 96px) / 3), (min-width: 768px) calc((100vw - 72px) / 2), 35vw"
     )
+    expect(
+      screen.getAllByRole("link", { name: post.title })[0].getAttribute("href")
+    ).toBe("/post/100000")
   })
 })
