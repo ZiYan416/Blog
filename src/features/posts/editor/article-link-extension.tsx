@@ -4,6 +4,32 @@ import Link from "@tiptap/extension-link"
 import { MarkView, type MarkViewProps } from "@tiptap/core"
 import { getLinkFaviconUrl } from "@/features/posts/components/link-favicon"
 
+function createFallbackIcon() {
+  const svgNamespace = "http://www.w3.org/2000/svg"
+  const icon = document.createElementNS(svgNamespace, "svg")
+  icon.classList.add("link-favicon__fallback")
+  icon.setAttribute("viewBox", "0 0 24 24")
+  icon.setAttribute("fill", "none")
+  icon.setAttribute("stroke", "currentColor")
+  icon.setAttribute("stroke-width", "2")
+  icon.setAttribute("stroke-linecap", "round")
+  icon.setAttribute("stroke-linejoin", "round")
+
+  const upperLink = document.createElementNS(svgNamespace, "path")
+  upperLink.setAttribute(
+    "d",
+    "M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"
+  )
+  const lowerLink = document.createElementNS(svgNamespace, "path")
+  lowerLink.setAttribute(
+    "d",
+    "M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
+  )
+  icon.append(upperLink, lowerLink)
+
+  return icon
+}
+
 function createFavicon(href: string) {
   const container = document.createElement("span")
   container.className = "link-favicon editor-link__favicon"
@@ -11,16 +37,11 @@ function createFavicon(href: string) {
   container.dataset.copyExclude = "true"
   container.setAttribute("aria-hidden", "true")
 
-  const showFallback = () => {
-    const fallback = document.createElement("span")
-    fallback.className = "link-favicon__fallback"
-    fallback.textContent = "↗"
-    container.replaceChildren(fallback)
-  }
+  const fallback = createFallbackIcon()
+  container.append(fallback)
 
   const faviconUrl = getLinkFaviconUrl(href)
   if (!faviconUrl) {
-    showFallback()
     return container
   }
 
@@ -32,7 +53,16 @@ function createFavicon(href: string) {
   image.decoding = "async"
   image.draggable = false
   image.referrerPolicy = "no-referrer"
-  image.addEventListener("error", showFallback, { once: true })
+  image.dataset.loaded = "false"
+  image.addEventListener(
+    "load",
+    () => {
+      image.dataset.loaded = "true"
+      fallback.remove()
+    },
+    { once: true }
+  )
+  image.addEventListener("error", () => image.remove(), { once: true })
   container.append(image)
 
   return container

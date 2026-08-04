@@ -655,6 +655,7 @@ export default function Editor({
         }
         .ProseMirror .editor-link__favicon {
           display: inline-flex;
+          position: relative;
           width: 0.9em;
           height: 0.9em;
           margin-right: 0.28em;
@@ -669,15 +670,35 @@ export default function Editor({
           display: inline-block;
           width: 100%;
           height: 100%;
+          max-width: none;
           margin: 0;
           object-fit: contain;
           pointer-events: none;
+          box-shadow: none;
+        }
+        .ProseMirror .link-favicon__image {
+          position: absolute;
+          inset: 0;
+          opacity: 0;
+          transition: opacity 0.15s ease;
+        }
+        .ProseMirror .link-favicon__image[data-loaded="true"] {
+          opacity: 1;
+        }
+        .ProseMirror .link-favicon__fallback {
+          color: #7693b5;
+          transform: rotate(-8deg);
         }
         .dark .ProseMirror .editor-link__favicon {
+          opacity: 1;
+        }
+        .dark .ProseMirror .link-favicon__image[data-loaded="true"] {
           border-radius: 0.2em;
           background: rgba(255, 255, 255, 0.92);
           box-shadow: 0 0 0 0.08em rgba(255, 255, 255, 0.92);
-          opacity: 1;
+        }
+        .dark .ProseMirror .link-favicon__fallback {
+          color: #9cb8d8;
         }
 
         /* === Horizontal Rule === */
