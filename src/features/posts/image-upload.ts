@@ -21,8 +21,7 @@ interface UploadImageResponse {
 }
 
 export interface UploadBlogImageOptions {
-  articleSlug?: string
-  articleTitle?: string
+  articlePublicId?: number
   folder?: string
   purpose?: BlogImagePurpose
 }
@@ -115,8 +114,9 @@ async function uploadBlogImageWithoutDeduplication(
 ): Promise<string> {
   const body = new FormData()
   body.append("file", file)
-  if (options.articleSlug) body.append("articleSlug", options.articleSlug)
-  if (options.articleTitle) body.append("articleTitle", options.articleTitle)
+  if (options.articlePublicId !== undefined) {
+    body.append("articlePublicId", String(options.articlePublicId))
+  }
   if (options.folder) body.append("folder", options.folder)
   if (options.purpose) body.append("purpose", options.purpose)
 

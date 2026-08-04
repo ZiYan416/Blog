@@ -7,8 +7,7 @@ import { uploadBlogImage } from "@/features/posts/image-upload"
 
 export function usePostCoverUpload(
   onUploaded: (url: string) => void,
-  articleSlug?: string,
-  articleTitle?: string
+  articlePublicId?: number
 ) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
@@ -22,8 +21,7 @@ export function usePostCoverUpload(
       setUploading(true)
       try {
         const url = await uploadBlogImage(file, {
-          articleSlug,
-          articleTitle,
+          articlePublicId,
           purpose: "cover",
         })
         onUploaded(url)
@@ -42,7 +40,7 @@ export function usePostCoverUpload(
         if (inputRef.current) inputRef.current.value = ""
       }
     },
-    [articleSlug, articleTitle, onUploaded, toast]
+    [articlePublicId, onUploaded, toast]
   )
 
   return { inputRef, uploading, uploadCover }

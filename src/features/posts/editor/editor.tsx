@@ -18,8 +18,7 @@ import { insertMarkdownBlocks } from '@/features/posts/markdown-normalization'
 interface EditorProps {
   content: string
   onChange: (content: string) => void
-  articleSlug?: string
-  articleTitle?: string
+  articlePublicId?: number
   onUploadStateChange?: (uploading: boolean) => void
   placeholder?: string
 }
@@ -27,8 +26,7 @@ interface EditorProps {
 export default function Editor({
   content,
   onChange,
-  articleSlug,
-  articleTitle,
+  articlePublicId,
   onUploadStateChange,
   placeholder = '开始创作吧...',
 }: EditorProps) {
@@ -128,8 +126,7 @@ export default function Editor({
 
       try {
         const results = await uploadBlogImages(files, {
-          articleSlug,
-          articleTitle,
+          articlePublicId,
         })
         const failed = results.filter((result) => !result.url)
 
@@ -187,7 +184,7 @@ export default function Editor({
         setToolbarUploading(false)
       }
     },
-    [articleSlug, articleTitle, tiptapEditor, toast, updateContent, viewMode]
+    [articlePublicId, tiptapEditor, toast, updateContent, viewMode]
   )
 
   const handleAction = (action: MarkdownAction) => {
@@ -286,8 +283,7 @@ export default function Editor({
             content={content}
             onChange={updateContent}
             containerRef={containerRef}
-            articleSlug={articleSlug}
-            articleTitle={articleTitle}
+            articlePublicId={articlePublicId}
             onUploadStateChange={setSourceUploading}
             onAction={handleAction}
           />
@@ -306,8 +302,7 @@ export default function Editor({
               content={content}
               onChange={updateContent}
               onEditorReady={setTiptapEditor}
-              articleSlug={articleSlug}
-              articleTitle={articleTitle}
+              articlePublicId={articlePublicId}
               onUploadStateChange={setRichUploading}
               placeholder={placeholder}
             />

@@ -222,12 +222,14 @@ function getSafeFolderSegments(value: string | null | undefined) {
 }
 
 export function buildImageUploadFolder(
-  options: { folder?: string | null; articleSlug?: string | null },
+  options: { folder?: string | null; articlePublicId?: number | null },
   now = new Date()
 ) {
   const suffix = options.folder?.trim()
     ? getSafeFolderSegments(options.folder)
-    : getSafeFolderSegments(options.articleSlug)
+    : options.articlePublicId === null || options.articlePublicId === undefined
+      ? []
+      : getSafeFolderSegments(String(options.articlePublicId))
 
   return [
     "blog",
@@ -422,7 +424,7 @@ export async function storeBlogImage(
   file: File,
   options: {
     folder?: string | null
-    articleSlug?: string | null
+    articlePublicId?: number | null
     purpose?: ImageUploadPurpose
   }
 ): Promise<StoredImage> {

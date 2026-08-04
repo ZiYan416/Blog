@@ -67,6 +67,7 @@ export function PostForm({ mode, postId }: PostFormProps) {
   const [title, setTitle] = useState("")
   const [slug, setSlug] = useState("")
   const [originalSlug, setOriginalSlug] = useState("")
+  const [articlePublicId, setArticlePublicId] = useState<number>()
   const [coverImage, setCoverImage] = useState("")
   const [content, setContent] = useState("")
   const [isPublished, setIsPublished] = useState(false)
@@ -83,8 +84,7 @@ export function PostForm({ mode, postId }: PostFormProps) {
     uploadCover,
   } = usePostCoverUpload(
     handleCoverUploaded,
-    slug,
-    title
+    articlePublicId
   )
 
   useEffect(() => {
@@ -102,6 +102,7 @@ export function PostForm({ mode, postId }: PostFormProps) {
         if (error) throw error
 
         const post = mapPostTags(data)
+        setArticlePublicId(post.public_id)
         setTitle(post.title)
         setSlug(post.slug)
         setOriginalSlug(post.slug)
@@ -299,8 +300,7 @@ export function PostForm({ mode, postId }: PostFormProps) {
             <Editor
               content={content}
               onChange={setContent}
-              articleSlug={slug}
-              articleTitle={title}
+              articlePublicId={articlePublicId}
               onUploadStateChange={setUploadingEditorImages}
               placeholder={isEditing ? "继续您的创作之旅..." : "开始您的创作之旅..."}
             />

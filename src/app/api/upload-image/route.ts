@@ -9,7 +9,6 @@ import {
   parseImageUploadPurpose,
   storeBlogImage,
 } from "@/server/image-storage"
-import { resolveArticleUploadSlug } from "@/server/slug"
 
 export const runtime = "nodejs"
 
@@ -49,15 +48,21 @@ export async function POST(request: NextRequest) {
     }
 
     const folder = formData.get("folder")
-    const articleSlug = formData.get("articleSlug")
-    const articleTitle = formData.get("articleTitle")
+    const articlePublicIdValue = formData.get("articlePublicId")
+    const articlePublicId =
+      typeof articlePublicIdValue === "string" && /^\d+$/.test(articlePublicIdValue)
+        ? Number(articlePublicIdValue)
+        : null
+    if (
+      articlePublicIdValue !== null &&
+      (!Number.isSafeInteger(articlePublicId) || (articlePublicId ?? 0) < 100000)
+    ) {
+      return apiError("文章数字标识无效", 400, "INVALID_ARTICLE_PUBLIC_ID")
+    }
     const purpose = parseImageUploadPurpose(formData.get("purpose"))
     const stored = await storeBlogImage(supabase, value, {
       folder: typeof folder === "string" ? folder : null,
-      articleSlug: resolveArticleUploadSlug({
-        articleSlug: typeof articleSlug === "string" ? articleSlug : null,
-        articleTitle: typeof articleTitle === "string" ? articleTitle : null,
-      }),
+      articlePublicId,
       purpose,
     })
 

@@ -76,13 +76,19 @@ describe("managed post image assets", () => {
 })
 
 describe("image upload folder", () => {
-  it("builds a blog year/month folder with a safe article slug", () => {
+  it("builds a blog year/month folder with the article public id", () => {
     expect(
       buildImageUploadFolder(
-        { articleSlug: "cloudflare-imgbed" },
+        { articlePublicId: 100015 },
         new Date("2026-07-29T00:00:00Z")
       )
-    ).toBe("blog/2026/07/cloudflare-imgbed")
+    ).toBe("blog/2026/07/100015")
+  })
+
+  it("uses the monthly folder before a new article has a public id", () => {
+    expect(
+      buildImageUploadFolder({}, new Date("2026-07-29T00:00:00Z"))
+    ).toBe("blog/2026/07")
   })
 
   it.each(["../secret", "%252e%252e/secret", "\\absolute", "/absolute"])(

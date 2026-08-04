@@ -80,16 +80,14 @@ describe("blog image upload deduplication", () => {
     })
 
     await uploadBlogImage(file, {
-      articleSlug: "media-loading",
-      articleTitle: "媒体加载",
+      articlePublicId: 100015,
       purpose: "cover",
     })
 
     const request = fetchMock.mock.calls[0][1] as RequestInit
     const body = request.body as FormData
     expect(body.get("file")).toBe(file)
-    expect(body.get("articleSlug")).toBe("media-loading")
-    expect(body.get("articleTitle")).toBe("媒体加载")
+    expect(body.get("articlePublicId")).toBe("100015")
     expect(body.get("purpose")).toBe("cover")
   })
 })

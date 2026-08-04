@@ -5,7 +5,6 @@ vi.mock("server-only", () => ({}))
 
 import {
   generatePostSlug,
-  resolveArticleUploadSlug,
 } from "../src/server/slug"
 
 describe("server slug helpers", () => {
@@ -17,23 +16,6 @@ describe("server slug helpers", () => {
   it("normalizes punctuation and returns an empty slug for unsupported input", () => {
     expect(generatePostSlug("  My_Custom Post  ")).toBe("my-custom-post")
     expect(generatePostSlug("🎉✨")).toBe("")
-  })
-
-  it("prefers an explicit upload slug over the article title", () => {
-    expect(
-      resolveArticleUploadSlug({
-        articleSlug: "custom-folder",
-        articleTitle: "你好",
-      })
-    ).toBe("custom-folder")
-  })
-
-  it("generates an upload slug from the title and keeps the monthly fallback", () => {
-    expect(resolveArticleUploadSlug({ articleTitle: "你好 Next.js" })).toBe(
-      "ni-hao-next-js"
-    )
-    expect(resolveArticleUploadSlug({ articleTitle: "🎉✨" })).toBeNull()
-    expect(resolveArticleUploadSlug({})).toBeNull()
   })
 
   it("keeps pinyin behind the server-only boundary", () => {

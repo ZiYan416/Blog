@@ -50,8 +50,7 @@ interface RichEditorProps {
   content: string
   onChange: (content: string) => void
   onEditorReady: (editor: Editor) => void
-  articleSlug?: string
-  articleTitle?: string
+  articlePublicId?: number
   onUploadStateChange?: (uploading: boolean) => void
   placeholder?: string
   className?: string
@@ -61,8 +60,7 @@ export function RichEditor({
   content,
   onChange,
   onEditorReady,
-  articleSlug,
-  articleTitle,
+  articlePublicId,
   onUploadStateChange,
   placeholder,
   className,
@@ -87,8 +85,7 @@ export function RichEditor({
 
     try {
       const results = await uploadBlogImages(files, {
-        articleSlug,
-        articleTitle,
+        articlePublicId,
       })
       const successful = results.filter(
         (result): result is typeof result & { url: string } =>
