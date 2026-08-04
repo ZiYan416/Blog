@@ -7,6 +7,7 @@ import { POST_LIST_RETURN_STATE_KEY } from '../src/features/posts/post-list-retu
 
 const post = {
   id: 'post-1',
+  public_id: 100000,
   title: '文章',
   slug: 'post-1',
   excerpt: null,

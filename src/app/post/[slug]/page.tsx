@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation'
+import { notFound, permanentRedirect } from 'next/navigation'
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { Calendar, Tag, Eye, Clock, User } from 'lucide-react'
@@ -16,6 +16,7 @@ import { getVisiblePost } from '@/server/repositories/posts'
 import { getPublicProfile } from '@/server/repositories/profiles'
 import { PostPageBackground } from '@/features/posts/components/post-page-background'
 import { PostListReturnButton } from '@/features/posts/components/post-list-return-button'
+import { getPostPath } from '@/features/posts/post-path'
 
 import { BackToTop } from '@/components/ui/back-to-top'
 import { GoToComments } from '@/components/ui/go-to-comments'
@@ -63,12 +64,12 @@ export async function generateMetadata({
     description: post.excerpt || post.title,
     authors: [{ name: siteConfig.name }],
     alternates: {
-      canonical: `/post/${encodeURIComponent(post.slug)}`,
+      canonical: getPostPath(post.public_id),
     },
     openGraph: {
       title: post.title,
       description: post.excerpt || post.title,
-      url: `/post/${encodeURIComponent(post.slug)}`,
+      url: getPostPath(post.public_id),
       type: 'article',
       images: post.cover_image ? [post.cover_image] : undefined,
     },
@@ -90,6 +91,9 @@ export default async function PostPage({
   const decodedSlug = decodeURIComponent(slug)
   const post = await getVisiblePost(decodedSlug)
   if (!post) notFound()
+  if (decodedSlug !== String(post.public_id)) {
+    permanentRedirect(getPostPath(post.public_id))
+  }
 
   const commentsPromise = getComments(post.id)
   const authorPromise = post.author_id
@@ -116,7 +120,7 @@ export default async function PostPage({
     image: post.cover_image || undefined,
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': absoluteSiteUrl(`/post/${encodeURIComponent(post.slug)}`),
+      '@id': absoluteSiteUrl(getPostPath(post.public_id)),
     },
   }
 

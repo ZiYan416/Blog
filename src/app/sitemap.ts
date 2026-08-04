@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { createPublicClient } from "@/lib/supabase/public";
 import { absoluteSiteUrl } from "@/lib/site-config";
+import { getPostPath } from "@/features/posts/post-path";
 
 export const revalidate = 3600;
 
@@ -11,7 +12,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [postsResult, tagsResult] = await Promise.all([
     supabase
       .from("posts")
-      .select("slug, created_at, updated_at")
+      .select("public_id, created_at, updated_at")
       .eq("published", true)
       .order("updated_at", { ascending: false }),
     supabase
@@ -27,7 +28,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   const postEntries: MetadataRoute.Sitemap = (postsResult.data || []).map((post) => ({
-    url: absoluteSiteUrl(`/post/${encodeURIComponent(post.slug)}`),
+    url: absoluteSiteUrl(getPostPath(post.public_id)),
     lastModified: post.updated_at || post.created_at,
     changeFrequency: "monthly",
     priority: 0.8,

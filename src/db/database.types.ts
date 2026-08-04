@@ -62,6 +62,7 @@ export interface Database {
       posts: {
         Row: {
           id: string
+          public_id: number
           title: string
           slug: string
           content: string | null
@@ -78,6 +79,7 @@ export interface Database {
         }
         Insert: {
           id?: string
+          public_id?: never
           title: string
           slug: string
           content?: string | null
@@ -93,6 +95,7 @@ export interface Database {
           view_count?: number
         }
         Update: {
+          public_id?: never
           title?: string
           slug?: string
           content?: string | null

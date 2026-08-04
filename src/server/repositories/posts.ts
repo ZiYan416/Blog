@@ -10,6 +10,7 @@ import {
 import { createPublicClient } from "@/lib/supabase/public"
 import { createClient as createServerClient } from "@/lib/supabase/server"
 import { buildPostSearchFilter } from "@/lib/validation"
+import { parsePostPublicId } from "@/features/posts/post-path"
 
 const CACHE_SECONDS = 300
 
@@ -43,13 +44,18 @@ export async function getVisiblePostCards(limit: number) {
   }
 }
 
-export async function getVisiblePost(slug: string) {
+export async function getVisiblePost(identifier: string) {
   const supabase = await createServerClient()
-  const { data, error } = await supabase
+  const publicId = parsePostPublicId(identifier)
+  let query = supabase
     .from("posts")
     .select(POST_DETAIL_SELECT)
-    .eq("slug", slug)
-    .maybeSingle()
+
+  query = publicId === null
+    ? query.eq("slug", identifier)
+    : query.eq("public_id", publicId)
+
+  const { data, error } = await query.maybeSingle()
 
   if (error) throw error
   return data ? mapPostTagsWithLinks(data) : null

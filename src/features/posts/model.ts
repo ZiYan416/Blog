@@ -1,10 +1,10 @@
 import type { Database } from "@/db/database.types"
 
 export const POST_CARD_SELECT =
-  "id, title, slug, excerpt, cover_image, published, featured, created_at, updated_at, category, view_count, author_id, post_tags(tag:tags(name, slug))" as const
+  "id, public_id, title, slug, excerpt, cover_image, published, featured, created_at, updated_at, category, view_count, author_id, post_tags(tag:tags(name, slug))" as const
 
 export const POST_DETAIL_SELECT =
-  "id, title, slug, content, excerpt, cover_image, published, featured, created_at, updated_at, category, view_count, author_id, post_tags(tag:tags(name, slug))" as const
+  "id, public_id, title, slug, content, excerpt, cover_image, published, featured, created_at, updated_at, category, view_count, author_id, post_tags(tag:tags(name, slug))" as const
 
 export interface PostTagRelation {
   tag: {

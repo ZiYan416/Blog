@@ -12,9 +12,11 @@ import { useState } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import { getErrorMessage } from '@/lib/errors'
 import { SafeImage } from '@/components/ui/safe-image'
+import { getPostPath } from '@/features/posts/post-path'
 
 export interface Post {
   id: string
+  public_id: number
   title: string
   slug: string
   excerpt: string | null
@@ -191,7 +193,7 @@ export default function PostCard({ post, preloadCover = false, onPostDeleted }: 
 
       {/* Image Section - Mobile: Right side (w-1/3), Desktop: Top (w-full) */}
       <Link
-        href={`/post/${post.slug || post.id}`}
+        href={getPostPath(post.public_id)}
         className="block relative w-[35%] md:w-full md:aspect-[16/10] shrink-0 order-last md:order-first border-l md:border-l-0 md:border-b border-black/5 dark:border-white/5"
       >
         {post.cover_image ? (
@@ -227,7 +229,7 @@ export default function PostCard({ post, preloadCover = false, onPostDeleted }: 
             </span>
           </div>
 
-          <Link href={`/post/${post.slug || post.id}`} className="group/title inline-block w-full" title={post.title}>
+          <Link href={getPostPath(post.public_id)} className="group/title inline-block w-full" title={post.title}>
             <h3 className="text-base md:text-2xl font-bold leading-snug md:leading-tight mb-2 md:mb-4 group-hover/title:text-neutral-600 dark:group-hover/title:text-neutral-400 transition-colors line-clamp-1 md:line-clamp-2">
               {post.title}
               <ArrowUpRight className="hidden md:inline-block w-5 h-5 opacity-0 -translate-y-1 translate-x-1 group-hover/title:opacity-100 group-hover/title:translate-y-0 group-hover/title:translate-x-0 transition-all duration-300 ml-1 align-text-top" />
@@ -266,7 +268,7 @@ export default function PostCard({ post, preloadCover = false, onPostDeleted }: 
           </div>
 
           <Link
-            href={`/post/${post.slug || post.id}`}
+            href={getPostPath(post.public_id)}
             className="text-[11px] font-bold uppercase tracking-widest hover:underline underline-offset-4 hidden md:inline-block"
           >
             Read More

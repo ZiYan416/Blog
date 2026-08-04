@@ -53,6 +53,7 @@ ALTER TABLE public.profiles
 
 CREATE TABLE IF NOT EXISTS public.posts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  public_id INTEGER GENERATED ALWAYS AS IDENTITY (START WITH 100000),
   title TEXT NOT NULL,
   slug TEXT NOT NULL UNIQUE,
   content TEXT NOT NULL,
@@ -69,6 +70,7 @@ CREATE TABLE IF NOT EXISTS public.posts (
 );
 
 ALTER TABLE public.posts
+  ADD COLUMN IF NOT EXISTS public_id INTEGER,
   ADD COLUMN IF NOT EXISTS title TEXT,
   ADD COLUMN IF NOT EXISTS slug TEXT,
   ADD COLUMN IF NOT EXISTS content TEXT,
@@ -82,6 +84,79 @@ ALTER TABLE public.posts
   ADD COLUMN IF NOT EXISTS author_id UUID,
   ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW(),
   ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+
+WITH public_id_base AS (
+  SELECT COALESCE(MAX(public_id), 99999) AS value
+  FROM public.posts
+),
+numbered_posts AS (
+  SELECT
+    post.id,
+    (public_id_base.value + ROW_NUMBER() OVER (
+      ORDER BY post.created_at, post.id
+    ))::INTEGER AS public_id
+  FROM public.posts AS post
+  CROSS JOIN public_id_base
+  WHERE post.public_id IS NULL
+)
+UPDATE public.posts AS post
+SET public_id = numbered_posts.public_id
+FROM numbered_posts
+WHERE post.id = numbered_posts.id;
+
+ALTER TABLE public.posts
+  ALTER COLUMN public_id SET NOT NULL;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_attribute
+    WHERE attrelid = 'public.posts'::regclass
+      AND attname = 'public_id'
+      AND attidentity <> ''
+      AND NOT attisdropped
+  ) THEN
+    ALTER TABLE public.posts
+      ALTER COLUMN public_id ADD GENERATED ALWAYS AS IDENTITY (START WITH 100000);
+  END IF;
+END;
+$$;
+
+SELECT setval(
+  pg_get_serial_sequence('public.posts', 'public_id'),
+  COALESCE(MAX(public_id), 99999),
+  true
+)
+FROM public.posts;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conrelid = 'public.posts'::regclass
+      AND conname = 'posts_public_id_key'
+  ) THEN
+    ALTER TABLE public.posts
+      ADD CONSTRAINT posts_public_id_key UNIQUE (public_id);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conrelid = 'public.posts'::regclass
+      AND conname = 'posts_public_id_six_digits_check'
+  ) THEN
+    ALTER TABLE public.posts
+      ADD CONSTRAINT posts_public_id_six_digits_check
+      CHECK (public_id >= 100000);
+  END IF;
+END;
+$$;
+
+COMMENT ON COLUMN public.posts.public_id IS
+  'Stable public article number used as the canonical URL identifier.';
 
 UPDATE public.posts
 SET published_at = created_at

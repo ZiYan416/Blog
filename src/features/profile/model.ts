@@ -22,7 +22,7 @@ export interface ProfileActivity {
   created_at: string
   posts: {
     title: string
-    slug: string
+    public_id: number
     cover_image: string | null
     excerpt: string | null
   } | null

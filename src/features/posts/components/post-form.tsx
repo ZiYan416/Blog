@@ -16,7 +16,6 @@ import {
   Loader2,
   Save,
   Send,
-  Type,
   Upload,
   X,
 } from "lucide-react"
@@ -295,18 +294,6 @@ export function PostForm({ mode, postId }: PostFormProps) {
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
               />
-              <div className="flex items-center gap-1.5 text-xs sm:text-sm text-neutral-500">
-                <Type className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
-                <span className="whitespace-nowrap">链接别名:</span>
-                <input
-                  type="text"
-                  aria-label="文章链接别名"
-                  placeholder="my-first-post"
-                  className="flex-1 bg-transparent border-none outline-none min-w-0"
-                  value={slug}
-                  onChange={(event) => setSlug(event.target.value)}
-                />
-              </div>
             </div>
 
             <Editor

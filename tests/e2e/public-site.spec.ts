@@ -155,9 +155,10 @@ test("about page presents the profile and sites within one viewport", async ({
   await expect(page.getByTestId("about-video-buffer")).toHaveCount(0)
 })
 
-test("first visit shows a global data saver notice on metered connections", async ({
+test("first visit shows a global data saver notice on mobile cellular connections", async ({
   page,
-}) => {
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile-chromium")
   await page.addInitScript(() => {
     Object.defineProperty(navigator, "connection", {
       configurable: true,
@@ -170,7 +171,7 @@ test("first visit shows a global data saver notice on metered connections", asyn
       },
     })
   })
-  await page.goto("/post")
+  await page.goto("/privacy")
 
   await expect(page.getByRole("status", { name: "节流模式提示" })).toBeVisible()
   await expect(page.getByText("当前网络可能按流量计费，背景视频已暂停。")).toBeVisible()
@@ -179,6 +180,26 @@ test("first visit shows a global data saver notice on metered connections", asyn
   await expect(page.getByRole("status", { name: "节流模式提示" })).toHaveCount(0)
   await page.goto("/about")
   await expect(page.getByTestId("about-video")).toHaveCount(1)
+})
+
+test("desktop does not show a data saver notice even when connection is cellular", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "chromium")
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "connection", {
+      configurable: true,
+      value: {
+        effectiveType: "4g",
+        saveData: true,
+        type: "cellular",
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+      },
+    })
+  })
+  await page.goto("/privacy")
+  await expect(page.getByRole("status", { name: "节流模式提示" })).toHaveCount(0)
 })
 
 test("about page keeps the fish poster when the video request fails", async ({
@@ -210,13 +231,11 @@ test("published article detail pages render without server errors", async ({
   const listResponse = await request.get("/api/posts?page=1&limit=50&sort=latest")
   expect(listResponse.ok()).toBe(true)
   const { posts } = (await listResponse.json()) as {
-    posts: Array<{ slug: string; title: string }>
+    posts: Array<{ public_id: number; title: string }>
   }
 
   for (const post of posts) {
-    const response = await page.goto(
-      `/post/${encodeURIComponent(post.slug)}`
-    )
+    const response = await page.goto(`/post/${post.public_id}`)
     expect(response?.status(), post.title).toBeLessThan(500)
     await expect(
       page.locator("[data-post-hero]:visible"),

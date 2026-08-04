@@ -45,7 +45,7 @@ export default async function ProfilePage() {
   // 3. Get Recent Activity (Comments)
   const { data: recentComments } = await supabase
     .from('comments')
-    .select('*, posts(title, slug, cover_image, excerpt)')
+    .select('*, posts(title, public_id, cover_image, excerpt)')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
     .limit(5)
