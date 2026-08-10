@@ -30,6 +30,39 @@ export const postPayloadSchema = z
   })
   .strict();
 
+export const postAutosaveSnapshotSchema = z
+  .object({
+    title: z.string().max(200, "标题不能超过 200 个字符"),
+    slug: z.string().max(200, "链接别名不能超过 200 个字符"),
+    content: z.string().max(2_000_000, "文章内容过长"),
+    coverImage: z.string().max(2_048, "封面地址过长"),
+    tags: z
+      .array(z.string().trim().min(1).max(50))
+      .max(20, "单篇文章最多使用 20 个标签")
+      .transform((tags) => [...new Set(tags)]),
+  })
+  .strict();
+
+export const postAutosaveRequestSchema = z
+  .object({
+    draftId: z.uuid(),
+    postId: z.uuid().nullable(),
+    basePostUpdatedAt: z.string().datetime({ offset: true }).nullable(),
+    expectedVersion: z.number().int().min(1).nullable(),
+    snapshot: postAutosaveSnapshotSchema,
+  })
+  .strict()
+  .refine(
+    ({ postId, basePostUpdatedAt }) =>
+      postId === null
+        ? basePostUpdatedAt === null
+        : basePostUpdatedAt !== null,
+    {
+      message: "文章与版本基准不匹配",
+      path: ["basePostUpdatedAt"],
+    }
+  );
+
 export const postListQuerySchema = z.object({
   page: z.coerce.number().int().min(1).max(10_000).default(1),
   limit: z.coerce.number().int().min(1).max(50).default(9),

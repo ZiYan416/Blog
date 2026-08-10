@@ -1,6 +1,6 @@
 <h1 align="center">
   <img src="./public/logo.svg" width="80" alt="Logo" /><br/>
-  Blog
+  Jay's Blog
 </h1>
 
 <div align="center">

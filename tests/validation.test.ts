@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildPostSearchFilter,
   commentSubmissionSchema,
+  postAutosaveRequestSchema,
   postListQuerySchema,
   postPayloadSchema,
 } from "../src/lib/validation";
@@ -32,6 +33,50 @@ describe("postPayloadSchema", () => {
         is_admin: true,
       })
     ).toThrow();
+  });
+});
+
+describe("postAutosaveRequestSchema", () => {
+  const snapshot = {
+    title: "未完成文章",
+    slug: "draft",
+    content: "正文",
+    coverImage: "",
+    tags: ["Next.js", "Next.js"],
+  };
+
+  it("accepts an idempotent new-post autosave and normalizes tags", () => {
+    const result = postAutosaveRequestSchema.parse({
+      draftId: "11111111-1111-4111-8111-111111111111",
+      postId: null,
+      basePostUpdatedAt: null,
+      expectedVersion: null,
+      snapshot,
+    });
+
+    expect(result.snapshot.tags).toEqual(["Next.js"]);
+  });
+
+  it("requires a matching base version for the selected post", () => {
+    expect(() =>
+      postAutosaveRequestSchema.parse({
+        draftId: "11111111-1111-4111-8111-111111111111",
+        postId: "22222222-2222-4222-8222-222222222222",
+        basePostUpdatedAt: null,
+        expectedVersion: null,
+        snapshot,
+      })
+    ).toThrow("文章与版本基准不匹配");
+
+    expect(() =>
+      postAutosaveRequestSchema.parse({
+        draftId: "11111111-1111-4111-8111-111111111111",
+        postId: null,
+        basePostUpdatedAt: "2026-08-10T12:00:00.000Z",
+        expectedVersion: null,
+        snapshot,
+      })
+    ).toThrow("文章与版本基准不匹配");
   });
 });
 

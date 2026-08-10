@@ -13,6 +13,7 @@ import {
   PanelsTopLeft,
 } from "lucide-react";
 import { useDataSaver } from "@/features/settings/hooks/use-data-saver";
+import { siteConfig } from "@/lib/site-config";
 
 const VIDEO_URL = "/videos/about/aquarium-loop-v1.mp4";
 const POSTER_URL = "/videos/about/aquarium-poster-v1.jpg";
@@ -20,7 +21,7 @@ const POSTER_URL = "/videos/about/aquarium-poster-v1.jpg";
 const destinations = [
   {
     href: "https://lunalbl.com",
-    label: "Blog",
+    label: siteConfig.name,
     detail: "文字与生活",
     icon: Globe2,
   },

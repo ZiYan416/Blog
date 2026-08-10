@@ -168,6 +168,64 @@ SET published_at = NULL
 WHERE published = false
   AND published_at IS NOT NULL;
 
+CREATE TABLE IF NOT EXISTS public.post_autosaves (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  author_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  post_id UUID REFERENCES public.posts(id) ON DELETE CASCADE,
+  title TEXT NOT NULL DEFAULT '',
+  slug TEXT,
+  content TEXT NOT NULL DEFAULT '',
+  cover_image TEXT,
+  tags TEXT[] NOT NULL DEFAULT '{}',
+  base_post_updated_at TIMESTAMPTZ,
+  version BIGINT NOT NULL DEFAULT 1,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT post_autosaves_post_base_updated_at_check
+    CHECK (post_id IS NULL OR base_post_updated_at IS NOT NULL),
+  CONSTRAINT post_autosaves_version_check
+    CHECK (version >= 1)
+);
+
+ALTER TABLE public.post_autosaves
+  ADD COLUMN IF NOT EXISTS author_id UUID,
+  ADD COLUMN IF NOT EXISTS post_id UUID,
+  ADD COLUMN IF NOT EXISTS title TEXT,
+  ADD COLUMN IF NOT EXISTS slug TEXT,
+  ADD COLUMN IF NOT EXISTS content TEXT,
+  ADD COLUMN IF NOT EXISTS cover_image TEXT,
+  ADD COLUMN IF NOT EXISTS tags TEXT[],
+  ADD COLUMN IF NOT EXISTS base_post_updated_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS version BIGINT,
+  ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conrelid = 'public.post_autosaves'::regclass
+      AND conname = 'post_autosaves_post_base_updated_at_check'
+  ) THEN
+    ALTER TABLE public.post_autosaves
+      ADD CONSTRAINT post_autosaves_post_base_updated_at_check
+      CHECK (post_id IS NULL OR base_post_updated_at IS NOT NULL);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conrelid = 'public.post_autosaves'::regclass
+      AND conname = 'post_autosaves_version_check'
+  ) THEN
+    ALTER TABLE public.post_autosaves
+      ADD CONSTRAINT post_autosaves_version_check
+      CHECK (version >= 1);
+  END IF;
+END;
+$$;
+
 CREATE TABLE IF NOT EXISTS public.tags (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL UNIQUE,
@@ -248,6 +306,7 @@ ALTER TABLE public.stats_snapshots
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.posts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.post_autosaves ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tags ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.post_tags ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.comments ENABLE ROW LEVEL SECURITY;
@@ -558,6 +617,47 @@ CREATE POLICY "Admins can delete posts"
 REVOKE ALL ON public.posts FROM anon, authenticated;
 GRANT SELECT ON public.posts TO anon, authenticated;
 GRANT INSERT, UPDATE, DELETE ON public.posts TO authenticated;
+
+DROP POLICY IF EXISTS "Admins can view own post autosaves"
+  ON public.post_autosaves;
+DROP POLICY IF EXISTS "Admins can insert own post autosaves"
+  ON public.post_autosaves;
+DROP POLICY IF EXISTS "Admins can update own post autosaves"
+  ON public.post_autosaves;
+DROP POLICY IF EXISTS "Admins can delete own post autosaves"
+  ON public.post_autosaves;
+
+CREATE POLICY "Admins can view own post autosaves"
+  ON public.post_autosaves FOR SELECT TO authenticated
+  USING (
+    (SELECT auth.uid()) = author_id
+    AND (SELECT public.is_current_user_admin())
+  );
+CREATE POLICY "Admins can insert own post autosaves"
+  ON public.post_autosaves FOR INSERT TO authenticated
+  WITH CHECK (
+    (SELECT auth.uid()) = author_id
+    AND (SELECT public.is_current_user_admin())
+  );
+CREATE POLICY "Admins can update own post autosaves"
+  ON public.post_autosaves FOR UPDATE TO authenticated
+  USING (
+    (SELECT auth.uid()) = author_id
+    AND (SELECT public.is_current_user_admin())
+  )
+  WITH CHECK (
+    (SELECT auth.uid()) = author_id
+    AND (SELECT public.is_current_user_admin())
+  );
+CREATE POLICY "Admins can delete own post autosaves"
+  ON public.post_autosaves FOR DELETE TO authenticated
+  USING (
+    (SELECT auth.uid()) = author_id
+    AND (SELECT public.is_current_user_admin())
+  );
+
+REVOKE ALL ON public.post_autosaves FROM PUBLIC, anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.post_autosaves TO authenticated;
 
 DROP POLICY IF EXISTS "Admins can insert tags" ON public.tags;
 DROP POLICY IF EXISTS "Admins can update tags" ON public.tags;
@@ -1218,6 +1318,12 @@ CREATE TRIGGER set_posts_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION public.update_updated_at_column();
 
+DROP TRIGGER IF EXISTS set_post_autosaves_updated_at ON public.post_autosaves;
+CREATE TRIGGER set_post_autosaves_updated_at
+  BEFORE UPDATE ON public.post_autosaves
+  FOR EACH ROW
+  EXECUTE FUNCTION public.update_updated_at_column();
+
 DROP TRIGGER IF EXISTS set_comments_updated_at ON public.comments;
 CREATE TRIGGER set_comments_updated_at
   BEFORE UPDATE ON public.comments
@@ -1471,6 +1577,20 @@ CREATE INDEX IF NOT EXISTS idx_posts_published_at
   ON public.posts (published_at DESC)
   WHERE published = true;
 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_post_autosaves_author_post
+  ON public.post_autosaves (author_id, post_id)
+  WHERE post_id IS NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_post_autosaves_author_new
+  ON public.post_autosaves (author_id)
+  WHERE post_id IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_post_autosaves_post_id
+  ON public.post_autosaves (post_id);
+
+CREATE INDEX IF NOT EXISTS idx_post_autosaves_author_updated_at
+  ON public.post_autosaves (author_id, updated_at DESC);
+
 -- ============================================================================
 -- 10. Daily analytics schedule
 -- ============================================================================
@@ -1505,6 +1625,8 @@ COMMENT ON TABLE public.public_profiles IS
   'Read-only public projection of non-sensitive profile fields.';
 COMMENT ON TABLE public.posts IS
   'Blog posts with publication state and transitional JSON tag names.';
+COMMENT ON TABLE public.post_autosaves IS
+  'Private administrator autosaves kept separate from published post content.';
 COMMENT ON TABLE public.tags IS
   'Canonical tag definitions with derived published-post counts.';
 COMMENT ON TABLE public.post_tags IS
@@ -1519,6 +1641,7 @@ GRANT ALL ON TABLE
   public.profiles,
   public.public_profiles,
   public.posts,
+  public.post_autosaves,
   public.tags,
   public.post_tags,
   public.comments,

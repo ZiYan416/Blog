@@ -120,6 +120,66 @@ export interface Database {
           },
         ]
       }
+      post_autosaves: {
+        Row: {
+          id: string
+          author_id: string
+          post_id: string | null
+          title: string
+          slug: string | null
+          content: string
+          cover_image: string | null
+          tags: string[]
+          base_post_updated_at: string | null
+          version: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          author_id: string
+          post_id?: string | null
+          title?: string
+          slug?: string | null
+          content?: string
+          cover_image?: string | null
+          tags?: string[]
+          base_post_updated_at?: string | null
+          version?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          author_id?: string
+          post_id?: string | null
+          title?: string
+          slug?: string | null
+          content?: string
+          cover_image?: string | null
+          tags?: string[]
+          base_post_updated_at?: string | null
+          version?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_autosaves_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_autosaves_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tags: {
         Row: {
           id: string
@@ -361,5 +421,6 @@ export interface Database {
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"]
 export type PublicProfile = Database["public"]["Views"]["public_profiles"]["Row"]
 export type Post = Database["public"]["Tables"]["posts"]["Row"]
+export type PostAutosave = Database["public"]["Tables"]["post_autosaves"]["Row"]
 export type Tag = Database["public"]["Tables"]["tags"]["Row"]
 export type CommentRow = Database["public"]["Tables"]["comments"]["Row"]

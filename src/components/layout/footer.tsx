@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/ui/logo";
+import { siteConfig } from "@/lib/site-config";
 
 export function Footer() {
   return (
@@ -9,7 +10,7 @@ export function Footer() {
           <div className="flex items-center gap-2.5">
             <Logo size="xs" className="opacity-50 grayscale" />
             <span className="text-sm font-medium text-neutral-500">
-              <span className="font-serif italic mr-1">Blog</span>
+              <span className="font-serif italic mr-1">{siteConfig.name}</span>
               © 2026
             </span>
           </div>

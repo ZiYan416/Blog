@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react"
@@ -11,6 +12,10 @@ import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
 import {
   ArrowLeft,
+  AlertTriangle,
+  CheckCircle2,
+  Cloud,
+  CloudOff,
   Eye,
   Image as ImageIcon,
   Loader2,
@@ -39,6 +44,12 @@ import {
 } from "@/features/posts/model"
 import { usePostTags } from "@/features/posts/hooks/use-post-tags"
 import { usePostCoverUpload } from "@/features/posts/hooks/use-post-cover-upload"
+import {
+  usePostAutosave,
+  type PostAutosaveRecovery,
+  type PostAutosaveStatus,
+} from "@/features/posts/hooks/use-post-autosave"
+import type { PostAutosaveSnapshot } from "@/features/posts/autosave-model"
 
 const PostPreviewModal = dynamic(
   () =>
@@ -57,6 +68,14 @@ interface PostFormProps {
   postId?: string
 }
 
+const EMPTY_AUTOSAVE_SNAPSHOT: PostAutosaveSnapshot = {
+  title: "",
+  slug: "",
+  content: "",
+  coverImage: "",
+  tags: [],
+}
+
 export function PostForm({ mode, postId }: PostFormProps) {
   const router = useRouter()
   const { toast } = useToast()
@@ -72,6 +91,10 @@ export function PostForm({ mode, postId }: PostFormProps) {
   const [content, setContent] = useState("")
   const [isPublished, setIsPublished] = useState(false)
   const [tags, setTags] = useState<string[]>([])
+  const [basePostUpdatedAt, setBasePostUpdatedAt] = useState<string | null>(null)
+  const [initialSnapshot, setInitialSnapshot] =
+    useState<PostAutosaveSnapshot>(EMPTY_AUTOSAVE_SNAPSHOT)
+  const [editorReady, setEditorReady] = useState(!isEditing)
   const [previewOpen, setPreviewOpen] = useState(false)
   const markdownInputRef = useRef<HTMLInputElement>(null)
   const { availableTags, loadingTags, refreshTags } = usePostTags()
@@ -86,6 +109,30 @@ export function PostForm({ mode, postId }: PostFormProps) {
     handleCoverUploaded,
     articlePublicId
   )
+
+  const autosaveSnapshot = useMemo<PostAutosaveSnapshot>(
+    () => ({ title, slug, content, coverImage, tags }),
+    [content, coverImage, slug, tags, title],
+  )
+  const applyAutosaveSnapshot = useCallback(
+    (snapshot: PostAutosaveSnapshot) => {
+      setTitle(snapshot.title)
+      setSlug(snapshot.slug)
+      setContent(snapshot.content)
+      setCoverImage(snapshot.coverImage)
+      setTags(snapshot.tags)
+    },
+    [],
+  )
+  const autosave = usePostAutosave({
+    enabled: editorReady,
+    postId: postId || null,
+    basePostUpdatedAt,
+    initialSnapshot,
+    snapshot: autosaveSnapshot,
+    paused: saving || uploadingEditorImages || uploading,
+    onRecover: applyAutosaveSnapshot,
+  })
 
   useEffect(() => {
     if (!isEditing || !postId) return
@@ -102,14 +149,24 @@ export function PostForm({ mode, postId }: PostFormProps) {
         if (error) throw error
 
         const post = mapPostTags(data)
+        const loadedSnapshot: PostAutosaveSnapshot = {
+          title: post.title,
+          slug: post.slug,
+          content: post.content || "",
+          coverImage: post.cover_image || "",
+          tags: post.tags,
+        }
         setArticlePublicId(post.public_id)
-        setTitle(post.title)
-        setSlug(post.slug)
+        setTitle(loadedSnapshot.title)
+        setSlug(loadedSnapshot.slug)
         setOriginalSlug(post.slug)
-        setCoverImage(post.cover_image || "")
-        setContent(post.content || "")
+        setCoverImage(loadedSnapshot.coverImage)
+        setContent(loadedSnapshot.content)
         setIsPublished(post.published)
-        setTags(post.tags)
+        setTags(loadedSnapshot.tags)
+        setBasePostUpdatedAt(post.updated_at)
+        setInitialSnapshot(loadedSnapshot)
+        setEditorReady(true)
       } catch (error) {
         toast({
           title: "加载文章失败",
@@ -144,6 +201,15 @@ export function PostForm({ mode, postId }: PostFormProps) {
 
   const savePost = useCallback(
     async (published: boolean) => {
+      if (autosave.recovery) {
+        toast({
+          title: "请先处理自动保存内容",
+          description: "恢复或丢弃较新的草稿后，才能继续保存与发布。",
+          variant: "warning",
+        })
+        return
+      }
+
       if (!title.trim()) {
         toast({ title: "标题不能为空", variant: "destructive" })
         return
@@ -180,13 +246,17 @@ export function PostForm({ mode, postId }: PostFormProps) {
           )
         }
 
+        const autosaveCleared = await autosave.clearAutosave()
         toast({
           title: published
             ? isEditing
               ? "文章已更新"
               : "发布成功"
             : "草稿已保存",
-          description: "文章已同步到云端。",
+          description: autosaveCleared
+            ? "文章已同步到云端。"
+            : "文章已同步，但旧的自动保存副本清理失败。",
+          variant: autosaveCleared ? "default" : "warning",
         })
         router.push("/post")
         router.refresh()
@@ -202,6 +272,7 @@ export function PostForm({ mode, postId }: PostFormProps) {
     },
     [
       availableTags,
+      autosave,
       content,
       coverImage,
       isEditing,
@@ -275,14 +346,34 @@ export function PostForm({ mode, postId }: PostFormProps) {
               </Button>
             </div>
 
-            <PostSaveActions
-              saving={saving || uploadingEditorImages || uploading}
-              published={isPublished}
-              onSave={savePost}
-              className="flex"
-            />
+            <div className="flex flex-col items-start gap-2 sm:items-end">
+              <PostSaveActions
+                saving={
+                  saving ||
+                  uploadingEditorImages ||
+                  uploading ||
+                  Boolean(autosave.recovery)
+                }
+                published={isPublished}
+                onSave={savePost}
+                className="flex"
+              />
+              <PostAutosaveIndicator
+                status={autosave.status}
+                savedAt={autosave.savedAt}
+              />
+            </div>
           </div>
         </div>
+
+        {autosave.recovery ? (
+          <PostAutosaveRecoveryBanner
+            recovery={autosave.recovery}
+            onRestore={autosave.restoreRecovery}
+            onDiscard={() => void autosave.discardRecovery()}
+            onKeepCurrent={autosave.keepCurrentAfterConflict}
+          />
+        ) : null}
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 md:gap-8 items-start">
           <div className="flex flex-col gap-4 md:gap-6">
@@ -414,6 +505,149 @@ export function PostForm({ mode, postId }: PostFormProps) {
         hideOnDesktop={false}
         positionClassName="lg:right-[24rem] xl:right-[calc((100vw-72rem)/2+23rem)]"
       />
+    </div>
+  )
+}
+
+function PostAutosaveIndicator({
+  status,
+  savedAt,
+}: {
+  status: PostAutosaveStatus
+  savedAt: string | null
+}) {
+  const time = savedAt
+    ? new Date(savedAt).toLocaleTimeString("zh-CN", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : null
+  const states: Record<
+    PostAutosaveStatus,
+    { label: string; icon: typeof Cloud; className: string }
+  > = {
+    loading: {
+      label: "正在检查自动保存…",
+      icon: Loader2,
+      className: "animate-spin",
+    },
+    idle: { label: "自动保存已就绪", icon: Cloud, className: "" },
+    unsaved: { label: "有未保存更改", icon: Cloud, className: "" },
+    "saving-local": {
+      label: "正在保存到本机…",
+      icon: Loader2,
+      className: "animate-spin",
+    },
+    "saved-local": {
+      label: time ? `已于 ${time} 保存到本机` : "已保存到本机",
+      icon: CheckCircle2,
+      className: "",
+    },
+    "saving-cloud": {
+      label: "正在同步云端…",
+      icon: Loader2,
+      className: "animate-spin",
+    },
+    "saved-cloud": {
+      label: time ? `已于 ${time} 同步云端` : "已同步云端",
+      icon: CheckCircle2,
+      className: "text-emerald-600 dark:text-emerald-400",
+    },
+    offline: {
+      label: "网络不可用，内容已保留在本机",
+      icon: CloudOff,
+      className: "text-amber-600 dark:text-amber-400",
+    },
+    conflict: {
+      label: "发现需要处理的版本冲突",
+      icon: AlertTriangle,
+      className: "text-amber-600 dark:text-amber-400",
+    },
+    error: {
+      label: "自动保存失败，离开前请手动保存",
+      icon: AlertTriangle,
+      className: "text-red-600 dark:text-red-400",
+    },
+  }
+  const state = states[status]
+  const Icon = state.icon
+  const textClassName = state.className === "animate-spin" ? "" : state.className
+
+  return (
+    <div
+      className={`flex items-center gap-1.5 px-1 text-xs text-neutral-500 ${textClassName}`}
+      role="status"
+      aria-live="polite"
+    >
+      <Icon className={`h-3.5 w-3.5 ${state.className}`} aria-hidden="true" />
+      <span>{state.label}</span>
+    </div>
+  )
+}
+
+function PostAutosaveRecoveryBanner({
+  recovery,
+  onRestore,
+  onDiscard,
+  onKeepCurrent,
+}: {
+  recovery: PostAutosaveRecovery
+  onRestore: () => void
+  onDiscard: () => void
+  onKeepCurrent: () => void
+}) {
+  const isTabConflict = recovery.conflictCode === "AUTOSAVE_CONFLICT"
+  const isPostConflict = recovery.conflictCode === "POST_VERSION_CONFLICT"
+
+  return (
+    <div
+      className="mb-6 flex flex-col gap-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-950 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-100 sm:flex-row sm:items-center sm:justify-between"
+      role="alert"
+    >
+      <div className="flex min-w-0 gap-3">
+        <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+        <div>
+          <p className="font-semibold">
+            {isPostConflict
+              ? "文章已在其他位置更新"
+              : isTabConflict
+                ? "另一个标签页保存了新版本"
+                : "发现比当前页面更新的自动保存内容"}
+          </p>
+          <p className="mt-1 text-sm opacity-80">
+            {isPostConflict
+              ? "请重新加载文章，基于最新线上版本继续编辑。"
+              : isTabConflict
+                ? "请选择载入另一标签页的版本，或保留当前内容并在下一次同步时覆盖工作副本。"
+                : "自动保存内容尚未写入正式文章；恢复后可以继续编辑，丢弃则保留当前页面内容。"}
+          </p>
+        </div>
+      </div>
+      <div className="flex shrink-0 flex-wrap gap-2">
+        {isPostConflict ? (
+          <Button type="button" size="sm" onClick={() => window.location.reload()}>
+            重新加载
+          </Button>
+        ) : isTabConflict ? (
+          <>
+            <Button type="button" size="sm" variant="outline" onClick={onKeepCurrent}>
+              保留当前内容
+            </Button>
+            <Button type="button" size="sm" onClick={onRestore}>
+              载入新版本
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button type="button" size="sm" variant="outline" onClick={onDiscard}>
+              丢弃自动保存
+            </Button>
+            <Button type="button" size="sm" onClick={onRestore}>
+              恢复内容
+            </Button>
+          </>
+        )}
+      </div>
     </div>
   )
 }

@@ -11,7 +11,7 @@ function resolveSiteUrl() {
 }
 
 export const siteConfig = {
-  name: process.env.NEXT_PUBLIC_SITE_NAME?.trim() || "Blog",
+  name: "Jay's Blog",
   description: "用心感受生活的温度，用代码构建数字的花园。",
   url: resolveSiteUrl(),
 };

@@ -1,8 +1,9 @@
 
 import { Metadata } from "next";
+import { siteConfig } from "@/lib/site-config";
 
 export const metadata: Metadata = {
-  title: "隐私政策 | Blog",
+  title: "隐私政策",
   description: "了解我们如何处理和保护您的个人信息。",
 };
 
@@ -16,7 +17,7 @@ export default function PrivacyPage() {
 
       <div className="prose prose-neutral dark:prose-invert max-w-none prose-headings:font-bold prose-h3:text-lg md:prose-h3:text-xl prose-p:text-neutral-600 dark:prose-p:text-neutral-400 prose-li:text-neutral-600 dark:prose-li:text-neutral-400">
         <p className="italic">
-          欢迎访问 Blog（以下简称“本网站”）。我们深知个人信息对您的重要性，并会尽力保护您的隐私安全。
+          欢迎访问 {siteConfig.name}（以下简称“本网站”）。我们深知个人信息对您的重要性，并会尽力保护您的隐私安全。
           本隐私政策旨在向您说明我们如何收集、使用、存储和分享您的信息。
         </p>
 
