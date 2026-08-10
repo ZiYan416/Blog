@@ -13,7 +13,7 @@ import {
   PanelsTopLeft,
 } from "lucide-react";
 import { useDataSaver } from "@/features/settings/hooks/use-data-saver";
-import { siteConfig } from "@/lib/site-config";
+import { SiteBrandName } from "@/components/ui/site-brand-name";
 
 const VIDEO_URL = "/videos/about/aquarium-loop-v1.mp4";
 const POSTER_URL = "/videos/about/aquarium-poster-v1.jpg";
@@ -21,7 +21,7 @@ const POSTER_URL = "/videos/about/aquarium-poster-v1.jpg";
 const destinations = [
   {
     href: "https://lunalbl.com",
-    label: siteConfig.name,
+    brand: true,
     detail: "文字与生活",
     icon: Globe2,
   },
@@ -245,7 +245,11 @@ export function AboutHero() {
                     />
                     <div className="min-w-0">
                       <p className="truncate text-xs font-medium text-white/90 sm:text-sm">
-                        {destination.label}
+                        {"brand" in destination ? (
+                          <SiteBrandName />
+                        ) : (
+                          destination.label
+                        )}
                       </p>
                       <p className="mt-0.5 hidden truncate text-[10px] text-white/38 sm:block">
                         {destination.detail}

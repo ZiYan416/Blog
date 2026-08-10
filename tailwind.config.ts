@@ -18,6 +18,10 @@ const config = {
     },
     extend: {
       fontFamily: {
+        pixel: [
+          "var(--font-pixelify-sans)",
+          "sans-serif",
+        ],
         geist: [
           "var(--font-geist)",
           "Geist",

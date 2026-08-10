@@ -8,6 +8,7 @@ import { formatDateString } from '@/lib/markdown'
 import { getTagStyles } from '@/lib/tag-color'
 import { siteConfig } from '@/lib/site-config'
 import { cn } from '@/lib/utils'
+import { SiteBrandName } from '@/components/ui/site-brand-name'
 
 export interface ShareCardPost {
   title: string
@@ -39,6 +40,7 @@ export const PostShareCard = forwardRef<HTMLDivElement, PostShareCardProps>(
     )
 
     const authorName = post.author?.display_name || siteConfig.name || 'Anonymous'
+    const usesSiteBrandAsAuthor = !post.author?.display_name && Boolean(siteConfig.name)
     const authorAvatar = post.author?.avatar_url
 
     return (
@@ -66,9 +68,11 @@ export const PostShareCard = forwardRef<HTMLDivElement, PostShareCardProps>(
               )}
             </div>
             <div>
-              <div className="font-bold text-sm leading-tight">{authorName}</div>
+              <div className="font-bold text-sm leading-tight">
+                {usesSiteBrandAsAuthor ? <SiteBrandName /> : authorName}
+              </div>
               <div className="text-[11px] text-neutral-500 dark:text-neutral-400 font-medium">
-                {siteConfig.name}
+                <SiteBrandName />
               </div>
             </div>
           </div>

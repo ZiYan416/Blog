@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Instrument_Serif } from "next/font/google";
+import { Instrument_Serif, Pixelify_Sans } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { AppProviders } from "@/app/providers";
@@ -15,6 +15,13 @@ const instrumentSerif = Instrument_Serif({
   subsets: ["latin"],
   style: ["normal", "italic"],
   variable: "--font-instrument-serif",
+  display: "swap",
+});
+
+const pixelifySans = Pixelify_Sans({
+  weight: ["400", "500", "600", "700"],
+  subsets: ["latin"],
+  variable: "--font-pixelify-sans",
   display: "swap",
 });
 
@@ -59,7 +66,8 @@ export default function RootLayout({
       </head>
       <body className={cn(
         "min-h-screen bg-[#fafafa] dark:bg-[#050505] text-neutral-900 dark:text-neutral-100 selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black antialiased flex flex-col font-sans",
-        instrumentSerif.variable
+        instrumentSerif.variable,
+        pixelifySans.variable
       )}>
         <SiteLoader />
         <AppProviders>

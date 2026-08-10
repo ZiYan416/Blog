@@ -29,7 +29,7 @@ import {
 import { SignOutButton } from "@/features/auth/components/sign-out-button";
 import { LoginModal } from "@/features/auth/components/login-modal";
 import { Logo } from "@/components/ui/logo";
-import { siteConfig } from "@/lib/site-config";
+import { SiteBrandName } from "@/components/ui/site-brand-name";
 
 import { SafeImage } from "@/components/ui/safe-image";
 
@@ -103,7 +103,7 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
               <SheetHeader className="p-6 pb-2 text-left">
                 <SheetTitle className="flex items-center gap-3">
                   <Logo className="w-8 h-8" />
-                  <span className="text-lg font-bold tracking-tight font-serif italic">{siteConfig.name}</span>
+                  <SiteBrandName className="text-lg font-bold tracking-tight" />
                 </SheetTitle>
                 <SheetDescription className="sr-only">
                   站点页面、搜索、账户和管理入口
@@ -221,7 +221,7 @@ export function Navbar({ user: initialUser }: { user?: SupabaseUser | null }) {
 
           <Link href="/" className="hidden md:flex items-center gap-3 group">
             <Logo className="group-hover:scale-105 transition-transform duration-300" />
-            <span className="text-xl font-bold tracking-tight font-serif italic text-neutral-900 dark:text-neutral-100 transition-colors">{siteConfig.name}</span>
+            <SiteBrandName className="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 transition-colors" />
           </Link>
 
           <nav aria-label="主导航" className="hidden md:flex items-center gap-1">
