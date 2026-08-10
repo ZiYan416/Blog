@@ -9,6 +9,7 @@ import { getTagStyles } from '@/lib/tag-color'
 import { siteConfig } from '@/lib/site-config'
 import { cn } from '@/lib/utils'
 import { SiteBrandName } from '@/components/ui/site-brand-name'
+import { SafeImage } from '@/components/ui/safe-image'
 
 export interface ShareCardPost {
   title: string
@@ -57,11 +58,14 @@ export const PostShareCard = forwardRef<HTMLDivElement, PostShareCardProps>(
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 overflow-hidden shrink-0 flex items-center justify-center">
               {authorAvatar ? (
-                <img
+                <SafeImage
                   src={authorAvatar}
                   alt={authorName}
+                  width={40}
+                  height={40}
+                  sizes="40px"
+                  priority
                   className="w-full h-full object-cover"
-                  crossOrigin="anonymous"
                 />
               ) : (
                 <User className="w-5 h-5 text-neutral-500" />
@@ -85,12 +89,14 @@ export const PostShareCard = forwardRef<HTMLDivElement, PostShareCardProps>(
 
         {/* Cover Image Section */}
         {post.cover_image && (
-          <div className="relative w-full aspect-[16/9] mb-4 rounded-xl overflow-hidden border border-neutral-200 dark:border-neutral-800">
-            <img
+          <div className="relative w-full aspect-[16/9] mb-4 rounded-xl overflow-hidden border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-800">
+            <SafeImage
               src={post.cover_image}
               alt={post.title}
+              fill
+              sizes="412px"
+              priority
               className="w-full h-full object-cover"
-              crossOrigin="anonymous"
             />
           </div>
         )}
