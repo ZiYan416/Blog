@@ -46,6 +46,7 @@ const NIGHT_VIDEOS = [
 const OVERLAY_IMAGE = "/images/hero-overlay.png";
 
 interface GroupVideoLoopProps {
+  groupId: "day" | "night";
   videos: {
     local: string;
     mobile: string;
@@ -62,6 +63,7 @@ interface GroupVideoLoopProps {
 
 // Seamless 100% duration-triggered video player engine with progressive lazy-preloading
 function GroupVideoLoop({
+  groupId,
   videos,
   isActiveGroup,
   isPrimaryGroup,
@@ -222,8 +224,9 @@ function GroupVideoLoop({
 
   return (
     <div
+      data-video-group={groupId}
       className={cn(
-        "absolute inset-0 z-0 overflow-hidden pointer-events-none transition-opacity duration-1000 ease-in-out",
+        "absolute inset-0 z-0 overflow-hidden pointer-events-none transition-opacity duration-1500 ease-in-out",
         isActiveGroup ? "opacity-100" : "opacity-0"
       )}
     >
@@ -287,6 +290,7 @@ export function CinematicHero({
   ctaNode,
 }: CinematicHeroProps) {
   const [isDark, setIsDark] = useState(false);
+  const [initialDark, setInitialDark] = useState<boolean | null>(null);
   const [isThemeReady, setIsThemeReady] = useState(false);
   const [isInitialVideoReady, setIsInitialVideoReady] = useState(false);
   const [isInitialVideoBuffered, setIsInitialVideoBuffered] = useState(false);
@@ -298,6 +302,7 @@ export function CinematicHero({
     const checkDark = () => {
       const dark = document.documentElement.classList.contains("dark");
       setIsDark(dark);
+      setInitialDark((current) => current ?? dark);
       setIsThemeReady(true);
     };
     checkDark();
@@ -368,29 +373,59 @@ export function CinematicHero({
           isInitialVideoReady ? "opacity-100" : "opacity-0"
         )}
       >
-        {/* Keep a poster visible while the active scene buffers or data saving is enabled. */}
+        {/* Keep both theme scenes mounted so a theme change can dissolve between
+            them. Only the inactive theme's first clip is preloaded after the
+            initial scene has buffered, preserving the progressive loading path. */}
         <div className="absolute -inset-1 z-0">
           {isThemeReady && (
-            <Image
-              src={(isDark ? NIGHT_VIDEOS : DAY_VIDEOS)[0].poster}
-              alt=""
-              aria-hidden="true"
-              fill
-              priority
-              sizes="100vw"
-              className="object-cover"
-            />
+            <>
+              <Image
+                src={DAY_VIDEOS[0].poster}
+                alt=""
+                aria-hidden="true"
+                fill
+                priority={initialDark === false}
+                sizes="100vw"
+                className={cn(
+                  "object-cover transition-opacity duration-1500 ease-in-out",
+                  isDark ? "opacity-0" : "opacity-100"
+                )}
+              />
+              <Image
+                src={NIGHT_VIDEOS[0].poster}
+                alt=""
+                aria-hidden="true"
+                fill
+                priority={initialDark === true}
+                sizes="100vw"
+                className={cn(
+                  "object-cover transition-opacity duration-1500 ease-in-out",
+                  isDark ? "opacity-100" : "opacity-0"
+                )}
+              />
+            </>
           )}
-          {videoEnabled && isThemeReady && (
-            <GroupVideoLoop
-              key={isDark ? "night" : "day"}
-              videos={isDark ? NIGHT_VIDEOS : DAY_VIDEOS}
-              isActiveGroup
-              isPrimaryGroup
-              onPrimaryReady={() => setIsInitialVideoReady(true)}
-              onPrimaryBuffered={() => setIsInitialVideoBuffered(true)}
-              allowBackgroundPreload={allowBackgroundPreload}
-            />
+          {videoEnabled && initialDark !== null && (
+            <>
+              <GroupVideoLoop
+                groupId="day"
+                videos={DAY_VIDEOS}
+                isActiveGroup={!isDark}
+                isPrimaryGroup={!initialDark}
+                onPrimaryReady={() => setIsInitialVideoReady(true)}
+                onPrimaryBuffered={() => setIsInitialVideoBuffered(true)}
+                allowBackgroundPreload={allowBackgroundPreload}
+              />
+              <GroupVideoLoop
+                groupId="night"
+                videos={NIGHT_VIDEOS}
+                isActiveGroup={isDark}
+                isPrimaryGroup={initialDark}
+                onPrimaryReady={() => setIsInitialVideoReady(true)}
+                onPrimaryBuffered={() => setIsInitialVideoBuffered(true)}
+                allowBackgroundPreload={allowBackgroundPreload}
+              />
+            </>
           )}
         </div>
 
