@@ -7,11 +7,13 @@ import { Input } from "@/components/ui/input"
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,8 +53,17 @@ export function TagManager({ initialTags }: TagManagerProps) {
   const { toast } = useToast()
 
   const fetchTags = async () => {
-    const data = await getAllTags()
-    setTags(data || [])
+    try {
+      const data = await getAllTags()
+      setTags(data || [])
+    } catch (error) {
+      console.error("Failed to refresh tags:", error)
+      toast({
+        title: "刷新标签失败",
+        description: "标签列表刷新失败，请稍后重试。",
+        variant: "destructive",
+      })
+    }
   }
 
   const filteredTags = tags.filter(tag =>
@@ -61,72 +72,105 @@ export function TagManager({ initialTags }: TagManagerProps) {
   )
 
   const handleCreate = async () => {
-    if (!newTagName.trim()) return
+    const name = newTagName.trim()
+    if (!name) return
     setLoading(true)
 
-    const result = await createTag(newTagName)
-    if (result.error) {
+    try {
+      const result = await createTag(name)
+      if (result.error) {
+        toast({
+          title: "创建标签失败",
+          description: "标签创建失败，请稍后重试。",
+          variant: "destructive",
+        })
+        return
+      }
       toast({
-        title: "Error",
-        description: "Failed to create tag",
-        variant: "destructive",
-      })
-    } else {
-      toast({
-        title: "Success",
-        description: "Tag created successfully",
+        title: "标签创建成功",
+        description: `“${name}” 已创建。`,
       })
       setIsCreateOpen(false)
       setNewTagName("")
       await fetchTags()
+    } catch (error) {
+      console.error("Failed to create tag:", error)
+      toast({
+        title: "创建标签失败",
+        description: "标签创建失败，请检查网络后重试。",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const handleUpdate = async () => {
-    if (!currentTag || !newTagName.trim()) return
+    const name = newTagName.trim()
+    if (!currentTag || !name) return
     setLoading(true)
 
-    const result = await updateTag(currentTag.id, newTagName)
-    if (result.error) {
+    try {
+      const result = await updateTag(currentTag.id, name)
+      if (result.error) {
+        toast({
+          title: "更新标签失败",
+          description: "标签更新失败，请稍后重试。",
+          variant: "destructive",
+        })
+        return
+      }
       toast({
-        title: "Error",
-        description: "Failed to update tag",
-        variant: "destructive",
-      })
-    } else {
-      toast({
-        title: "Success",
-        description: "Tag updated successfully",
+        title: "标签更新成功",
+        description: `“${name}” 已更新。`,
       })
       setIsEditOpen(false)
       setCurrentTag(null)
       setNewTagName("")
       await fetchTags()
+    } catch (error) {
+      console.error("Failed to update tag:", error)
+      toast({
+        title: "更新标签失败",
+        description: "标签更新失败，请检查网络后重试。",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const handleDelete = async () => {
-    if (!tagToDelete) return
+    const tag = tagToDelete
+    if (!tag) return
     setLoading(true)
 
-    const result = await deleteTag(tagToDelete.id)
-    if (result.error) {
+    try {
+      const result = await deleteTag(tag.id)
+      if (result.error) {
+        toast({
+          title: "删除标签失败",
+          description: "标签删除失败，请稍后重试。",
+          variant: "destructive",
+        })
+        return
+      }
       toast({
-        title: "删除失败",
-        description: result.error,
-        variant: "destructive",
-      })
-    } else {
-      toast({
-        title: "已删除标签",
-        description: `“${tagToDelete.name}” 已删除。`,
+        title: "标签删除成功",
+        description: `“${tag.name}” 已删除。`,
       })
       setTagToDelete(null)
       await fetchTags()
+    } catch (error) {
+      console.error("Failed to delete tag:", error)
+      toast({
+        title: "删除标签失败",
+        description: "标签删除失败，请检查网络后重试。",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const openEdit = (tag: TagItem) => {
@@ -159,7 +203,12 @@ export function TagManager({ initialTags }: TagManagerProps) {
           />
         </div>
 
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <Dialog
+          open={isCreateOpen}
+          onOpenChange={(open) => {
+            if (!loading) setIsCreateOpen(open)
+          }}
+        >
           <DialogTrigger asChild>
             <Button className="w-full sm:w-auto rounded-full px-6">
               <Plus className="w-4 h-4 mr-2" />
@@ -169,16 +218,21 @@ export function TagManager({ initialTags }: TagManagerProps) {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>新建标签</DialogTitle>
+              <DialogDescription>创建一个新标签，用于归类和筛选文章。</DialogDescription>
             </DialogHeader>
             <div className="py-4">
-              <Input
-                placeholder="输入标签名称..."
-                value={newTagName}
-                onChange={(e) => setNewTagName(e.target.value)}
-              />
+              <div className="space-y-2">
+                <Label htmlFor="new-tag-name">标签名称</Label>
+                <Input
+                  id="new-tag-name"
+                  placeholder="输入标签名称..."
+                  value={newTagName}
+                  onChange={(e) => setNewTagName(e.target.value)}
+                />
+              </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsCreateOpen(false)}>取消</Button>
+              <Button variant="outline" onClick={() => setIsCreateOpen(false)} disabled={loading}>取消</Button>
               <Button onClick={handleCreate} disabled={loading}>
                 {loading ? "创建中..." : "创建"}
               </Button>
@@ -274,15 +328,22 @@ export function TagManager({ initialTags }: TagManagerProps) {
       )}
 
       {/* Edit Dialog */}
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+      <Dialog
+        open={isEditOpen}
+        onOpenChange={(open) => {
+          if (!loading) setIsEditOpen(open)
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>编辑标签</DialogTitle>
+            <DialogDescription>修改标签名称，Slug 会根据名称自动生成。</DialogDescription>
           </DialogHeader>
           <div className="py-4 space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-muted-foreground">标签名称</label>
+              <Label htmlFor="edit-tag-name">标签名称</Label>
               <Input
+                id="edit-tag-name"
                 placeholder="输入标签名称..."
                 value={newTagName}
                 onChange={(e) => setNewTagName(e.target.value)}
@@ -290,8 +351,9 @@ export function TagManager({ initialTags }: TagManagerProps) {
             </div>
             {currentTag && (
               <div className="space-y-2">
-                 <label className="text-sm font-medium text-muted-foreground">Slug (自动生成)</label>
+                 <Label htmlFor="edit-tag-slug">Slug（自动生成）</Label>
                  <Input
+                   id="edit-tag-slug"
                    disabled
                    value={currentTag.slug}
                    className="bg-muted font-mono text-xs"
@@ -300,7 +362,7 @@ export function TagManager({ initialTags }: TagManagerProps) {
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditOpen(false)}>取消</Button>
+            <Button variant="outline" onClick={() => setIsEditOpen(false)} disabled={loading}>取消</Button>
             <Button onClick={handleUpdate} disabled={loading}>
               {loading ? "保存中..." : "保存"}
             </Button>
@@ -308,7 +370,12 @@ export function TagManager({ initialTags }: TagManagerProps) {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={!!tagToDelete} onOpenChange={(open) => !open && setTagToDelete(null)}>
+      <AlertDialog
+        open={!!tagToDelete}
+        onOpenChange={(open) => {
+          if (!open && !loading) setTagToDelete(null)
+        }}
+      >
         <AlertDialogContent className="rounded-3xl">
           <AlertDialogHeader>
             <AlertDialogTitle>确认删除标签？</AlertDialogTitle>
@@ -318,7 +385,7 @@ export function TagManager({ initialTags }: TagManagerProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-full">取消</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-full" disabled={loading}>取消</AlertDialogCancel>
             <AlertDialogAction
               className="rounded-full bg-red-500 hover:bg-red-600"
               disabled={loading}

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { UserManagement } from "./user-management";
 import { UserDetailDialog } from "./user-detail-dialog";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -136,9 +136,17 @@ export function UserManagementWrapper({
 
       <AlertDialog
         open={deleteDialog.open}
-        onOpenChange={(open) =>
-          setDeleteDialog({ open, userId: deleteDialog.userId })
-        }
+        onOpenChange={(open) => {
+          // Do not let Escape, the overlay or the cancel button hide the
+          // dialog while a deletion is in progress. On failure the dialog
+          // remains open so the administrator can retry.
+          if (!open && isDeleting) return;
+          setDeleteDialog((current) =>
+            open
+              ? { ...current, open: true }
+              : { open: false, userId: null }
+          );
+        }}
       >
         <AlertDialogContent className="rounded-3xl">
           <AlertDialogHeader>
@@ -149,7 +157,9 @@ export function UserManagementWrapper({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-full">取消</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-full" disabled={isDeleting}>
+              取消
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={(event) => {
                 event.preventDefault();

@@ -2,6 +2,7 @@
 
 import { useToast } from "@/hooks/use-toast"
 import {
+  DEFAULT_TOAST_DURATION,
   Toast,
   ToastClose,
   ToastDescription,
@@ -14,7 +15,7 @@ export function Toaster() {
   const { toasts } = useToast()
 
   return (
-    <ToastProvider duration={2000}>
+    <ToastProvider duration={DEFAULT_TOAST_DURATION} label="消息">
       {toasts.map(function ({ id, title, description, action, ...props }) {
         return (
           <Toast key={id} {...props}>
@@ -29,7 +30,7 @@ export function Toaster() {
           </Toast>
         )
       })}
-      <ToastViewport />
+      <ToastViewport aria-label="消息通知" />
     </ToastProvider>
   )
 }

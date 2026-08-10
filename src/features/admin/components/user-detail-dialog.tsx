@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { UserCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 import { SafeImage } from "@/components/ui/safe-image";
 
 interface User {
@@ -54,6 +54,11 @@ export function UserDetailDialog({
 
   // 当对话框打开时，初始化表单数据
   const handleOpenChange = (isOpen: boolean) => {
+    // Keep the form open while the save request is running. The successful
+    // submit path closes it directly after the request resolves; failures
+    // leave it open and editable for another attempt.
+    if (!isOpen && loading) return;
+
     if (isOpen && user) {
       setFormData({
         display_name: user.display_name || "",
@@ -103,7 +108,19 @@ export function UserDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[500px] rounded-3xl">
+      <DialogContent
+        className="sm:max-w-[500px] rounded-3xl"
+        showCloseButton={!loading}
+        onEscapeKeyDown={(event) => {
+          if (loading) event.preventDefault();
+        }}
+        onPointerDownOutside={(event) => {
+          if (loading) event.preventDefault();
+        }}
+        onInteractOutside={(event) => {
+          if (loading) event.preventDefault();
+        }}
+      >
         <DialogHeader>
           <DialogTitle className="text-xl">编辑用户资料</DialogTitle>
           <DialogDescription>
@@ -141,6 +158,7 @@ export function UserDetailDialog({
             <Input
               id="display_name"
               value={formData.display_name}
+              disabled={loading}
               onChange={(e) =>
                 setFormData({ ...formData, display_name: e.target.value })
               }
@@ -155,6 +173,7 @@ export function UserDetailDialog({
             <Textarea
               id="bio"
               value={formData.bio}
+              disabled={loading}
               onChange={(e) =>
                 setFormData({ ...formData, bio: e.target.value })
               }
@@ -170,6 +189,7 @@ export function UserDetailDialog({
             <Input
               id="avatar_url"
               value={formData.avatar_url}
+              disabled={loading}
               onChange={(e) =>
                 setFormData({ ...formData, avatar_url: e.target.value })
               }
@@ -195,6 +215,7 @@ export function UserDetailDialog({
               <Switch
                 id="is_admin"
                 checked={formData.is_admin}
+                disabled={loading}
                 onCheckedChange={(checked) =>
                   setFormData({ ...formData, is_admin: checked })
                 }

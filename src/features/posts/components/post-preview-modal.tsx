@@ -1,6 +1,6 @@
 "use client"
 
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Calendar, Tag, Clock, User, X } from 'lucide-react'
@@ -35,9 +35,12 @@ export function PostPreviewModal({ open, onOpenChange, post }: PostPreviewModalP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[100vw] h-screen p-0 border-none rounded-none bg-[#fafafa] dark:bg-[#050505] overflow-hidden focus:outline-none">
+      <DialogContent showCloseButton={false} className="max-w-[100vw] h-screen p-0 border-none rounded-none bg-[#fafafa] dark:bg-[#050505] overflow-hidden focus:outline-none">
         {/* Hidden title for accessibility */}
         <DialogTitle className="sr-only">文章预览: {post.title}</DialogTitle>
+        <DialogDescription className="sr-only">
+          预览文章内容、封面、标签和作者信息。
+        </DialogDescription>
 
         {/* Floating Close Button */}
         <Button

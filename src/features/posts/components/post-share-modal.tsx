@@ -214,22 +214,22 @@ export function PostShareModal({ open, onOpenChange, post }: PostShareModalProps
       </div>
 
       <DialogContent className="w-[92vw] max-w-[92vw] sm:max-w-lg md:max-w-3xl p-4 md:p-6 max-h-[92vh] overflow-y-auto rounded-2xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
-        {/* Mobile Header (visible only on mobile) */}
-        <div className="md:hidden mb-2">
-          <DialogHeader className="text-left">
-            <DialogTitle className="text-base sm:text-lg font-bold flex items-center gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-[380px_minmax(0,1fr)] gap-4 md:gap-6 items-center md:items-start">
+          {/* Keep one semantic title/description pair while placing it above
+              the card on mobile and in the action column on desktop. */}
+          <DialogHeader className="order-1 md:col-start-2 md:row-start-1 text-left mb-2 md:mb-0">
+            <DialogTitle className="text-base sm:text-lg md:text-xl font-bold flex items-center gap-2">
               <Share2 className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
               文章分享卡片
             </DialogTitle>
             <DialogDescription className="text-[11px] sm:text-xs text-neutral-500 mt-0.5">
-              长按图片可保存，亦可使用下方一键分享。
+              <span className="md:hidden">长按图片可保存，亦可使用下方一键分享。</span>
+              <span className="hidden md:inline">卡片已生成，电脑端已自动复制图片至剪贴板，方便即时粘贴分享。</span>
             </DialogDescription>
           </DialogHeader>
-        </div>
 
-        <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-center md:items-start">
           {/* Card Preview Container */}
-          <div className="w-full md:w-[380px] shrink-0 flex flex-col items-center justify-center bg-neutral-100 dark:bg-neutral-900/60 p-2 sm:p-3 md:p-4 rounded-xl border border-neutral-200/80 dark:border-neutral-800 min-h-[180px] md:min-h-[260px]">
+          <div className="order-2 md:col-start-1 md:row-span-2 w-full md:w-[380px] shrink-0 flex flex-col items-center justify-center bg-neutral-100 dark:bg-neutral-900/60 p-2 sm:p-3 md:p-4 rounded-xl border border-neutral-200/80 dark:border-neutral-800 min-h-[180px] md:min-h-[260px]">
             {imgUrl ? (
               <img
                 src={imgUrl}
@@ -245,27 +245,14 @@ export function PostShareModal({ open, onOpenChange, post }: PostShareModalProps
           </div>
 
           {/* Information & Action Buttons Container */}
-          <div className="flex-1 w-full flex flex-col justify-center md:my-auto min-w-0">
-            {/* Desktop Header (visible only on desktop) */}
-            <div className="hidden md:block">
-              <DialogHeader className="text-left">
-                <DialogTitle className="text-xl font-bold flex items-center gap-2">
-                  <Share2 className="w-5 h-5 text-amber-500" />
-                  文章分享卡片
-                </DialogTitle>
-                <DialogDescription className="text-xs text-neutral-500 mt-1">
-                  卡片已生成，电脑端已自动复制图片至剪贴板，方便即时粘贴分享。
-                </DialogDescription>
-              </DialogHeader>
-
-              {/* Desktop Copy Success Notification */}
-              {copied && (
-                <div className="mt-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs flex items-center gap-2">
-                  <Check className="w-4 h-4 shrink-0 text-amber-500" />
-                  <span>已自动复制卡片图片到剪贴板！可以直接在聊天框 Ctrl+V / Cmd+V 粘贴。</span>
-                </div>
-              )}
-            </div>
+          <div className="order-3 md:col-start-2 md:row-start-2 flex-1 w-full flex flex-col justify-center md:my-auto min-w-0">
+            {/* Desktop Copy Success Notification */}
+            {copied && (
+              <div className="hidden md:flex mt-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs items-center gap-2">
+                <Check className="w-4 h-4 shrink-0 text-amber-500" />
+                <span>已自动复制卡片图片到剪贴板！可以直接在聊天框 Ctrl+V / Cmd+V 粘贴。</span>
+              </div>
+            )}
 
             {/* Action Buttons Stack */}
             <div className="mt-3 md:mt-6 pt-3 md:pt-5 border-t border-neutral-200 dark:border-neutral-800 flex flex-col gap-2.5">

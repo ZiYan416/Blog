@@ -25,7 +25,7 @@ import {
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { toast } from 'sonner'
+import { toast } from '@/hooks/use-toast'
 import { SafeImage } from '@/components/ui/safe-image'
 import { getPostPath } from '@/features/posts/post-path'
 
@@ -262,7 +262,16 @@ export function CommentManagement({ initialComments }: CommentManagementProps) {
       </TabsContent>
     </Tabs>
 
-    <AlertDialog open={!!commentToDelete} onOpenChange={(open) => !open && setCommentToDelete(null)}>
+    <AlertDialog
+      open={!!commentToDelete}
+      onOpenChange={(open) => {
+        // Keep the confirmation open while the destructive request is in
+        // flight. A failed request still leaves the dialog available for a
+        // retry.
+        if (!open && loading === commentToDelete?.id) return
+        if (!open) setCommentToDelete(null)
+      }}
+    >
       <AlertDialogContent className="rounded-3xl">
         <AlertDialogHeader>
           <AlertDialogTitle>确认删除评论？</AlertDialogTitle>
@@ -271,7 +280,12 @@ export function CommentManagement({ initialComments }: CommentManagementProps) {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel className="rounded-full">取消</AlertDialogCancel>
+          <AlertDialogCancel
+            className="rounded-full"
+            disabled={loading === commentToDelete?.id}
+          >
+            取消
+          </AlertDialogCancel>
           <AlertDialogAction
             className="rounded-full bg-red-500 hover:bg-red-600"
             disabled={loading === commentToDelete?.id}

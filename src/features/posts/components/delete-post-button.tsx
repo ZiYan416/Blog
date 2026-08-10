@@ -6,15 +6,16 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogClose,
-} from "@/components/ui/dialog";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export function DeletePostButton({
   slug,
@@ -74,8 +75,17 @@ export function DeletePostButton({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+    <AlertDialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        // Keep the confirmation visible while the destructive request is in
+        // flight, even if the user presses Escape or clicks the overlay.
+        if (!isDeleting) {
+          setOpen(nextOpen);
+        }
+      }}
+    >
+      <AlertDialogTrigger asChild>
         <Button
           variant="ghost"
           size="icon"
@@ -84,30 +94,32 @@ export function DeletePostButton({
         >
           <Trash2 className="w-4 h-4" />
         </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-red-600">
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2 text-red-600">
             <AlertTriangle className="w-5 h-5" />
             确认删除文章？
-          </DialogTitle>
-          <DialogDescription className="pt-2">
+          </AlertDialogTitle>
+          <AlertDialogDescription className="pt-2">
             您即将删除文章 <span className="font-bold text-foreground">&ldquo;{title}&rdquo;</span>。
             <br />
             此操作<span className="font-bold text-red-500">无法撤销</span>。文章删除后，
             系统还会清理仅由该文章引用的博客托管图片；被其他文章复用的图片会保留。
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter className="gap-2 sm:gap-0">
-          <DialogClose asChild>
-            <Button variant="outline" className="rounded-full" disabled={isDeleting}>
-              取消
-            </Button>
-          </DialogClose>
-          <Button
-            variant="destructive"
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="gap-2 sm:gap-0">
+          <AlertDialogCancel className="rounded-full" disabled={isDeleting}>
+            取消
+          </AlertDialogCancel>
+          <AlertDialogAction
             className="rounded-full bg-red-600 hover:bg-red-700"
-            onClick={handleDelete}
+            onClick={(event) => {
+              // AlertDialogAction closes by default. Keep it open until the
+              // request succeeds so failures remain actionable.
+              event.preventDefault();
+              void handleDelete();
+            }}
             disabled={isDeleting}
           >
             {isDeleting ? (
@@ -118,9 +130,9 @@ export function DeletePostButton({
             ) : (
               "确认删除"
             )}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
