@@ -19,7 +19,7 @@ git clone https://github.com/your-username/your-repo.git
 
 ### 3. 创建分支 (Create a Branch)
 
-请基于 `master` 分支创建功能分支或 bug 修复分支。分支名应该具有描述性：
+请基于 `develop` 分支在个人 Fork 中创建功能分支或 bug 修复分支，避免在主仓库中长期保留临时分支。分支名应该具有描述性：
 
 ```bash
 git checkout -b feature/your-feature-name
