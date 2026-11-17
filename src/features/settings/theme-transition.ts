@@ -59,6 +59,7 @@ export function buildThemeRevealCss({ x, y, farthestCorner, feather }: RevealGeo
 
   return [
     '@property ' + RADIUS + ' { syntax: "<length>"; inherits: false; initial-value: 0px; }',
+    '::view-transition-image-pair(root) { isolation: auto; }',
     '::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }',
     '@keyframes ' + KEYFRAMES + ' {',
     '  from { ' + RADIUS + ': ' + start + 'px; }',
