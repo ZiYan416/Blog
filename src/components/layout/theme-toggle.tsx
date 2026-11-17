@@ -2,6 +2,7 @@
 
 import { useEffect, useSyncExternalStore } from 'react'
 import { Moon, Sun } from 'lucide-react'
+import { ThemeAnimationType, useThemeAnimation } from 'theme-switch-animation/react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { THEME_STORAGE_KEY } from '@/features/settings/theme-init'
@@ -18,15 +19,24 @@ export function ThemeToggle({ className }: { className?: string }) {
     document.documentElement.style.colorScheme = initialTheme
   }, [])
 
-  const toggleTheme = () => {
-    const newTheme = isDark ? 'light' : 'dark'
-    localStorage.setItem(THEME_STORAGE_KEY, newTheme)
-    document.documentElement.classList.toggle('dark', newTheme === 'dark')
-    document.documentElement.style.colorScheme = newTheme
-  }
+  // Keep the existing theme persistence and DOM update logic; animate only the transition.
+  const { ref, toggleTheme } = useThemeAnimation<HTMLButtonElement>({
+    isDark,
+    onChange: (nextIsDark) => {
+      const newTheme = nextIsDark ? 'dark' : 'light'
+      localStorage.setItem(THEME_STORAGE_KEY, newTheme)
+      document.documentElement.classList.toggle('dark', newTheme === 'dark')
+      document.documentElement.style.colorScheme = newTheme
+    },
+    animationType: ThemeAnimationType.CIRCLE_BLUR,
+    duration: 750,
+    easing: 'ease-in-out',
+    reverse: 'auto',
+  })
 
   return (
     <Button
+      ref={ref}
       variant="ghost"
       size="icon"
       onClick={toggleTheme}
