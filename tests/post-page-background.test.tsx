@@ -15,6 +15,9 @@ describe("PostPageBackground", () => {
     )
 
     expect(container.querySelector("img")?.getAttribute("src")).toBe(coverImage)
+    // Blur only the decorative cover, not article text or foreground controls.
+    expect(container.querySelector("img")?.className).toContain("blur-[20px]")
+    expect(container.querySelector("img")?.className).toContain("md:blur-[28px]")
     expect(
       container.firstElementChild?.hasAttribute("data-post-background")
     ).toBe(true)

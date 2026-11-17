@@ -34,7 +34,7 @@ export function PostPageBackground({
             fill
             priority
             sizes="100vw"
-            className="scale-[1.06] object-cover object-center"
+            className="scale-[1.06] object-cover object-center blur-[20px] md:blur-[28px]"
           />
         </div>
       ) : (
