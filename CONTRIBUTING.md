@@ -6,15 +6,15 @@
 
 ### 1. 提交 Issue
 
-在提交代码之前，请先通过提交 [Issue](https://github.com/your-username/your-repo/issues) 的方式与我们讨论你想要添加的特性或发现的 Bug。这样可以避免重复劳动，并确保你的想法与项目方向一致。
+在提交代码之前，请先通过提交 [Issue](https://github.com/ZiYan416/Blog/issues) 的方式与我们讨论你想要添加的特性或发现的 Bug。这样可以避免重复劳动，并确保你的想法与项目方向一致。
 
 ### 2. 派生和克隆 (Fork & Clone)
 
 1. 点击右上角的 Fork 按钮，将本项目派生到你的 GitHub 账号下。
-2. 将你派生的仓库克隆到本地：
+2. 将你派生的仓库克隆到本地（将 `<你的用户名>` 替换为自己的 GitHub 账号，而非上游仓库所有者）：
 
 ```bash
-git clone https://github.com/your-username/your-repo.git
+git clone https://github.com/<你的用户名>/Blog.git
 ```
 
 ### 3. 创建分支 (Create a Branch)
